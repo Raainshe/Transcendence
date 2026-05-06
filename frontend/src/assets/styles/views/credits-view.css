@@ -1,0 +1,102 @@
+.credits-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: var(--sp-6);
+  padding: var(--sp-6) var(--sp-4);
+}
+
+.credits-view__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  width: min(560px, 100%);
+}
+
+.credits-view__title {
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-xl), 5vw, var(--fs-2xl));
+  letter-spacing: 0.25em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow:
+    0 0 8px rgba(0, 159, 220, 0.7),
+    0 0 18px rgba(0, 159, 220, 0.45);
+  line-height: 1;
+  margin: 0;
+}
+
+.credits-view__underline {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.credits-view__underline-block {
+  flex: 1 1 0;
+  height: 5px;
+  border-radius: 1px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.credits-view__underline-block--yellow {
+  color: var(--t-yellow);
+  background-color: var(--t-yellow);
+}
+
+.credits-view__underline-block--cyan {
+  color: var(--t-cyan);
+  background-color: var(--t-cyan);
+}
+
+.credits-view__underline-block--purple {
+  color: var(--t-purple);
+  background-color: var(--t-purple);
+}
+
+.credits-view__underline-block--orange {
+  color: var(--t-orange);
+  background-color: var(--t-orange);
+}
+
+.credits-view__underline-block--blue {
+  color: var(--t-blue);
+  background-color: var(--t-blue);
+}
+
+.credits-view__underline-block--green {
+  color: var(--t-green);
+  background-color: var(--t-green);
+}
+
+.credits-view__underline-block--red {
+  color: var(--t-red);
+  background-color: var(--t-red);
+}
+
+.credits-view__subtitle {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.3em;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  margin-top: var(--sp-2);
+}
+
+.credits-view__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sp-5);
+  width: min(960px, 100%);
+}
+
+@media (max-width: 720px) {
+  .credits-view__grid {
+    grid-template-columns: 1fr;
+    width: min(360px, 100%);
+  }
+}

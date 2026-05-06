@@ -1,0 +1,11 @@
+.app {
+  min-height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+.app__main {
+  display: flex;
+  flex-direction: column;
+  padding: var(--sp-5) var(--sp-4);
+}

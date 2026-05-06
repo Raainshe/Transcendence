@@ -1,0 +1,101 @@
+.site-header {
+  position: relative;
+  z-index: var(--z-header);
+  padding: var(--sp-6) var(--sp-4) var(--sp-5);
+  display: flex;
+  justify-content: center;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(180deg, rgba(0, 159, 220, 0.08), transparent);
+}
+
+.site-header__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  width: 66%;
+  max-width: 100%;
+}
+
+.site-header__wordmark {
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-lg), 5.5vw, var(--fs-3xl));
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-shadow:
+    0 0 8px rgba(0, 159, 220, 0.7),
+    0 0 18px rgba(0, 159, 220, 0.45),
+    0 0 32px rgba(0, 159, 220, 0.25);
+  text-transform: uppercase;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.site-header__registered {
+  font-size: 0.4em;
+  vertical-align: super;
+  margin-left: 0.2em;
+  color: var(--color-text-dim);
+  text-shadow: none;
+}
+
+.site-header__underline {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.site-header__underline-block {
+  flex: 1 1 0;
+  height: 6px;
+  border-radius: 1px;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.site-header__underline-block--yellow {
+  color: var(--t-yellow);
+  background-color: var(--t-yellow);
+}
+
+.site-header__underline-block--cyan {
+  color: var(--t-cyan);
+  background-color: var(--t-cyan);
+}
+
+.site-header__underline-block--purple {
+  color: var(--t-purple);
+  background-color: var(--t-purple);
+}
+
+.site-header__underline-block--orange {
+  color: var(--t-orange);
+  background-color: var(--t-orange);
+}
+
+.site-header__underline-block--blue {
+  color: var(--t-blue);
+  background-color: var(--t-blue);
+}
+
+.site-header__underline-block--green {
+  color: var(--t-green);
+  background-color: var(--t-green);
+}
+
+.site-header__underline-block--red {
+  color: var(--t-red);
+  background-color: var(--t-red);
+}
+
+@media (min-aspect-ratio: 4/3) {
+  .site-header__inner {
+    width: 50%;
+  }
+}
+
+@media (min-aspect-ratio: 16/9) {
+  .site-header__inner {
+    width: 33%;
+  }
+}

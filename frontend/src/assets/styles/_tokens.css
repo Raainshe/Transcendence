@@ -1,0 +1,52 @@
+:root {
+  --t-yellow: #f7d308;
+  --t-cyan: #009fdc;
+  --t-purple: #9d4dbb;
+  --t-orange: #ff7308;
+  --t-blue: #0049ac;
+  --t-green: #59b101;
+  --t-red: #d70f37;
+
+  --accent: var(--t-cyan);
+  --accent-selected: var(--t-yellow);
+
+  --color-text: #e6e8ef;
+  --color-text-dim: #8b8fa3;
+  --color-bg: #0a0a14;
+  --color-bg-grid: rgba(255, 255, 255, 0.04);
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-panel: rgba(10, 10, 30, 0.65);
+
+  --font-display: 'Press Start 2P', 'Courier New', ui-monospace, monospace;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', 'Roboto Mono', monospace;
+
+  --fs-xs: 0.625rem;
+  --fs-sm: 0.75rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.5rem;
+  --fs-3xl: 3.5rem;
+
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4rem;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+
+  --shadow-glow-cyan: 0 0 8px var(--t-cyan), 0 0 18px rgba(0, 159, 220, 0.55);
+  --shadow-glow-yellow: 0 0 8px var(--t-yellow), 0 0 18px rgba(247, 211, 8, 0.65);
+
+  --grid-cell: 32px;
+
+  --z-header: 10;
+  --z-footer: 10;
+
+  color-scheme: dark;
+}
