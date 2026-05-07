@@ -30,54 +30,6 @@
   margin: 0;
 }
 
-.credits-view__underline {
-  display: flex;
-  gap: 4px;
-  width: 100%;
-}
-
-.credits-view__underline-block {
-  flex: 1 1 0;
-  height: 5px;
-  border-radius: 1px;
-  box-shadow: 0 0 8px currentColor;
-}
-
-.credits-view__underline-block--yellow {
-  color: var(--t-yellow);
-  background-color: var(--t-yellow);
-}
-
-.credits-view__underline-block--cyan {
-  color: var(--t-cyan);
-  background-color: var(--t-cyan);
-}
-
-.credits-view__underline-block--purple {
-  color: var(--t-purple);
-  background-color: var(--t-purple);
-}
-
-.credits-view__underline-block--orange {
-  color: var(--t-orange);
-  background-color: var(--t-orange);
-}
-
-.credits-view__underline-block--blue {
-  color: var(--t-blue);
-  background-color: var(--t-blue);
-}
-
-.credits-view__underline-block--green {
-  color: var(--t-green);
-  background-color: var(--t-green);
-}
-
-.credits-view__underline-block--red {
-  color: var(--t-red);
-  background-color: var(--t-red);
-}
-
 .credits-view__subtitle {
   font-family: var(--font-display);
   font-size: var(--fs-sm);

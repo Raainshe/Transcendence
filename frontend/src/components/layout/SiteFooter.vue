@@ -10,13 +10,26 @@ const hints = [
   { keys: '\u2190\u2192', label: 'Change' },
   { keys: 'Enter', label: 'Start' },
 ] as const
+
+const links = [
+  { to: '/privacy', label: 'Privacy' },
+  { to: '/terms', label: 'Terms' },
+  { to: '/credits', label: 'Developed by' },
+] as const
 </script>
 
 <template>
   <footer class="site-footer">
     <span class="site-footer__left">
       <span class="site-footer__brand">&copy; {{ year }} Transcendence</span>
-      <RouterLink to="/credits" class="site-footer__credits">Developed by</RouterLink>
+      <RouterLink
+        v-for="link in links"
+        :key="link.to"
+        :to="link.to"
+        class="site-footer__link"
+      >
+        {{ link.label }}
+      </RouterLink>
     </span>
     <span class="site-footer__hint" aria-hidden="true">
       <span v-for="hint in hints" :key="hint.label" class="site-footer__hint-item">
