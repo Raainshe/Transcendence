@@ -27,23 +27,29 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="game-play-view">
-    <h1 class="game-play-view__title">Play</h1>
-    <div class="game-play-view__main">
-      <GameHud />
+    <h1 class="visually-hidden">Play</h1>
+    <GameHud band="top" />
+    <div class="game-play-view__canvas-slot">
       <GameBoard />
     </div>
-    <p class="game-play-view__controls">
-      Move: Arrow Left / Right · Rotate: Arrow Up, X (CW), Z / Left Ctrl (CCW) · Soft drop: Arrow Down ·
-      Hard drop: Space · Esc: menu
-    </p>
+    <GameHud band="bottom">
+      <p class="game-play-view__controls">
+        Move: Left / Right · Rotate: Up, X, Z / Ctrl · Soft: Down · Hard: Space · Esc: menu
+      </p>
+    </GameHud>
   </div>
 </template>
 
 <style scoped>
-.game-play-view__title {
-  font-family: var(--font-display);
-  font-size: var(--fs-lg);
-  margin: 0;
-  text-align: center;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>

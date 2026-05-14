@@ -4,6 +4,11 @@ import { computed } from 'vue'
 import type { GameOverReason } from '@/game/types'
 import { useGameSessionStore } from '@/stores/gameSession'
 
+defineProps<{
+  /** `top`: stats row above the matrix. `bottom`: game-over + default slot (controls). */
+  band: 'top' | 'bottom'
+}>()
+
 const store = useGameSessionStore()
 
 const reasonLabel = computed(() => {
@@ -16,101 +21,143 @@ const reasonLabel = computed(() => {
 </script>
 
 <template>
-  <aside class="game-hud" aria-live="polite">
-    <div class="game-hud__block">
-      <span class="game-hud__label">Level</span>
+  <header v-if="band === 'top'" class="game-hud game-hud--bar" aria-live="polite">
+    <div class="game-hud__stat">
+      <span class="game-hud__label">Lvl</span>
       <span class="game-hud__value">{{ store.level }}</span>
     </div>
-    <div class="game-hud__block">
+    <div class="game-hud__stat">
       <span class="game-hud__label">Lines</span>
-      <span class="game-hud__value">{{ store.lines }} / {{ store.goal }}</span>
+      <span class="game-hud__value">{{ store.lines }}/{{ store.goal }}</span>
     </div>
-    <div class="game-hud__block">
+    <div class="game-hud__stat game-hud__stat--phase">
       <span class="game-hud__label">Phase</span>
       <span class="game-hud__value game-hud__value--sm">{{ store.phaseLabel }}</span>
     </div>
-    <div class="game-hud__block game-hud__block--wide">
+    <div class="game-hud__stat game-hud__stat--next">
       <span class="game-hud__label">Next</span>
       <span class="game-hud__next">{{ store.nextQueueLabels.join(' ') }}</span>
     </div>
+  </header>
+
+  <footer v-else class="game-hud game-hud--footer" aria-live="polite">
     <div v-if="store.gameOver" class="game-hud__game-over" role="status">
       <p class="game-hud__go-title">Game over</p>
       <p v-if="reasonLabel" class="game-hud__go-reason">{{ reasonLabel }}</p>
-      <p class="game-hud__go-hint">Press Esc to return to the menu.</p>
+      <p class="game-hud__go-hint">Esc: menu</p>
     </div>
-  </aside>
+    <div class="game-hud__slot">
+      <slot />
+    </div>
+  </footer>
 </template>
 
 <style scoped>
 .game-hud {
   font-family: var(--font-display);
-  font-size: var(--fs-xs);
   color: var(--color-text);
   background: var(--color-panel);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--sp-4);
-  min-width: 12rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--sp-3);
+  box-sizing: border-box;
 }
 
-.game-hud__block {
+.game-hud--bar {
   display: flex;
-  flex-direction: column;
-  gap: var(--sp-1);
-}
-
-.game-hud__block--wide {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sp-3) var(--sp-5);
+  padding: var(--sp-2) var(--sp-3);
+  flex-shrink: 0;
+  width: 100%;
   max-width: 100%;
 }
 
+.game-hud__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.game-hud__stat--phase {
+  max-width: 8rem;
+}
+
+.game-hud__stat--next {
+  flex: 1 1 100%;
+  align-items: center;
+}
+
+@media (min-width: 28rem) {
+  .game-hud__stat--next {
+    flex: 0 1 auto;
+  }
+}
+
 .game-hud__label {
-  font-size: var(--fs-xs);
+  font-size: 0.5rem;
   color: var(--color-text-dim);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
 }
 
 .game-hud__value {
-  font-size: var(--fs-sm);
+  font-size: var(--fs-xs);
 }
 
 .game-hud__value--sm {
-  font-size: var(--fs-xs);
+  font-size: 0.5rem;
   word-break: break-word;
+  text-align: center;
 }
 
 .game-hud__next {
   font-family: var(--font-mono);
-  font-size: var(--fs-sm);
-  letter-spacing: 0.15em;
+  font-size: var(--fs-xs);
+  letter-spacing: 0.12em;
   color: var(--accent-selected);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: min(100vw - 2rem, 24rem);
+}
+
+.game-hud--footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.game-hud__slot {
+  width: 100%;
+  max-width: 36rem;
 }
 
 .game-hud__game-over {
-  margin-top: var(--sp-2);
-  padding-top: var(--sp-3);
-  border-top: 1px solid var(--color-border);
+  text-align: center;
 }
 
 .game-hud__go-title {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-sm);
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
   color: var(--t-red);
 }
 
 .game-hud__go-reason {
-  margin: 0 0 var(--sp-2);
-  font-size: var(--fs-xs);
+  margin: 0 0 var(--sp-1);
+  font-size: 0.5rem;
   color: var(--color-text-dim);
 }
 
 .game-hud__go-hint {
   margin: 0;
-  font-size: var(--fs-xs);
+  font-size: 0.5rem;
   color: var(--color-text-dim);
-  line-height: 1.5;
 }
 </style>
