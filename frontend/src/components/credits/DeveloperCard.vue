@@ -9,7 +9,7 @@ const props = defineProps<{
   url: string
 }>()
 
-const avatarUrl = computed(() => `https://github.com/${props.handle}.png?size=240`)
+const avatarUrl = computed(() => `https://avatars.githubusercontent.com/${props.handle}?s=240`)
 </script>
 
 <template>
@@ -28,6 +28,7 @@ const avatarUrl = computed(() => `https://github.com/${props.handle}.png?size=24
       height="120"
       loading="lazy"
       decoding="async"
+      referrerpolicy="no-referrer"
     />
     <p class="developer-card__name">{{ name }}</p>
     <p class="developer-card__handle">@{{ handle }}</p>

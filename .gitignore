@@ -1,3 +1,5 @@
 node_modules/
 .DS_Store
 *:Zone.Identifier
+__tests__/
+vitest.config.ts
