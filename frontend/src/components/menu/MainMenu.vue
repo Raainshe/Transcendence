@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref, useTemplateRef } from 'vue'
+import { useRouter } from 'vue-router'
 
 import CycleSelector from '@/components/menu/CycleSelector.vue'
 import MenuItem from '@/components/menu/MenuItem.vue'
@@ -17,6 +18,7 @@ import '@/assets/styles/menu/main-menu.css'
 type CyclerHandle = { prev: () => void; next: () => void }
 
 const settings = useGameSettingsStore()
+const router = useRouter()
 
 const ITEM_COUNT = 3
 const focusedIndex = ref(0)
@@ -30,12 +32,7 @@ onMounted(() => {
 })
 
 function startNewGame() {
-  // Stub: actual navigation will be wired when game routes exist.
-
-  console.info('[Transcendence] Starting new game with', {
-    variation: settings.variation,
-    playerCount: settings.playerCount,
-  })
+  void router.push({ name: 'play' })
 }
 
 function move(delta: 1 | -1) {
