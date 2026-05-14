@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import HoldQueue from '@/components/game/HoldQueue.vue'
+import NextQueue from '@/components/game/NextQueue.vue'
 import type { GameOverReason } from '@/game/types'
 import { useGameSessionStore } from '@/stores/gameSession'
 
@@ -22,6 +24,7 @@ const reasonLabel = computed(() => {
 
 <template>
   <header v-if="band === 'top'" class="game-hud game-hud--bar" aria-live="polite">
+    <HoldQueue :hold-piece="store.holdPiece" :can-hold="store.canHold" />
     <div class="game-hud__stat">
       <span class="game-hud__label">Lvl</span>
       <span class="game-hud__value">{{ store.level }}</span>
@@ -34,10 +37,7 @@ const reasonLabel = computed(() => {
       <span class="game-hud__label">Phase</span>
       <span class="game-hud__value game-hud__value--sm">{{ store.phaseLabel }}</span>
     </div>
-    <div class="game-hud__stat game-hud__stat--next">
-      <span class="game-hud__label">Next</span>
-      <span class="game-hud__next">{{ store.nextQueueLabels.join(' ') }}</span>
-    </div>
+    <NextQueue :pieces="store.nextPieces" />
   </header>
 
   <footer v-else class="game-hud game-hud--footer" aria-live="polite">
@@ -64,9 +64,9 @@ const reasonLabel = computed(() => {
 .game-hud--bar {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
-  gap: var(--sp-3) var(--sp-5);
+  gap: var(--sp-3) var(--sp-4);
   padding: var(--sp-2) var(--sp-3);
   flex-shrink: 0;
   width: 100%;
@@ -85,17 +85,6 @@ const reasonLabel = computed(() => {
   max-width: 8rem;
 }
 
-.game-hud__stat--next {
-  flex: 1 1 100%;
-  align-items: center;
-}
-
-@media (min-width: 28rem) {
-  .game-hud__stat--next {
-    flex: 0 1 auto;
-  }
-}
-
 .game-hud__label {
   font-size: 0.5rem;
   color: var(--color-text-dim);
@@ -111,17 +100,6 @@ const reasonLabel = computed(() => {
   font-size: 0.5rem;
   word-break: break-word;
   text-align: center;
-}
-
-.game-hud__next {
-  font-family: var(--font-mono);
-  font-size: var(--fs-xs);
-  letter-spacing: 0.12em;
-  color: var(--accent-selected);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: min(100vw - 2rem, 24rem);
 }
 
 .game-hud--footer {

@@ -12,10 +12,8 @@
  * floating-point). Inputs (`moveLeft`, `rotateCW`, `hardDrop`, ...) take
  * effect immediately and may transition phases (Falling ⇄ Lock) on their own.
  *
- * Slice 3 scope: gravity, hard/soft drop, Extended Placement lock-down,
- * line clear, Marathon-style level-up (10 lines/level, capped at MAX_LEVEL),
- * Block-out game-over. Scoring, T-spin, Hold, ghost piece, variants, and
- * Lock-out / Top-out land in later slices.
+ * Slice 3–6: gravity, lock-down, line clear, level-up, block-out, **Hold** (§2.5),
+ * ghost rendering (UI). Scoring, T-spin, variants, Lock-out / Top-out land later.
  */
 
 import { Bag } from '@/game/engine/Bag'
@@ -37,7 +35,7 @@ import {
   type Tetrimino,
 } from '@/game/types'
 
-const DEFAULT_NEXT_QUEUE_SIZE = 5
+const DEFAULT_NEXT_QUEUE_SIZE = 6
 
 /**
  * Safety cap on while-loop iterations inside `update()`. Real games are at
@@ -65,6 +63,10 @@ export class Engine {
   private generationTimerMs: number
   private gameOverReason: GameOverReason | undefined
   private events: EngineEvent[]
+
+  private holdSlot: PieceType | null = null
+  /** True after a successful Hold until the current piece locks (§2.5.3). */
+  private holdUsedForCurrentPiece = false
 
   constructor(config: EngineConfig = {}) {
     this.matrix = new Matrix()
@@ -102,6 +104,8 @@ export class Engine {
       phase: this.phase,
       currentPiece: this.currentPiece,
       nextQueue: this.bag.peek(this.nextQueueSize) as readonly PieceType[],
+      holdPiece: this.holdSlot,
+      canHold: this.computeCanHold(),
       level: this.level,
       lines: this.lines,
       goal: this.goal,
@@ -245,6 +249,47 @@ export class Engine {
     return true
   }
 
+  /**
+   * Hold queue (§2.5). Swaps the active piece with the hold slot, or fills hold
+   * and pulls the next bag piece. At most once per lock cycle.
+   */
+  hold(): boolean {
+    if (this.phase !== EnginePhase.Falling && this.phase !== EnginePhase.Lock) {
+      return false
+    }
+    if (!this.currentPiece || this.holdUsedForCurrentPiece) return false
+
+    if (this.holdSlot === null) {
+      const peeked = this.bag.peek(1)[0]
+      if (peeked === undefined) return false
+      const fresh = spawn(peeked)
+      if (this.matrix.collides(fresh)) {
+        this.setGameOver('blockOut')
+        return false
+      }
+      this.holdSlot = this.currentPiece.type
+      this.bag.next()
+      if (!this.activateSpawnedPiece(fresh)) return false
+    } else {
+      const fromHold = this.holdSlot
+      const fresh = spawn(fromHold)
+      if (this.matrix.collides(fresh)) {
+        this.setGameOver('blockOut')
+        return false
+      }
+      this.holdSlot = this.currentPiece.type
+      if (!this.activateSpawnedPiece(fresh)) return false
+    }
+
+    this.holdUsedForCurrentPiece = true
+    this.emit({
+      type: 'piece-held',
+      piece: this.currentPiece,
+      holdSlot: this.holdSlot,
+    })
+    return true
+  }
+
   // -------------------------------------------------------------------------
   // Internal: phase transitions
   // -------------------------------------------------------------------------
@@ -252,20 +297,22 @@ export class Engine {
   private spawnNext(): void {
     const pieceType = this.bag.next()
     const fresh = spawn(pieceType)
+    this.activateSpawnedPiece(fresh)
+  }
 
-    // §10 (a) Block-out: any cell of the freshly-generated piece overlaps a
-    // locked block. The check uses `collides()` which already excludes the
-    // above-buffer "no collision" zone.
+  /**
+   * Places `fresh` (already typed spawn position) into play: block-out check,
+   * `piece-generated`, optional §3.4 one-row drop, lock-down + phase.
+   * @returns `false` if game over was triggered.
+   */
+  private activateSpawnedPiece(fresh: Tetrimino): boolean {
     if (this.matrix.collides(fresh)) {
       this.setGameOver('blockOut')
-      return
+      return false
     }
 
     this.emit({ type: 'piece-generated', piece: fresh })
 
-    // §3.4: "the tetrimino drops one row if no existing Block is in its
-    // path". Apply that drop here so consumers see the piece on rows 20-21
-    // rather than 21-22.
     let piece = fresh
     const droppedOnce = translate(piece, 0, -1)
     if (!this.matrix.collides(droppedOnce)) {
@@ -283,6 +330,7 @@ export class Engine {
       this.lockDown.onLanded()
       this.phase = EnginePhase.Lock
     }
+    return true
   }
 
   private applyGravityStep(): void {
@@ -395,6 +443,7 @@ export class Engine {
     this.generationTimerMs = this.generationDelayMs
     this.gravityAccumMs = 0
     this.softDropActive = false
+    this.holdUsedForCurrentPiece = false
   }
 
   private setGameOver(reason: GameOverReason): void {
@@ -410,6 +459,13 @@ export class Engine {
 
   private emit(event: EngineEvent): void {
     this.events.push(event)
+  }
+
+  private computeCanHold(): boolean {
+    if (this.phase === EnginePhase.GameOver) return false
+    if (this.phase !== EnginePhase.Falling && this.phase !== EnginePhase.Lock) return false
+    if (!this.currentPiece) return false
+    return !this.holdUsedForCurrentPiece
   }
 }
 

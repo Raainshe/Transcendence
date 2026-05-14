@@ -4,36 +4,10 @@ import { ref, shallowRef } from 'vue'
 import { Engine } from '@/game/engine/Engine'
 import { InputController } from '@/game/input/InputController'
 import { KeyboardAdapter } from '@/game/input/KeyboardAdapter'
-import {
-  EnginePhase,
-  type GameOverReason,
-  MinoType,
-  type PieceType,
-} from '@/game/types'
+import { EnginePhase, type GameOverReason, type PieceType } from '@/game/types'
 
 /** Max delta per frame to avoid huge jumps after tab backgrounding. */
 const MAX_FRAME_DT_MS = 100
-
-function pieceTypeToLetter(t: PieceType): string {
-  switch (t) {
-    case MinoType.I:
-      return 'I'
-    case MinoType.O:
-      return 'O'
-    case MinoType.T:
-      return 'T'
-    case MinoType.S:
-      return 'S'
-    case MinoType.Z:
-      return 'Z'
-    case MinoType.J:
-      return 'J'
-    case MinoType.L:
-      return 'L'
-    default:
-      return '?'
-  }
-}
 
 function phaseLabel(phase: EnginePhase): string {
   switch (phase) {
@@ -56,6 +30,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   let keyboard: KeyboardAdapter | null = null
 
   const active = ref(false)
+  const paused = ref(false)
 
   const level = ref(1)
   const lines = ref(0)
@@ -63,7 +38,9 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   const phaseLabelRef = ref('GENERATION')
   const gameOver = ref(false)
   const gameOverReason = ref<GameOverReason | undefined>(undefined)
-  const nextQueueLabels = ref<string[]>([])
+  const nextPieces = ref<PieceType[]>([])
+  const holdPiece = ref<PieceType | null>(null)
+  const canHold = ref(true)
 
   function syncHudFromEngine(): void {
     const e = engine.value
@@ -75,13 +52,26 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     phaseLabelRef.value = phaseLabel(s.phase)
     gameOver.value = s.gameOver
     gameOverReason.value = s.gameOverReason
-    nextQueueLabels.value = s.nextQueue.map(pieceTypeToLetter)
+    nextPieces.value = [...s.nextQueue]
+    holdPiece.value = s.holdPiece
+    canHold.value = s.canHold
+  }
+
+  function pause(): void {
+    if (paused.value) return
+    paused.value = true
+    input?.releaseAll()
+    engine.value?.softDrop(false)
+  }
+
+  function resume(): void {
+    paused.value = false
   }
 
   function beginSession(seed?: number): void {
     endSession()
     const eng = new Engine(seed !== undefined ? { seed } : {})
-    const ctrl = new InputController(eng)
+    const ctrl = new InputController(eng, { isInputBlocked: () => paused.value })
     const kb = new KeyboardAdapter(ctrl)
 
     engine.value = eng
@@ -95,6 +85,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     }
 
     active.value = true
+    paused.value = false
     syncHudFromEngine()
   }
 
@@ -104,14 +95,21 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     input = null
     engine.value = null
     active.value = false
+    paused.value = false
     gameOver.value = false
     gameOverReason.value = undefined
-    nextQueueLabels.value = []
+    nextPieces.value = []
+    holdPiece.value = null
+    canHold.value = true
   }
 
   function stepFrame(dtMs: number): void {
     const e = engine.value
     if (!e || !input) return
+    if (paused.value) {
+      syncHudFromEngine()
+      return
+    }
     const dt = Math.min(Math.max(0, dtMs), MAX_FRAME_DT_MS)
     input.update(dt)
     e.update(dt)
@@ -123,15 +121,20 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   return {
     engine,
     active,
+    paused,
     level,
     lines,
     goal,
     phaseLabel: phaseLabelRef,
     gameOver,
     gameOverReason,
-    nextQueueLabels,
+    nextPieces,
+    holdPiece,
+    canHold,
     beginSession,
     endSession,
     stepFrame,
+    pause,
+    resume,
   }
 })

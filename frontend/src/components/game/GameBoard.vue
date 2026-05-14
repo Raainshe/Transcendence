@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
+import { computeGhostPiece } from '@/game/engine/Ghost'
 import { getOccupiedCells } from '@/game/engine/Tetrimino'
 import {
   MATRIX_VISIBLE_HEIGHT,
@@ -106,6 +107,25 @@ function draw(): void {
 
   const piece = eng.state.currentPiece
   if (piece) {
+    const ghost = computeGhostPiece(matrix, piece)
+    const sameCell =
+      ghost.origin.x === piece.origin.x &&
+      ghost.origin.y === piece.origin.y &&
+      ghost.facing === piece.facing
+    if (!sameCell) {
+      const prevAlpha = ctx.globalAlpha
+      ctx.globalAlpha = 0.3
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)'
+      for (const { x, y } of getOccupiedCells(ghost)) {
+        if (y < 1 || y > MATRIX_VISIBLE_HEIGHT) continue
+        const rowFromTop = MATRIX_VISIBLE_HEIGHT - y
+        ctx.fillStyle = MINO_COLORS[ghost.type]
+        ctx.fillRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
+        ctx.strokeRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
+      }
+      ctx.globalAlpha = prevAlpha
+    }
+
     ctx.fillStyle = MINO_COLORS[piece.type]
     for (const { x, y } of getOccupiedCells(piece)) {
       if (y < 1 || y > MATRIX_VISIBLE_HEIGHT) continue

@@ -44,6 +44,7 @@ export interface EngineLike {
   rotateCCW(): boolean
   softDrop(active: boolean): void
   hardDrop(): boolean
+  hold(): boolean
 }
 
 type DirState = {
@@ -61,6 +62,7 @@ export class InputController {
   private readonly engine: EngineLike
   private readonly dasMs: number
   private readonly arrMs: number
+  private readonly isInputBlocked: () => boolean
 
   private readonly left: DirState = makeDirState()
   private readonly right: DirState = makeDirState()
@@ -69,12 +71,14 @@ export class InputController {
   private rotateCwHeld = false
   private rotateCcwHeld = false
   private hardDropHeld = false
+  private holdHeld = false
   private softDropHeld = false
 
   constructor(engine: EngineLike, config: InputConfig = {}) {
     this.engine = engine
     this.dasMs = config.dasMs ?? DEFAULT_DAS_MS
     this.arrMs = config.arrMs ?? DEFAULT_ARR_MS
+    this.isInputBlocked = config.isInputBlocked ?? (() => false)
   }
 
   // -------------------------------------------------------------------------
@@ -82,6 +86,7 @@ export class InputController {
   // -------------------------------------------------------------------------
 
   press(cmd: InputCommand): void {
+    if (this.isInputBlocked()) return
     switch (cmd) {
       case InputCommand.MoveLeft:
         if (this.left.held) return
@@ -107,6 +112,11 @@ export class InputController {
         if (this.hardDropHeld) return
         this.hardDropHeld = true
         this.engine.hardDrop()
+        return
+      case InputCommand.Hold:
+        if (this.holdHeld) return
+        this.holdHeld = true
+        this.engine.hold()
         return
       case InputCommand.SoftDrop:
         if (this.softDropHeld) return
@@ -145,6 +155,9 @@ export class InputController {
       case InputCommand.HardDrop:
         this.hardDropHeld = false
         return
+      case InputCommand.Hold:
+        this.holdHeld = false
+        return
       case InputCommand.SoftDrop:
         if (!this.softDropHeld) return
         this.softDropHeld = false
@@ -162,6 +175,7 @@ export class InputController {
     this.rotateCwHeld = false
     this.rotateCcwHeld = false
     this.hardDropHeld = false
+    this.holdHeld = false
     if (this.softDropHeld) {
       this.softDropHeld = false
       this.engine.softDrop(false)
@@ -173,6 +187,7 @@ export class InputController {
   // -------------------------------------------------------------------------
 
   update(dtMs: number): void {
+    if (this.isInputBlocked()) return
     if (this.activeDir === null) return
     if (dtMs <= 0) return
 

@@ -148,6 +148,10 @@ export type EngineState = {
   phase: EnginePhase
   currentPiece: Tetrimino | null
   nextQueue: readonly PieceType[]
+  /** Piece in the Hold slot, or `null` if empty. */
+  holdPiece: PieceType | null
+  /** `true` when the player may use Hold for the current falling piece (§2.5). */
+  canHold: boolean
   level: number
   lines: number
   /** Total lines required to reach the *next* level (cumulative). */
@@ -171,6 +175,7 @@ export type EngineEvent =
   | { type: 'piece-rotated'; piece: Tetrimino; kickIndex: number }
   | { type: 'piece-soft-dropped'; piece: Tetrimino }
   | { type: 'piece-hard-dropped'; piece: Tetrimino; cellsFallen: number }
+  | { type: 'piece-held'; piece: Tetrimino; holdSlot: PieceType | null }
   | { type: 'piece-locked'; piece: Tetrimino; cells: readonly Position[] }
   | { type: 'lines-cleared'; rows: readonly number[] }
   | { type: 'level-up'; level: number }
@@ -201,11 +206,7 @@ export const MAX_LEVEL = 15
 /**
  * Logical player commands. The `InputController` (DAS/ARR + state machine)
  * speaks this vocabulary; a `KeyboardAdapter` translates raw `KeyboardEvent`
- * codes into these. Gamepad / touch adapters in the future hook in the same
- * way.
- *
- * Hold and Pause are intentionally absent — they arrive with the Hold queue
- * and pause UI in slice 6.
+ * codes into these. Pause is handled in the session layer (slice 6), not here.
  */
 export enum InputCommand {
   MoveLeft = 'moveLeft',
@@ -214,6 +215,7 @@ export enum InputCommand {
   HardDrop = 'hardDrop',
   RotateCW = 'rotateCW',
   RotateCCW = 'rotateCCW',
+  Hold = 'hold',
 }
 
 /** Tunable timings for the `InputController`. All fields optional. */
@@ -226,6 +228,11 @@ export type InputConfig = {
    * `MAX_ARR_BURST`). Default `DEFAULT_ARR_MS`.
    */
   arrMs?: number
+  /**
+   * When `true`, `press` and `update` are no-ops (e.g. game paused). `release`,
+   * `releaseAll`, and externally invoked cleanup are not blocked.
+   */
+  isInputBlocked?: () => boolean
 }
 
 /**

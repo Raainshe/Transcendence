@@ -32,6 +32,7 @@ export const DEFAULT_KEYMAP: KeyMap = {
   ArrowDown: InputCommand.SoftDrop,
   ArrowUp: InputCommand.RotateCW,
   Space: InputCommand.HardDrop,
+  KeyC: InputCommand.Hold,
   KeyZ: InputCommand.RotateCCW,
   KeyX: InputCommand.RotateCW,
   ControlLeft: InputCommand.RotateCCW,
