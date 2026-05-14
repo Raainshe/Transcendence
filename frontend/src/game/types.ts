@@ -193,3 +193,58 @@ export const LINES_PER_LEVEL = 10
 
 /** Top of the Fixed Goal level scale (§6 / §7). Gravity is clamped at this level. */
 export const MAX_LEVEL = 15
+
+// ---------------------------------------------------------------------------
+// Input layer (slice 4)
+// ---------------------------------------------------------------------------
+
+/**
+ * Logical player commands. The `InputController` (DAS/ARR + state machine)
+ * speaks this vocabulary; a `KeyboardAdapter` translates raw `KeyboardEvent`
+ * codes into these. Gamepad / touch adapters in the future hook in the same
+ * way.
+ *
+ * Hold and Pause are intentionally absent — they arrive with the Hold queue
+ * and pause UI in slice 6.
+ */
+export enum InputCommand {
+  MoveLeft = 'moveLeft',
+  MoveRight = 'moveRight',
+  SoftDrop = 'softDrop',
+  HardDrop = 'hardDrop',
+  RotateCW = 'rotateCW',
+  RotateCCW = 'rotateCCW',
+}
+
+/** Tunable timings for the `InputController`. All fields optional. */
+export type InputConfig = {
+  /** Delayed Auto Shift: ms held before auto-repeat begins. Default `DEFAULT_DAS_MS`. */
+  dasMs?: number
+  /**
+   * Auto-Repeat Rate: ms between auto-repeated shifts after DAS expires.
+   * `0` means "fire moves in a single burst until a wall is hit" (capped by
+   * `MAX_ARR_BURST`). Default `DEFAULT_ARR_MS`.
+   */
+  arrMs?: number
+}
+
+/**
+ * Mapping from `KeyboardEvent.code` strings to logical `InputCommand` values.
+ * Used by the `KeyboardAdapter` and freely replaceable per-instance (e.g. for
+ * user-defined keymaps later).
+ */
+export type KeyMap = Readonly<Record<string, InputCommand>>
+
+/** Default Delayed Auto Shift: 10 frames at 60 fps. */
+export const DEFAULT_DAS_MS = 167
+
+/** Default Auto-Repeat Rate: 2 frames at 60 fps. */
+export const DEFAULT_ARR_MS = 33
+
+/**
+ * Safety cap for the `ARR = 0` burst path. With `ARR = 0`, a single
+ * `InputController.update()` would otherwise loop until the move fails; this
+ * upper bound stops runaway loops if the engine's move/collision logic ever
+ * lies about a successful move.
+ */
+export const MAX_ARR_BURST = 50
