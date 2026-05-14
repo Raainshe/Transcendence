@@ -84,3 +84,112 @@ export const MINO_COLORS: Readonly<Record<PieceType, string>> = {
   [MinoType.J]: '#0000F0', // dark blue
   [MinoType.L]: '#F0A000', // orange
 }
+
+// ---------------------------------------------------------------------------
+// Engine state machine (slice 3)
+// ---------------------------------------------------------------------------
+
+/**
+ * The time-bearing phases of the engine loop. The Guideline §A1.1 lists eight
+ * phases (Generation, Falling, Lock, Pattern, Iterate, Animate, Eliminate,
+ * Completion); all but Generation, Falling, and Lock resolve synchronously
+ * inside a single `update()` call, so the engine only exposes these four:
+ *
+ * - `Generation` — waiting `GENERATION_DELAY_MS` after the previous lock-down
+ *   before the next piece spawns (§A1.2.1).
+ * - `Falling`    — a piece is in play and able to fall.
+ * - `Lock`       — piece is on a Surface and the lock-down timer is counting.
+ * - `GameOver`   — terminal; `update()` is a no-op.
+ */
+export enum EnginePhase {
+  Generation = 'generation',
+  Falling = 'falling',
+  Lock = 'lock',
+  GameOver = 'gameOver',
+}
+
+/**
+ * Reason why the engine entered `GameOver`. Slice 3 implements `'blockOut'`
+ * only (§10 a, spawn collision). `'lockOut'` and `'topOut'` are wired in
+ * slice 8 alongside variants.
+ */
+export type GameOverReason = 'blockOut' | 'lockOut' | 'topOut'
+
+/** Configurable parameters for an `Engine` instance. All fields optional. */
+export type EngineConfig = {
+  /** Seed for the 7-bag PRNG. Defaults to a time-based seed (non-deterministic). */
+  seed?: number
+  /** Starting level (clamped to 1..MAX_LEVEL). Defaults to 1. */
+  startLevel?: number
+  /** Lock-down delay in ms. Defaults to `LOCK_DELAY_MS`. */
+  lockDelayMs?: number
+  /** Max lock-down resets per piece (Extended Placement cap). Defaults to `MAX_LOCK_RESETS`. */
+  maxLockResets?: number
+  /** Delay between a piece locking and the next spawn. Defaults to `GENERATION_DELAY_MS`. */
+  generationDelayMs?: number
+  /** Length of the Next Queue look-ahead exposed in state snapshots. Defaults to 5. */
+  nextQueueSize?: number
+}
+
+/** Public snapshot of the lock-down policy, suitable for rendering / debugging. */
+export type LockDownSnapshot = {
+  active: boolean
+  timerMs: number
+  movesLeft: number
+  lowestBottomY: number
+}
+
+/**
+ * Read-only snapshot of the engine state, suitable for passing to a renderer
+ * or asserting on in tests. Always represents the engine after the most recent
+ * `update()` / input call.
+ */
+export type EngineState = {
+  phase: EnginePhase
+  currentPiece: Tetrimino | null
+  nextQueue: readonly PieceType[]
+  level: number
+  lines: number
+  /** Total lines required to reach the *next* level (cumulative). */
+  goal: number
+  softDropActive: boolean
+  /** Remaining ms before the next piece spawns (only meaningful in `Generation`). */
+  generationTimerMs: number
+  lockDown: LockDownSnapshot
+  gameOver: boolean
+  gameOverReason?: GameOverReason
+}
+
+/**
+ * Discriminated union of events emitted by the engine since the last
+ * `drainEvents()`. Consumers (renderer, audio, score) attach to specific
+ * `type` variants; T-Spin / scoring tags will be added in slice 7.
+ */
+export type EngineEvent =
+  | { type: 'piece-generated'; piece: Tetrimino }
+  | { type: 'piece-moved'; piece: Tetrimino }
+  | { type: 'piece-rotated'; piece: Tetrimino; kickIndex: number }
+  | { type: 'piece-soft-dropped'; piece: Tetrimino }
+  | { type: 'piece-hard-dropped'; piece: Tetrimino; cellsFallen: number }
+  | { type: 'piece-locked'; piece: Tetrimino; cells: readonly Position[] }
+  | { type: 'lines-cleared'; rows: readonly number[] }
+  | { type: 'level-up'; level: number }
+  | { type: 'game-over'; reason: GameOverReason }
+
+/** Lock-down delay in milliseconds (§5.7). */
+export const LOCK_DELAY_MS = 500
+
+/** Extended Placement: max successful moves/rotations that reset the timer per piece (§5.7). */
+export const MAX_LOCK_RESETS = 15
+
+/** Delay between a piece locking and the next piece spawning (§A1.2.1). */
+export const GENERATION_DELAY_MS = 200
+
+/** Soft-drop multiplier vs. natural gravity (§5.5). */
+export const SOFT_DROP_MULTIPLIER = 20
+
+/** Lines required per level in the Fixed Goal System (§6). */
+export const LINES_PER_LEVEL = 10
+
+/** Top of the Fixed Goal level scale (§6 / §7). Gravity is clamped at this level. */
+export const MAX_LEVEL = 15
