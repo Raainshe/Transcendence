@@ -1,0 +1,92 @@
+.developer-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-5) var(--sp-4);
+  background: var(--color-panel);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  text-align: center;
+  text-decoration: none;
+  color: var(--color-text);
+  outline: none;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.developer-card:hover,
+.developer-card:focus-visible {
+  border-color: rgba(247, 211, 8, 0.55);
+  background: rgba(247, 211, 8, 0.06);
+  box-shadow:
+    0 0 0 1px rgba(247, 211, 8, 0.18),
+    0 0 28px rgba(247, 211, 8, 0.18);
+  transform: translateY(-2px);
+}
+
+.developer-card:hover .developer-card__name,
+.developer-card:focus-visible .developer-card__name {
+  color: var(--accent-selected);
+  text-shadow: var(--shadow-glow-yellow);
+}
+
+.developer-card:hover .developer-card__avatar,
+.developer-card:focus-visible .developer-card__avatar {
+  border-color: var(--accent-selected);
+  box-shadow:
+    0 0 12px rgba(247, 211, 8, 0.55),
+    0 0 28px rgba(247, 211, 8, 0.25);
+}
+
+.developer-card__avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--accent);
+  object-fit: cover;
+  background-color: var(--color-bg);
+  box-shadow:
+    0 0 10px rgba(0, 159, 220, 0.45),
+    0 0 22px rgba(0, 159, 220, 0.18);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.developer-card__name {
+  font-family: var(--font-display);
+  font-size: var(--fs-sm);
+  letter-spacing: 0.18em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow: 0 0 6px rgba(0, 159, 220, 0.55);
+  margin: 0;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+
+.developer-card__handle {
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.2em;
+  color: var(--color-text-dim);
+  margin: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .developer-card,
+  .developer-card__avatar,
+  .developer-card__name {
+    transition: none;
+  }
+
+  .developer-card:hover,
+  .developer-card:focus-visible {
+    transform: none;
+  }
+}

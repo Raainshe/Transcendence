@@ -1,0 +1,31 @@
+Types + Matrix + Tetrimino + Bag (pure TS, unit tests with Vitest)
+SRS kick tables + collision/wall-kick (pure TS, unit tests with explicit fixtures from §A1.4.2)
+Engine state machine with gravity, hard/soft drop, lock-down (Extended only at first)
+Input controller with DAS/ARR, keymap config
+Canvas renderer + HUD wired to Pinia → first playable
+Ghost piece, Hold queue, Next queue, pause (§2.5.1–2.5.4, §13.1.6)
+Scoring + Back-to-Back + T-Spin detection (§8, §9)
+Variants (Marathon, Sprint, Ultra) + game-over conditions (§10)
+Audio + visual polish (line-clear effect, hard-drop trail, action notifications §13)
+Local same-screen multiplayer + Appendix B garbage system
+
+frontend/src/
+  game/                  ← pure TS, framework-agnostic
+    engine/
+      Matrix.ts          // 10×40 grid (20 visible + 20 buffer), bit-packed Uint8Array rows
+      Tetrimino.ts       // shapes, rotation states (NESW), color
+      Bag.ts             // 7-bag random generator (§3.3, §A1.2.1)
+      SRS.ts             // Super Rotation System kick tables (§A1.4)
+      LockDown.ts        // Extended / Infinite / Classic strategies (§5.7-5.9)
+      TSpin.ts           // 3-corner detection + Mini vs Full (§9)
+      Scoring.ts         // table + Back-to-Back (§8)
+      FallSpeed.ts       // (0.8 - ((level-1)*0.007))^(level-1)  (§7)
+      Engine.ts          // the 8-phase state machine driver
+    types.ts             // Mino, Facing, Cell, EngineEvent, ...
+  components/game/
+    GameBoard.vue        // renderer + input binding only
+    NextQueue.vue
+    HoldQueue.vue
+    Hud.vue
+  stores/
+    gameSession.ts       // Pinia: snapshot of engine state for reactivity
