@@ -6,8 +6,16 @@ import { InputController } from '@/game/input/InputController'
 import { KeyboardAdapter } from '@/game/input/KeyboardAdapter'
 import { toMatchRecordV1 } from '@/game/scoring/export'
 import type { MatchRecordV1, ScoreBreakdown } from '@/game/scoring/types'
-import { EnginePhase, type GameOverReason, type PieceType } from '@/game/types'
+import { engineConfigForVariation } from '@/game/variants'
+import {
+  EnginePhase,
+  type GameOverReason,
+  type MatchEndKind,
+  type MatchEndReason,
+  type PieceType,
+} from '@/game/types'
 import { useGameSettingsStore } from '@/stores/gameSettings'
+import type { GameVariation } from '@/types/game'
 
 /** Max delta per frame to avoid huge jumps after tab backgrounding. */
 const MAX_FRAME_DT_MS = 100
@@ -48,6 +56,12 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   const phaseLabelRef = ref('GENERATION')
   const gameOver = ref(false)
   const gameOverReason = ref<GameOverReason | undefined>(undefined)
+  const variant = ref<GameVariation>('marathon')
+  const elapsedMs = ref(0)
+  const timeRemainingMs = ref<number | null>(null)
+  const sprintLinesRemaining = ref<number | null>(null)
+  const matchEndKind = ref<MatchEndKind>('playing')
+  const matchEndReason = ref<MatchEndReason | undefined>(undefined)
   const nextPieces = ref<PieceType[]>([])
   const holdPiece = ref<PieceType | null>(null)
   const canHold = ref(true)
@@ -82,11 +96,17 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     phaseLabelRef.value = phaseLabel(s.phase)
     gameOver.value = s.gameOver
     gameOverReason.value = s.gameOverReason
+    variant.value = s.variant
+    elapsedMs.value = s.elapsedMs
+    timeRemainingMs.value = s.timeRemainingMs
+    sprintLinesRemaining.value = s.sprintLinesRemaining
+    matchEndKind.value = s.matchEndKind
+    matchEndReason.value = s.matchEndReason
     nextPieces.value = [...s.nextQueue]
     holdPiece.value = s.holdPiece
     canHold.value = s.canHold
 
-    if (s.gameOver && !endedAt.value) {
+    if (s.matchEnded && !endedAt.value) {
       endedAt.value = new Date().toISOString()
       lastMatchRecord.value = buildMatchRecord()
     }
@@ -134,7 +154,11 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     scoreLedger.value = []
     lastMatchRecord.value = null
 
-    const eng = new Engine({ seed: s })
+    const settings = useGameSettingsStore()
+    const eng = new Engine({
+      seed: s,
+      ...engineConfigForVariation(settings.variation),
+    })
     const ctrl = new InputController(eng, { isInputBlocked: () => paused.value })
     const kb = new KeyboardAdapter(ctrl)
 
@@ -167,6 +191,12 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     paused.value = false
     gameOver.value = false
     gameOverReason.value = undefined
+    variant.value = 'marathon'
+    elapsedMs.value = 0
+    timeRemainingMs.value = null
+    sprintLinesRemaining.value = null
+    matchEndKind.value = 'playing'
+    matchEndReason.value = undefined
     nextPieces.value = []
     holdPiece.value = null
     canHold.value = true
@@ -207,6 +237,12 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     phaseLabel: phaseLabelRef,
     gameOver,
     gameOverReason,
+    variant,
+    elapsedMs,
+    timeRemainingMs,
+    sprintLinesRemaining,
+    matchEndKind,
+    matchEndReason,
     nextPieces,
     holdPiece,
     canHold,

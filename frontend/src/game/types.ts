@@ -1,4 +1,5 @@
 import type { ScoreBreakdown, TSpinKind } from '@/game/scoring/types'
+import type { GameVariation } from '@/types/game'
 
 /**
  * Shared types and constants for the Tetris engine.
@@ -117,12 +118,25 @@ export enum EnginePhase {
  */
 export type GameOverReason = 'blockOut' | 'lockOut' | 'topOut'
 
+/** Successful match completion (variant goals). */
+export type MatchWinReason = 'sprintComplete' | 'ultraComplete'
+
+export type MatchEndReason = GameOverReason | MatchWinReason
+
+export type MatchEndKind = 'playing' | 'won' | 'lost'
+
 /** Configurable parameters for an `Engine` instance. All fields optional. */
 export type EngineConfig = {
+  /** Game mode (Marathon, Sprint, Ultra, Multiplayer stub). */
+  variant?: GameVariation
   /** Seed for the 7-bag PRNG. Defaults to a time-based seed (non-deterministic). */
   seed?: number
   /** Starting level (clamped to 1..MAX_LEVEL). Defaults to 1. */
   startLevel?: number
+  /** Sprint: lines required to win. Defaults to `SPRINT_LINE_GOAL`. */
+  sprintLineGoal?: number
+  /** Ultra: match time limit in ms. Defaults to `ULTRA_DURATION_MS`. */
+  ultraDurationMs?: number
   /** Lock-down delay in ms. Defaults to `LOCK_DELAY_MS`. */
   lockDelayMs?: number
   /** Max lock-down resets per piece (Extended Placement cap). Defaults to `MAX_LOCK_RESETS`. */
@@ -168,6 +182,15 @@ export type EngineState = {
   backToBackActive: boolean
   /** Longest Back-to-Back chain this match (§8). */
   backToBackCount: number
+  variant: GameVariation
+  elapsedMs: number
+  /** Ultra only — ms left before time's up. */
+  timeRemainingMs: number | null
+  /** Sprint only — lines left to reach goal. */
+  sprintLinesRemaining: number | null
+  matchEnded: boolean
+  matchEndKind: MatchEndKind
+  matchEndReason?: MatchEndReason
 }
 
 /**
@@ -192,6 +215,7 @@ export type EngineEvent =
   | { type: 'score-awarded'; breakdown: ScoreBreakdown }
   | { type: 'level-up'; level: number }
   | { type: 'game-over'; reason: GameOverReason }
+  | { type: 'match-ended'; kind: 'won' | 'lost'; reason: MatchEndReason }
 
 /** Lock-down delay in milliseconds (§5.7). */
 export const LOCK_DELAY_MS = 500

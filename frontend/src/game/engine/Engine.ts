@@ -12,11 +12,12 @@
  * floating-point). Inputs (`moveLeft`, `rotateCW`, `hardDrop`, ...) take
  * effect immediately and may transition phases (Falling ⇄ Lock) on their own.
  *
- * Slice 3–7: gravity, lock-down, line clear, level-up, Hold, **scoring** (§8),
- * T-Spin (§9), Back-to-Back. Variants, Lock-out / Top-out land later.
+ * Slice 3–8: gravity, lock-down, line clear, level-up, Hold, scoring (§8),
+ * T-Spin (§9), Back-to-Back, **variants**, §10 game-over.
  */
 
 import { Bag } from '@/game/engine/Bag'
+import { isLockOut, isTopOut } from '@/game/engine/GameOver'
 import { msPerCell, softDropMsPerCell } from '@/game/engine/FallSpeed'
 import { LockDown } from '@/game/engine/LockDown'
 import { Matrix } from '@/game/engine/Matrix'
@@ -37,10 +38,14 @@ import {
   GENERATION_DELAY_MS,
   type GameOverReason,
   LINES_PER_LEVEL,
+  type MatchEndKind,
+  type MatchEndReason,
+  type MatchWinReason,
   MAX_LEVEL,
   type PieceType,
   type Tetrimino,
 } from '@/game/types'
+import { SPRINT_LINE_GOAL, ULTRA_DURATION_MS, type GameVariation } from '@/types/game'
 
 const DEFAULT_NEXT_QUEUE_SIZE = 6
 
@@ -60,6 +65,9 @@ export class Engine {
   private readonly nextQueueSize: number
   private readonly startLevel: number
   readonly seed: number
+  private readonly variant: GameVariation
+  private readonly sprintLineGoal: number
+  private readonly ultraDurationMs: number
 
   private phase: EnginePhase
   private currentPiece: Tetrimino | null
@@ -70,6 +78,9 @@ export class Engine {
   private gravityAccumMs: number
   private generationTimerMs: number
   private gameOverReason: GameOverReason | undefined
+  private matchEndKind: MatchEndKind = 'playing'
+  private matchEndReason: MatchEndReason | undefined
+  private elapsedMs = 0
   private events: EngineEvent[]
 
   private holdSlot: PieceType | null = null
@@ -98,13 +109,16 @@ export class Engine {
 
     this.generationDelayMs = config.generationDelayMs ?? GENERATION_DELAY_MS
     this.nextQueueSize = config.nextQueueSize ?? DEFAULT_NEXT_QUEUE_SIZE
+    this.variant = config.variant ?? 'marathon'
+    this.sprintLineGoal = config.sprintLineGoal ?? SPRINT_LINE_GOAL
+    this.ultraDurationMs = config.ultraDurationMs ?? ULTRA_DURATION_MS
     this.startLevel = clampLevel(config.startLevel ?? 1)
 
     this.phase = EnginePhase.Generation
     this.currentPiece = null
     this.level = this.startLevel
     this.lines = 0
-    this.goal = LINES_PER_LEVEL
+    this.goal = this.variant === 'sprint' ? this.sprintLineGoal : LINES_PER_LEVEL
     this.softDropActive = false
     this.gravityAccumMs = 0
     // The very first piece is also gated by the generation delay so the
@@ -137,6 +151,15 @@ export class Engine {
       score: this.score,
       backToBackActive: this.backToBackActive,
       backToBackCount: this.backToBackCount,
+      variant: this.variant,
+      elapsedMs: this.elapsedMs,
+      timeRemainingMs:
+        this.variant === 'ultra' ? Math.max(0, this.ultraDurationMs - this.elapsedMs) : null,
+      sprintLinesRemaining:
+        this.variant === 'sprint' ? Math.max(0, this.sprintLineGoal - this.lines) : null,
+      matchEnded: this.matchEndKind !== 'playing',
+      matchEndKind: this.matchEndKind,
+      matchEndReason: this.matchEndReason,
     }
   }
 
@@ -158,6 +181,12 @@ export class Engine {
   update(dtMs: number): void {
     if (this.phase === EnginePhase.GameOver) return
     if (dtMs <= 0) return
+
+    this.elapsedMs += dtMs
+    if (this.variant === 'ultra' && this.elapsedMs >= this.ultraDurationMs) {
+      this.endMatchWon('ultraComplete')
+      return
+    }
 
     let remaining = dtMs
     for (let i = 0; i < MAX_UPDATE_ITERATIONS && remaining > 0; i++) {
@@ -454,6 +483,11 @@ export class Engine {
     const cells = getOccupiedCells(lockedPiece)
     this.emit({ type: 'piece-locked', piece: lockedPiece, cells })
 
+    if (isLockOut(lockedPiece)) {
+      this.setGameOver('lockOut')
+      return
+    }
+
     const tSpin = detectTSpin(
       this.matrix,
       lockedPiece,
@@ -507,11 +541,24 @@ export class Engine {
       })
     }
 
+    if (isTopOut(this.matrix)) {
+      this.setGameOver('topOut')
+      return
+    }
+
     this.lines += fullRows.length
-    while (this.lines >= this.goal && this.level < MAX_LEVEL) {
-      this.level += 1
-      this.goal += LINES_PER_LEVEL
-      this.emit({ type: 'level-up', level: this.level })
+
+    if (this.variant !== 'sprint') {
+      while (this.lines >= this.goal && this.level < MAX_LEVEL) {
+        this.level += 1
+        this.goal += LINES_PER_LEVEL
+        this.emit({ type: 'level-up', level: this.level })
+      }
+    }
+
+    if (this.variant === 'sprint' && this.lines >= this.sprintLineGoal) {
+      this.endMatchWon('sprintComplete')
+      return
     }
 
     this.currentPiece = null
@@ -524,9 +571,21 @@ export class Engine {
 
   private setGameOver(reason: GameOverReason): void {
     this.phase = EnginePhase.GameOver
+    this.matchEndKind = 'lost'
+    this.matchEndReason = reason
     this.gameOverReason = reason
     this.currentPiece = null
     this.emit({ type: 'game-over', reason })
+    this.emit({ type: 'match-ended', kind: 'lost', reason })
+  }
+
+  private endMatchWon(reason: MatchWinReason): void {
+    this.phase = EnginePhase.GameOver
+    this.matchEndKind = 'won'
+    this.matchEndReason = reason
+    this.gameOverReason = undefined
+    this.currentPiece = null
+    this.emit({ type: 'match-ended', kind: 'won', reason })
   }
 
   private fallInterval(): number {

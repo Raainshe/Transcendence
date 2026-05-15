@@ -1,14 +1,17 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 import type { GameVariation, PlayerCount } from '@/types/game'
 
-// TODO: When implementing the game, couple `playerCount` and `variation` so that
-// `sprint` forces 1 player and `multiplayer` forces 2+. For now they remain
-// independent so the menu's two cyclers stay simple and predictable.
 export const useGameSettingsStore = defineStore('gameSettings', () => {
-  const variation = ref<GameVariation>('sprint')
+  const variation = ref<GameVariation>('marathon')
   const playerCount = ref<PlayerCount>(1)
+
+  watch(variation, (v) => {
+    if (v === 'sprint' || v === 'ultra') {
+      playerCount.value = 1
+    }
+  })
 
   return { variation, playerCount }
 })

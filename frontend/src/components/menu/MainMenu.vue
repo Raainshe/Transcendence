@@ -88,6 +88,7 @@ function formatVariation(value: GameVariation): string {
 function formatPlayers(count: PlayerCount): string {
   return `${count} PLAYER${count === 1 ? '' : 'S'}`
 }
+
 </script>
 
 <template>

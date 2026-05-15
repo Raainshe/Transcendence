@@ -91,7 +91,7 @@ Use **`runId`** as the idempotency key: one persisted row per `runId`, reject du
 | `schemaVersion` | `1` | yes | Contract version. |
 | `runId` | `string` (UUID) | yes | Unique match id from `crypto.randomUUID()` at `beginSession`. |
 | `seed` | `number` (uint32) | yes | PRNG seed for the 7-bag; same seed ⇒ same piece sequence. |
-| `variation` | `string` | yes | Game mode from menu: `"sprint"` \| `"multiplayer"` (see [`types/game.ts`](../src/types/game.ts)). |
+| `variation` | `string` | yes | Game mode from menu: `"marathon"` \| `"sprint"` \| `"ultra"` \| `"multiplayer"` (see [`types/game.ts`](../src/types/game.ts)). |
 | `playerCount` | `number` | yes | `1`–`4` from menu settings. |
 | `startedAt` | `string` | yes | ISO 8601 UTC when the session started. |
 | `endedAt` | `string` | no | ISO 8601 UTC when the match ended (game over or quit). |

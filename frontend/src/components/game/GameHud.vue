@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+import GameModeBadge from '@/components/game/GameModeBadge.vue'
 import HoldQueue from '@/components/game/HoldQueue.vue'
 import NextQueue from '@/components/game/NextQueue.vue'
-import type { GameOverReason } from '@/game/types'
+import type { GameOverReason, MatchWinReason } from '@/game/types'
 import { useGameSessionStore } from '@/stores/gameSession'
+import { SPRINT_LINE_GOAL } from '@/types/game'
 
 defineProps<{
   /** `top`: stats row above the matrix. `bottom`: game-over + default slot (controls). */
@@ -13,32 +15,75 @@ defineProps<{
 
 const store = useGameSessionStore()
 
-const reasonLabel = computed(() => {
+function formatMs(ms: number): string {
+  const totalSec = Math.floor(ms / 1000)
+  const m = Math.floor(totalSec / 60)
+  const s = totalSec % 60
+  return `${m}:${s.toString().padStart(2, '0')}`
+}
+
+const timerLabel = computed(() => {
+  if (store.variant === 'ultra' && store.timeRemainingMs !== null) {
+    return formatMs(store.timeRemainingMs)
+  }
+  return formatMs(store.elapsedMs)
+})
+
+const linesDisplay = computed(() => {
+  if (store.variant === 'sprint') {
+    return `${store.lines}/${SPRINT_LINE_GOAL}`
+  }
+  return `${store.lines}/${store.goal}`
+})
+
+const showLevel = computed(
+  () => store.variant === 'marathon' || store.variant === 'ultra' || store.variant === 'multiplayer',
+)
+
+const showPhase = computed(() => store.variant === 'marathon' || store.variant === 'multiplayer')
+
+const showTimer = computed(() => store.variant === 'sprint' || store.variant === 'ultra')
+
+const failureLabel = computed(() => {
   const r: GameOverReason | undefined = store.gameOverReason
   if (r === 'blockOut') return 'BLOCK OUT'
   if (r === 'lockOut') return 'LOCK OUT'
   if (r === 'topOut') return 'TOP OUT'
   return ''
 })
+
+const winTitle = computed(() => {
+  const r = store.matchEndReason as MatchWinReason | undefined
+  if (r === 'sprintComplete') return 'Sprint complete!'
+  if (r === 'ultraComplete') return "Time's up!"
+  return 'Complete!'
+})
+
+const matchEnded = computed(() => store.matchEndKind !== 'playing')
 </script>
 
 <template>
   <header v-if="band === 'top'" class="game-hud game-hud--bar" aria-live="polite">
     <HoldQueue :hold-piece="store.holdPiece" :can-hold="store.canHold" />
+    <GameModeBadge :variation="store.variant" size="sm" />
     <div class="game-hud__stat game-hud__stat--score">
       <span class="game-hud__label">Score</span>
       <span class="game-hud__value">{{ store.score.toLocaleString() }}</span>
       <span v-if="store.backToBackActive" class="game-hud__b2b">B2B</span>
     </div>
-    <div class="game-hud__stat">
+    <div v-if="showLevel" class="game-hud__stat">
       <span class="game-hud__label">Lvl</span>
       <span class="game-hud__value">{{ store.level }}</span>
     </div>
     <div class="game-hud__stat">
       <span class="game-hud__label">Lines</span>
-      <span class="game-hud__value">{{ store.lines }}/{{ store.goal }}</span>
+      <span class="game-hud__value">{{ linesDisplay }}</span>
     </div>
-    <div class="game-hud__stat game-hud__stat--phase">
+    <div v-if="showTimer" class="game-hud__stat">
+      <span class="game-hud__label">{{ store.variant === 'ultra' ? 'Time' : 'Timer' }}</span>
+      <span class="game-hud__value">{{ timerLabel }}</span>
+    </div>
+    <div v-if="showPhase" class="game-hud__stat game-hud__stat--phase">
       <span class="game-hud__label">Phase</span>
       <span class="game-hud__value game-hud__value--sm">{{ store.phaseLabel }}</span>
     </div>
@@ -46,10 +91,16 @@ const reasonLabel = computed(() => {
   </header>
 
   <footer v-else class="game-hud game-hud--footer" aria-live="polite">
-    <div v-if="store.gameOver" class="game-hud__game-over" role="status">
-      <p class="game-hud__go-title">Game over</p>
-      <p v-if="reasonLabel" class="game-hud__go-reason">{{ reasonLabel }}</p>
-      <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
+    <div v-if="matchEnded" class="game-hud__game-over" role="status">
+      <template v-if="store.matchEndKind === 'won'">
+        <p class="game-hud__go-title game-hud__go-title--win">{{ winTitle }}</p>
+        <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
+      </template>
+      <template v-else>
+        <p class="game-hud__go-title">Game over</p>
+        <p v-if="failureLabel" class="game-hud__go-reason">{{ failureLabel }}</p>
+        <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
+      </template>
       <p class="game-hud__go-hint">Esc: menu</p>
     </div>
     <div class="game-hud__slot">
@@ -77,6 +128,7 @@ const reasonLabel = computed(() => {
   flex-shrink: 0;
   width: 100%;
   max-width: 100%;
+  overflow: visible;
 }
 
 .game-hud__stat {
@@ -147,6 +199,10 @@ const reasonLabel = computed(() => {
   margin: 0 0 var(--sp-1);
   font-size: var(--fs-xs);
   color: var(--t-red);
+}
+
+.game-hud__go-title--win {
+  color: var(--accent-selected);
 }
 
 .game-hud__go-reason {
