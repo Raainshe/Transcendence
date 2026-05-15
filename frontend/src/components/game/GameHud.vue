@@ -25,6 +25,11 @@ const reasonLabel = computed(() => {
 <template>
   <header v-if="band === 'top'" class="game-hud game-hud--bar" aria-live="polite">
     <HoldQueue :hold-piece="store.holdPiece" :can-hold="store.canHold" />
+    <div class="game-hud__stat game-hud__stat--score">
+      <span class="game-hud__label">Score</span>
+      <span class="game-hud__value">{{ store.score.toLocaleString() }}</span>
+      <span v-if="store.backToBackActive" class="game-hud__b2b">B2B</span>
+    </div>
     <div class="game-hud__stat">
       <span class="game-hud__label">Lvl</span>
       <span class="game-hud__value">{{ store.level }}</span>
@@ -44,6 +49,7 @@ const reasonLabel = computed(() => {
     <div v-if="store.gameOver" class="game-hud__game-over" role="status">
       <p class="game-hud__go-title">Game over</p>
       <p v-if="reasonLabel" class="game-hud__go-reason">{{ reasonLabel }}</p>
+      <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
       <p class="game-hud__go-hint">Esc: menu</p>
     </div>
     <div class="game-hud__slot">
@@ -83,6 +89,22 @@ const reasonLabel = computed(() => {
 
 .game-hud__stat--phase {
   max-width: 8rem;
+}
+
+.game-hud__stat--score {
+  min-width: 3.5rem;
+}
+
+.game-hud__b2b {
+  font-size: 0.45rem;
+  color: var(--accent-selected);
+  letter-spacing: 0.08em;
+}
+
+.game-hud__go-score {
+  margin: 0 0 var(--sp-1);
+  font-size: var(--fs-xs);
+  color: var(--color-text);
 }
 
 .game-hud__label {

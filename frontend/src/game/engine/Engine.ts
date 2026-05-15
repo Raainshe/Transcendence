@@ -12,16 +12,23 @@
  * floating-point). Inputs (`moveLeft`, `rotateCW`, `hardDrop`, ...) take
  * effect immediately and may transition phases (Falling ⇄ Lock) on their own.
  *
- * Slice 3–6: gravity, lock-down, line clear, level-up, block-out, **Hold** (§2.5),
- * ghost rendering (UI). Scoring, T-spin, variants, Lock-out / Top-out land later.
+ * Slice 3–7: gravity, lock-down, line clear, level-up, Hold, **scoring** (§8),
+ * T-Spin (§9), Back-to-Back. Variants, Lock-out / Top-out land later.
  */
 
 import { Bag } from '@/game/engine/Bag'
 import { msPerCell, softDropMsPerCell } from '@/game/engine/FallSpeed'
 import { LockDown } from '@/game/engine/LockDown'
 import { Matrix } from '@/game/engine/Matrix'
+import {
+  lineClearKindFromCount,
+  scoreDropCells,
+  scoreLineClear,
+} from '@/game/engine/Scoring'
 import { type RotationDirection, tryRotate as srsTryRotate } from '@/game/engine/SRS'
+import { detectTSpin } from '@/game/engine/TSpin'
 import { getOccupiedCells, spawn, translate } from '@/game/engine/Tetrimino'
+import type { ScoreBreakdown } from '@/game/scoring/types'
 import {
   type EngineConfig,
   type EngineEvent,
@@ -52,6 +59,7 @@ export class Engine {
   private readonly generationDelayMs: number
   private readonly nextQueueSize: number
   private readonly startLevel: number
+  readonly seed: number
 
   private phase: EnginePhase
   private currentPiece: Tetrimino | null
@@ -68,9 +76,21 @@ export class Engine {
   /** True after a successful Hold until the current piece locks (§2.5.3). */
   private holdUsedForCurrentPiece = false
 
+  private score = 0
+  private backToBackActive = false
+  private backToBackChain = 0
+  private backToBackCount = 0
+  private scoreSequence = 0
+
+  private lastActionWasRotation = false
+  private lastKickIndex: number | null = null
+  private softDropCellsThisPiece = 0
+  private hardDropCellsThisPiece = 0
+
   constructor(config: EngineConfig = {}) {
+    this.seed = config.seed ?? 1
     this.matrix = new Matrix()
-    this.bag = new Bag(config.seed)
+    this.bag = new Bag(this.seed)
     this.lockDown = new LockDown({
       lockDelayMs: config.lockDelayMs,
       maxResets: config.maxLockResets,
@@ -114,6 +134,9 @@ export class Engine {
       lockDown: this.lockDown.snapshot(),
       gameOver: this.phase === EnginePhase.GameOver,
       gameOverReason: this.gameOverReason,
+      score: this.score,
+      backToBackActive: this.backToBackActive,
+      backToBackCount: this.backToBackCount,
     }
   }
 
@@ -244,6 +267,7 @@ export class Engine {
       dropped += 1
     }
     this.currentPiece = piece
+    this.hardDropCellsThisPiece = dropped
     this.emit({ type: 'piece-hard-dropped', piece, cellsFallen: dropped })
     this.commitLock()
     return true
@@ -320,6 +344,7 @@ export class Engine {
     }
 
     this.currentPiece = piece
+    this.resetPieceTracking()
     this.lockDown.reset(bottomY(piece))
     this.gravityAccumMs = 0
     this.softDropActive = false
@@ -346,6 +371,7 @@ export class Engine {
     this.currentPiece = candidate
     this.lockDown.onFell(bottomY(this.currentPiece))
     if (this.softDropActive) {
+      this.softDropCellsThisPiece += 1
       this.emit({ type: 'piece-soft-dropped', piece: this.currentPiece })
     }
     // Eagerly detect landing on the very same tick the piece reaches a
@@ -368,6 +394,7 @@ export class Engine {
     if (this.matrix.collides(candidate)) return false
 
     this.currentPiece = candidate
+    this.lastActionWasRotation = false
     this.emit({ type: 'piece-moved', piece: this.currentPiece })
     this.lockDown.onMovedOrRotated()
     this.recheckSurface()
@@ -384,6 +411,8 @@ export class Engine {
     if (!result) return false
 
     this.currentPiece = result.piece
+    this.lastActionWasRotation = true
+    this.lastKickIndex = result.kickIndex
     this.emit({
       type: 'piece-rotated',
       piece: this.currentPiece,
@@ -425,10 +454,57 @@ export class Engine {
     const cells = getOccupiedCells(lockedPiece)
     this.emit({ type: 'piece-locked', piece: lockedPiece, cells })
 
+    const tSpin = detectTSpin(
+      this.matrix,
+      lockedPiece,
+      this.lastActionWasRotation,
+      this.lastKickIndex,
+    )
+
     const fullRows = this.matrix.findFullRows()
+    const linesCleared = fullRows.length
+    const lineClearKind = lineClearKindFromCount(linesCleared)
+
+    const lineResult = scoreLineClear({
+      sequence: this.nextScoreSequence(),
+      level: this.level,
+      linesCleared,
+      lineClearKind,
+      tSpinKind: tSpin.kind,
+      backToBackActive: this.backToBackActive,
+      backToBackChain: this.backToBackChain,
+    })
+    if (lineResult.breakdown) {
+      this.applyScoreBreakdown(lineResult.breakdown)
+      this.backToBackActive = lineResult.nextBackToBackActive
+      this.backToBackChain = lineResult.nextBackToBackChain
+      this.backToBackCount = Math.max(this.backToBackCount, this.backToBackChain)
+    }
+
+    const softDrop = scoreDropCells(
+      this.nextScoreSequence(),
+      this.softDropCellsThisPiece,
+      'soft',
+      this.level,
+    )
+    if (softDrop) this.applyScoreBreakdown(softDrop)
+
+    const hardDrop = scoreDropCells(
+      this.nextScoreSequence(),
+      this.hardDropCellsThisPiece,
+      'hard',
+      this.level,
+    )
+    if (hardDrop) this.applyScoreBreakdown(hardDrop)
+
     if (fullRows.length > 0) {
       this.matrix.clearRows(fullRows)
-      this.emit({ type: 'lines-cleared', rows: fullRows })
+      this.emit({
+        type: 'lines-cleared',
+        rows: fullRows,
+        linesCleared,
+        tSpinKind: tSpin.kind,
+      })
     }
 
     this.lines += fullRows.length
@@ -459,6 +535,30 @@ export class Engine {
 
   private emit(event: EngineEvent): void {
     this.events.push(event)
+  }
+
+  private resetPieceTracking(): void {
+    this.lastActionWasRotation = false
+    this.lastKickIndex = null
+    this.softDropCellsThisPiece = 0
+    this.hardDropCellsThisPiece = 0
+  }
+
+  private nextScoreSequence(): number {
+    this.scoreSequence += 1
+    return this.scoreSequence
+  }
+
+  private applyScoreBreakdown(breakdown: ScoreBreakdown): void {
+    const entry: ScoreBreakdown = {
+      ...breakdown,
+      backToBackChain:
+        breakdown.reason === 'lineClear' || breakdown.reason === 'tSpinNoLines'
+          ? breakdown.backToBackChain
+          : this.backToBackChain,
+    }
+    this.score += entry.pointsAwarded
+    this.emit({ type: 'score-awarded', breakdown: entry })
   }
 
   private computeCanHold(): boolean {

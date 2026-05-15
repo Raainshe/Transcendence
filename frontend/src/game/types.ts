@@ -1,3 +1,5 @@
+import type { ScoreBreakdown, TSpinKind } from '@/game/scoring/types'
+
 /**
  * Shared types and constants for the Tetris engine.
  *
@@ -162,6 +164,10 @@ export type EngineState = {
   lockDown: LockDownSnapshot
   gameOver: boolean
   gameOverReason?: GameOverReason
+  score: number
+  backToBackActive: boolean
+  /** Longest Back-to-Back chain this match (§8). */
+  backToBackCount: number
 }
 
 /**
@@ -177,7 +183,13 @@ export type EngineEvent =
   | { type: 'piece-hard-dropped'; piece: Tetrimino; cellsFallen: number }
   | { type: 'piece-held'; piece: Tetrimino; holdSlot: PieceType | null }
   | { type: 'piece-locked'; piece: Tetrimino; cells: readonly Position[] }
-  | { type: 'lines-cleared'; rows: readonly number[] }
+  | {
+      type: 'lines-cleared'
+      rows: readonly number[]
+      linesCleared: number
+      tSpinKind: TSpinKind
+    }
+  | { type: 'score-awarded'; breakdown: ScoreBreakdown }
   | { type: 'level-up'; level: number }
   | { type: 'game-over'; reason: GameOverReason }
 
