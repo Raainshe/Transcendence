@@ -3,12 +3,14 @@ package database
 import (
 	"context"
 	"database/sql"
+	"embed"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
+	"github.com/pressly/goose/v3"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -22,6 +24,9 @@ type Service interface {
 	// Close terminates the database connection.
 	// It returns an error if the connection cannot be closed.
 	Close() error
+
+	// DB returns the underlying *sql.DB for use by repositories and migrations.
+	DB() *sql.DB
 }
 
 type service struct {
@@ -112,4 +117,17 @@ func (s *service) Health() map[string]string {
 func (s *service) Close() error {
 	log.Printf("Disconnected from database: %s", database)
 	return s.db.Close()
+}
+
+func (s *service) DB() *sql.DB {
+	return s.db
+}
+
+// RunMigrations applies all pending goose migrations using the provided embed.FS.
+func RunMigrations(db *sql.DB, migrationsFS embed.FS) error {
+	goose.SetBaseFS(migrationsFS)
+	if err := goose.SetDialect("postgres"); err != nil {
+		return err
+	}
+	return goose.Up(db, ".")
 }
