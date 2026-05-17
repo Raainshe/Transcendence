@@ -103,6 +103,20 @@ func (s *AuthService) Login(ctx context.Context, req LoginRequest) (*model.User,
 	return user, token, err
 }
 
+func (s *AuthService) RefreshToken(tokenString string) (string, error) {
+	var c Claims
+	token, err := jwt.ParseWithClaims(tokenString, &c, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, jwt.ErrSignatureInvalid
+		}
+		return []byte(s.jwtSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return "", ErrInvalidCreds
+	}
+	return s.issueToken(c.UserID)
+}
+
 func (s *AuthService) issueToken(userID uuid.UUID) (string, error) {
 	claims := Claims{
 		UserID: userID,
