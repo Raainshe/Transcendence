@@ -6,6 +6,11 @@ import (
 	"github.com/google/uuid"
 )
 
+type UpdateUserRequest struct {
+	Username  *string `json:"username"`
+	AvatarURL *string `json:"avatar_url"`
+}
+
 type User struct {
 	ID            uuid.UUID  `json:"id"`
 	Username      string     `json:"username"`
