@@ -15,6 +15,8 @@ import (
 	"backend/internal/service"
 )
 
+const maxAvatarSize = 5 << 20 // 5 MB
+
 type UserHandler struct {
 	users *service.UserService
 }
@@ -93,7 +95,43 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+
+	if err := r.ParseMultipartForm(maxAvatarSize); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file too large or invalid form data"})
+		return
+	}
+
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "avatar field is required"})
+		return
+	}
+	defer file.Close()
+
+	user, err := h.users.UploadAvatar(r.Context(), userID, file, header)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrInvalidFileType):
+			writeJSON(w, http.StatusUnprocessableEntity, map[string]string{"error": err.Error()})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to upload avatar"})
+		}
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"user": user})
+}
+
+func (h *UserHandler) DeleteMe(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+
+	if err := h.users.DeleteMe(r.Context(), userID); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete account"})
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *UserHandler) GetFriends(w http.ResponseWriter, r *http.Request) {

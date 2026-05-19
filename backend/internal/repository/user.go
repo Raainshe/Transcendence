@@ -20,6 +20,7 @@ type UserRepository interface {
 	List(ctx context.Context, limit, offset int) ([]model.User, error)
 	Count(ctx context.Context) (int, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateUserRequest) (*model.User, error)
+	Delete(ctx context.Context, id uuid.UUID) error
 }
 
 type userRepository struct {
@@ -117,6 +118,11 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, req model.Upd
 		          is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, id.String(), req.Username, req.AvatarURL))
+}
+
+func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id.String())
+	return err
 }
 
 func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
