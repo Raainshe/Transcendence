@@ -27,6 +27,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/", s.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
 
+	// Serve uploaded files (avatars, etc.)
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(s.uploadDir))))
+
 	r.Route("/api/v1", func(r chi.Router) {
 		// Auth — public
 		r.Post("/auth/register", s.authHandler.Register)
@@ -54,6 +57,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Use(mw.JWTAuth(s.jwtSecret))
 			r.Get("/users/me", s.userHandler.GetMe)
 			r.Patch("/users/me", s.userHandler.UpdateMe)
+			r.Delete("/users/me", s.userHandler.DeleteMe)
 			r.Post("/users/me/avatar", s.userHandler.UploadAvatar)
 			r.Get("/users/me/friends", s.userHandler.GetFriends)
 			r.Post("/users/me/friends/{id}", s.userHandler.AddFriend)

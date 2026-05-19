@@ -21,6 +21,7 @@ type Server struct {
 	port        int
 	db          database.Service
 	jwtSecret   string
+	uploadDir   string
 	authHandler *handler.AuthHandler
 	userHandler *handler.UserHandler
 	gameHandler *handler.GameHandler
@@ -40,17 +41,24 @@ func NewServer() *http.Server {
 		log.Fatalf("database migration failed: %v", err)
 	}
 
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
+
 	userRepo := repository.NewUserRepository(dbService.DB())
+	fileRepo := repository.NewFileRepository(dbService.DB())
 	gameRepo := repository.NewGameRepository(dbService.DB())
 
 	authSvc := service.NewAuthService(userRepo, jwtSecret)
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, fileRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 
 	srv := &Server{
 		port:        port,
 		db:          dbService,
 		jwtSecret:   jwtSecret,
+		uploadDir:   uploadDir,
 		authHandler: handler.NewAuthHandler(authSvc),
 		userHandler: handler.NewUserHandler(userSvc),
 		gameHandler: handler.NewGameHandler(gameSvc),
