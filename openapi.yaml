@@ -1,0 +1,589 @@
+openapi: 3.0.3
+info:
+  title: Transcendence API
+  description: |
+    REST API for the Transcendence Tetris platform.
+
+    Authentication uses short-lived JWT Bearer tokens (15 min). Use `POST /auth/refresh`
+    (with a valid token in the `Authorization` header) to get a new one before expiry.
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: Current API version
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        username:
+          type: string
+          example: "fearcon"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        avatar_url:
+          type: string
+          nullable: true
+          example: "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg"
+        role:
+          type: string
+          enum: [user, admin]
+          example: "user"
+        is_2fa_enabled:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        last_seen_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UserStats:
+      type: object
+      properties:
+        games_played:
+          type: integer
+          example: 42
+        wins:
+          type: integer
+          example: 18
+        best_score:
+          type: integer
+          example: 98500
+        total_lines:
+          type: integer
+          example: 1240
+        avg_score:
+          type: integer
+          example: 61200
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        rank:
+          type: integer
+          format: int64
+          example: 1
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+          example: "fearcon"
+        avatar_url:
+          type: string
+          nullable: true
+        score:
+          type: integer
+          example: 98500
+        lines_cleared:
+          type: integer
+          example: 204
+        level_reached:
+          type: integer
+          example: 12
+        mode:
+          type: string
+          example: "marathon"
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT Bearer token (expires in 15 minutes)
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "invalid request body"
+
+paths:
+
+  # ── Auth ──────────────────────────────────────────────────────────────────
+
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username:
+                  type: string
+                  minLength: 1
+                  maxLength: 32
+                  example: "fearcon"
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  minLength: 1
+                  example: "supersecret"
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email or username already in use
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                emailTaken:
+                  value: { "error": "email already in use" }
+                usernameTaken:
+                  value: { "error": "username already in use" }
+
+  /auth/login:
+    post:
+      summary: Login with email and password
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  example: "supersecret"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      summary: Refresh a JWT token
+      description: |
+        Pass the current (not yet expired) token in the `Authorization: Bearer` header.
+        Returns a new token with a fresh 15-minute expiry.
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: New token issued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Token missing or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      summary: Logout (invalidates client-side token)
+      description: |
+        The server is stateless — tokens are not blocklisted. The client should discard
+        the token on receipt of this response.
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout acknowledged
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Users ─────────────────────────────────────────────────────────────────
+
+  /users:
+    get:
+      summary: List all users (paginated)
+      tags: [Users]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+          description: Number of users to return
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+          description: Number of users to skip
+      responses:
+        '200':
+          description: Paginated user list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  total:
+                    type: integer
+                    description: Total count of users in the database
+                    example: 137
+
+  /users/{id}:
+    get:
+      summary: Get a user by ID
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}/stats:
+    get:
+      summary: Get game statistics for a user
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    $ref: '#/components/schemas/UserStats'
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me:
+    get:
+      summary: Get the authenticated user's profile
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found (deleted after token was issued)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Update the authenticated user's profile
+      description: All fields are optional. Only provided fields are updated.
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                  minLength: 1
+                  maxLength: 32
+                  example: "new_username"
+                avatar_url:
+                  type: string
+                  example: "https://example.com/my-avatar.jpg"
+            example:
+              username: "new_username"
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Username already taken
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Delete the authenticated user's account
+      description: Permanently deletes the account and all associated data. This action is irreversible.
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Account deleted
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/avatar:
+    post:
+      summary: Upload a profile avatar
+      description: |
+        Accepts a `multipart/form-data` request with an `avatar` field.
+        Replaces any previously set avatar URL.
+
+        **Constraints:**
+        - Allowed types: `image/jpeg`, `image/png`, `image/webp`, `image/gif`
+        - Maximum size: 5 MB
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [avatar]
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded, updated user returned
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: File too large or missing avatar field
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Unsupported file type
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "only jpeg, png, webp, and gif images are allowed"
+
+  # ── Leaderboard ───────────────────────────────────────────────────────────
+
+  /leaderboard:
+    get:
+      summary: Get the top-scoring players
+      tags: [Games]
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+            minimum: 1
+            maximum: 100
+          description: Number of entries to return
+      responses:
+        '200':
+          description: Leaderboard entries ranked by score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+
+  # ── Utility ───────────────────────────────────────────────────────────────
+
+  /health:
+    get:
+      summary: Database health check
+      tags: [Utility]
+      servers:
+        - url: /
+      responses:
+        '200':
+          description: Health status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+
+tags:
+  - name: Auth
+    description: Registration, login, token management
+  - name: Users
+    description: User profiles and account management
+  - name: Games
+    description: Game recording and leaderboard
+  - name: Utility
+    description: Health checks and diagnostics
