@@ -1,0 +1,13 @@
+.main-menu__header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: var(--sp-2);
+}
+
+.main-menu__header .main-menu__title {
+  margin-bottom: 0;
+}
+
+/* Positioning for main menu header — button styles live in audio-mute-toggle.css */

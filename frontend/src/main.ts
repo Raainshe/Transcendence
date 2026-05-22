@@ -1,3 +1,4 @@
+import '@fontsource/press-start-2p/index.css'
 import '@/assets/styles/main.css'
 
 import { createApp } from 'vue'
