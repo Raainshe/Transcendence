@@ -11,12 +11,15 @@ import {
   MinoType,
   type PieceType,
 } from '@/game/types'
+import { LINE_CLEAR_FX_MS } from '@/game/fx/types'
+import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSessionStore } from '@/stores/gameSession'
 
 const MIN_CELL = 8
 const MAX_CELL = 30
 
 const store = useGameSessionStore()
+const fxStore = useGameFxStore()
 const { engine } = storeToRefs(store)
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
@@ -28,6 +31,52 @@ let resizeObserver: ResizeObserver | null = null
 function colorForCell(value: number): string | null {
   if (value === MinoType.Empty) return null
   return MINO_COLORS[value as PieceType]
+}
+
+function rowFromTop(matrixY: number): number {
+  return MATRIX_VISIBLE_HEIGHT - matrixY
+}
+
+function drawFx(ctx: CanvasRenderingContext2D, cell: number, now: number): void {
+  fxStore.prune(now)
+  const pad = 1
+  const size = cell - pad * 2
+
+  const trail = fxStore.hardDropTrail
+  if (trail && trail.expiresAt > now) {
+    const t = 1 - (trail.expiresAt - now) / 150
+    const alpha = 0.55 * (1 - t)
+    ctx.fillStyle = trail.color
+    ctx.globalAlpha = alpha
+    for (let x = trail.minX; x <= trail.maxX; x++) {
+      const left = (x - 1) * cell + pad
+      const topY = Math.max(trail.fromY, trail.toY)
+      const bottomY = Math.min(trail.fromY, trail.toY)
+      const top = rowFromTop(topY) * cell + pad
+      const height = (topY - bottomY + 1) * cell - pad * 2
+      if (height > 0) {
+        ctx.fillRect(left, top, size, height)
+      }
+    }
+    ctx.globalAlpha = 1
+  }
+
+  const flash = fxStore.lineClearFlash
+  if (flash && flash.expiresAt > now) {
+    const progress = 1 - (flash.expiresAt - now) / LINE_CLEAR_FX_MS
+    const pulse = progress < 0.5 ? progress * 2 : 2 - progress * 2
+    ctx.globalAlpha = 0.35 + pulse * 0.45
+    for (const { x, y, color } of flash.clearedCells) {
+      if (y < 1 || y > MATRIX_VISIBLE_HEIGHT) continue
+      const left = (x - 1) * cell + pad
+      const top = rowFromTop(y) * cell + pad
+      ctx.fillStyle = color ? MINO_COLORS[color] : '#fff'
+      ctx.fillRect(left, top, size, size)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+      ctx.fillRect(left, top, size, size)
+    }
+    ctx.globalAlpha = 1
+  }
 }
 
 function measureCellFromParent(): void {
@@ -99,11 +148,12 @@ function draw(): void {
       const v = matrix.get(x, y)
       const c = colorForCell(v)
       if (!c) continue
-      const rowFromTop = MATRIX_VISIBLE_HEIGHT - y
       ctx.fillStyle = c
-      ctx.fillRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
+      ctx.fillRect((x - 1) * cell + pad, rowFromTop(y) * cell + pad, cell - pad * 2, cell - pad * 2)
     }
   }
+
+  drawFx(ctx, cell, performance.now())
 
   const piece = eng.state.currentPiece
   if (piece) {
@@ -118,10 +168,10 @@ function draw(): void {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)'
       for (const { x, y } of getOccupiedCells(ghost)) {
         if (y < 1 || y > MATRIX_VISIBLE_HEIGHT) continue
-        const rowFromTop = MATRIX_VISIBLE_HEIGHT - y
+        const row = rowFromTop(y)
         ctx.fillStyle = MINO_COLORS[ghost.type]
-        ctx.fillRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
-        ctx.strokeRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
+        ctx.fillRect((x - 1) * cell + pad, row * cell + pad, cell - pad * 2, cell - pad * 2)
+        ctx.strokeRect((x - 1) * cell + pad, row * cell + pad, cell - pad * 2, cell - pad * 2)
       }
       ctx.globalAlpha = prevAlpha
     }
@@ -129,8 +179,7 @@ function draw(): void {
     ctx.fillStyle = MINO_COLORS[piece.type]
     for (const { x, y } of getOccupiedCells(piece)) {
       if (y < 1 || y > MATRIX_VISIBLE_HEIGHT) continue
-      const rowFromTop = MATRIX_VISIBLE_HEIGHT - y
-      ctx.fillRect((x - 1) * cell + pad, rowFromTop * cell + pad, cell - pad * 2, cell - pad * 2)
+      ctx.fillRect((x - 1) * cell + pad, rowFromTop(y) * cell + pad, cell - pad * 2, cell - pad * 2)
     }
   }
 }

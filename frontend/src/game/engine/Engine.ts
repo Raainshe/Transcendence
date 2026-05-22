@@ -16,6 +16,7 @@
  * T-Spin (§9), Back-to-Back, **variants**, §10 game-over.
  */
 
+import type { ClearedCellSnapshot } from '@/game/fx/types'
 import { Bag } from '@/game/engine/Bag'
 import { isLockOut, isTopOut } from '@/game/engine/GameOver'
 import { msPerCell, softDropMsPerCell } from '@/game/engine/FallSpeed'
@@ -41,13 +42,28 @@ import {
   type MatchEndKind,
   type MatchEndReason,
   type MatchWinReason,
+  MATRIX_WIDTH,
   MAX_LEVEL,
+  MinoType,
   type PieceType,
   type Tetrimino,
 } from '@/game/types'
 import { SPRINT_LINE_GOAL, ULTRA_DURATION_MS, type GameVariation } from '@/types/game'
 
 const DEFAULT_NEXT_QUEUE_SIZE = 6
+
+function snapshotClearedRows(matrix: Matrix, rows: readonly number[]): ClearedCellSnapshot[] {
+  const out: ClearedCellSnapshot[] = []
+  for (const row of rows) {
+    for (let x = 1; x <= MATRIX_WIDTH; x++) {
+      const v = matrix.get(x, row)
+      if (v !== MinoType.Empty) {
+        out.push({ x, y: row, color: v as PieceType })
+      }
+    }
+  }
+  return out
+}
 
 /**
  * Safety cap on while-loop iterations inside `update()`. Real games are at
@@ -532,13 +548,15 @@ export class Engine {
     if (hardDrop) this.applyScoreBreakdown(hardDrop)
 
     if (fullRows.length > 0) {
-      this.matrix.clearRows(fullRows)
+      const clearedCells = snapshotClearedRows(this.matrix, fullRows)
       this.emit({
         type: 'lines-cleared',
         rows: fullRows,
         linesCleared,
         tSpinKind: tSpin.kind,
+        clearedCells,
       })
+      this.matrix.clearRows(fullRows)
     }
 
     if (isTopOut(this.matrix)) {

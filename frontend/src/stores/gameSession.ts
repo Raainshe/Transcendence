@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
 
+import { gameAudio } from '@/game/audio/AudioManager'
 import { Engine } from '@/game/engine/Engine'
 import { InputController } from '@/game/input/InputController'
 import { KeyboardAdapter } from '@/game/input/KeyboardAdapter'
@@ -14,6 +15,7 @@ import {
   type MatchEndReason,
   type PieceType,
 } from '@/game/types'
+import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import type { GameVariation } from '@/types/game'
 
@@ -76,7 +78,15 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   function processEngineEvents(): void {
     const e = engine.value
     if (!e) return
-    for (const event of e.drainEvents()) {
+    const events = e.drainEvents()
+    const settings = useGameSettingsStore()
+    const fx = useGameFxStore()
+    fx.ingestEvents(events)
+    gameAudio.handleEvents(events, {
+      sfxEnabled: settings.sfxEnabled,
+      sfxVolume: settings.sfxVolume,
+    })
+    for (const event of events) {
       if (event.type === 'score-awarded') {
         scoreLedger.value.push({ ...event.breakdown })
       }
@@ -146,6 +156,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   function beginSession(seed?: number): void {
     endSession()
+    useGameFxStore().reset()
     const s = seed ?? defaultSessionSeed()
     sessionSeed.value = s
     runId.value = crypto.randomUUID()
@@ -208,6 +219,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     startedAt.value = ''
     endedAt.value = undefined
     scoreLedger.value = []
+    useGameFxStore().reset()
   }
 
   function stepFrame(dtMs: number): void {

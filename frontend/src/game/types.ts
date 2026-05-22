@@ -1,3 +1,4 @@
+import type { ClearedCellSnapshot } from '@/game/fx/types'
 import type { ScoreBreakdown, TSpinKind } from '@/game/scoring/types'
 import type { GameVariation } from '@/types/game'
 
@@ -211,6 +212,8 @@ export type EngineEvent =
       rows: readonly number[]
       linesCleared: number
       tSpinKind: TSpinKind
+      /** Locked cells on cleared rows before `clearRows` (for line-clear FX). */
+      clearedCells: readonly ClearedCellSnapshot[]
     }
   | { type: 'score-awarded'; breakdown: ScoreBreakdown }
   | { type: 'level-up'; level: number }
