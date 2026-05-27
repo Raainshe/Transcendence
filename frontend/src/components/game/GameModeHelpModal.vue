@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, useId, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/game/game-mode-help.css'
 import { getGameVariationInfo, type GameVariation } from '@/types/game'
@@ -15,6 +16,7 @@ const emit = defineEmits<{
 
 const titleId = useId()
 const backButtonRef = useTemplateRef<HTMLButtonElement>('backButton')
+const { t } = useI18n()
 
 const info = computed(() => getGameVariationInfo(props.variation))
 
@@ -60,7 +62,7 @@ function onBackKeydown(event: KeyboardEvent): void {
     >
       <h2 :id="titleId" class="game-mode-help-panel__title">{{ info.label }}</h2>
       <p class="game-mode-help-panel__body">{{ info.description }}</p>
-      <p class="game-mode-help-panel__subtitle">How to win</p>
+      <p class="game-mode-help-panel__subtitle">{{ t('game.modeHelp.howToWin') }}</p>
       <p class="game-mode-help-panel__win">{{ info.howToWin }}</p>
       <div class="game-mode-help-panel__actions">
         <button
@@ -70,7 +72,7 @@ function onBackKeydown(event: KeyboardEvent): void {
           @click="emit('close')"
           @keydown="onBackKeydown"
         >
-          Back to game
+          {{ t('game.modeHelp.backToGame') }}
         </button>
       </div>
     </div>

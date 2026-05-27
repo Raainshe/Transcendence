@@ -1,0 +1,177 @@
+{
+  "app": {
+    "title": "Transcendence - Tetris"
+  },
+  "header": {
+    "languageLabel": "Sprache",
+    "languageCodes": {
+      "en": "EN",
+      "de": "DE"
+    }
+  },
+  "menu": {
+    "ariaLabel": "Hauptmenü",
+    "title": "Hauptmenü",
+    "newGame": "Neues Spiel",
+    "variation": "Variante",
+    "players": "Spieler",
+    "playersCount": "{count} Spieler | {count} Spieler",
+    "audioOn": "Musik: AN",
+    "audioOff": "Musik: AUS",
+    "variationAriaLabel": "Spielvariante",
+    "playersAriaLabel": "Anzahl Spieler"
+  },
+  "cycler": {
+    "previous": "Zurück",
+    "next": "Weiter"
+  },
+  "footer": {
+    "privacy": "Datenschutz",
+    "terms": "AGB",
+    "developedBy": "Entwickelt von",
+    "hintNavigate": "Navigieren",
+    "hintChange": "Ändern",
+    "hintStart": "Start",
+    "version": "v0.1.0"
+  },
+  "credits": {
+    "title": "Credits",
+    "subtitle": "Entwickelt von",
+    "developerGithubAria": "{name} auf GitHub",
+    "developerAvatarAlt": "GitHub-Avatar von {name}"
+  },
+  "game": {
+    "modeHeading": "Modus",
+    "playHeading": "Spielen",
+    "modeAriaLabel": "Spielmodus: {mode}",
+    "controlsLine": "Bewegen: Links / Rechts · Drehen: Hoch, X, Z / Strg · Soft Drop: Runter · Hard Drop: Leertaste · Halten: C · Pause: Esc · Fortsetzen: P · Im Pause-Menü: Hoch/Runter + Enter · Menü (im Pause-Menü): Esc · Modus-Hilfe (Pause): Esc schließt",
+    "pauseTitle": "Pausiert",
+    "pauseCopy": "Fortsetzen: P · Beenden: Esc · Bewegen: Hoch / Runter · Auswählen: Enter oder Leertaste · Sound: M · Modus-Hilfe: Esc schließt",
+    "pauseMenuAriaLabel": "Pausemenü",
+    "pauseResume": "Fortsetzen",
+    "pauseQuit": "Zum Menü",
+    "pauseAbout": "Über {mode}",
+    "pauseSfxOn": "Soundeffekte: AN",
+    "pauseSfxOff": "Soundeffekte: AUS",
+    "hud": {
+      "score": "Punkte",
+      "level": "Lvl",
+      "lines": "Linien",
+      "time": "Zeit",
+      "timer": "Timer",
+      "phase": "Phase",
+      "sprintComplete": "Sprint geschafft!",
+      "timesUp": "Zeit ist um!",
+      "complete": "Geschafft!",
+      "gameOver": "Spiel vorbei",
+      "menuHint": "Esc: Menü",
+      "blockOut": "BLOCK OUT",
+      "lockOut": "LOCK OUT",
+      "topOut": "TOP OUT"
+    },
+    "queue": {
+      "next": "Nächste",
+      "nextAria": "Nächste Steine",
+      "hold": "Halten",
+      "holdAria": "Haltefeld",
+      "holdFilledAria": "Halten: {piece}",
+      "holdEmptyAria": "Haltefeld leer"
+    },
+    "modeHelp": {
+      "howToWin": "So gewinnst du",
+      "backToGame": "Zurück ins Spiel"
+    },
+    "notifications": {
+      "tetris": "TETRIS",
+      "triple": "DREIFACH",
+      "double": "DOPPEL",
+      "miniTSpin": "MINI T-SPIN",
+      "tSpinTriple": "T-SPIN DREIFACH",
+      "tSpinDouble": "T-SPIN DOPPEL",
+      "tSpinSingle": "T-SPIN",
+      "tSpinNoLines": "T-SPIN!",
+      "backToBack": "BACK-TO-BACK",
+      "levelUp": "LEVEL {level}"
+    }
+  },
+  "variations": {
+    "marathon": {
+      "label": "MARATHON",
+      "tooltip": "Endlos spielen; alle 10 Linien ein Level höher.",
+      "description": "Klassisches endloses Tetris. Die Geschwindigkeit steigt mit jedem Levelaufstieg nach 10 gelöschten Linien. Spiele, bis du oben anstößt oder keinen gültigen Spawn mehr hast.",
+      "howToWin": "Es gibt kein festes Ziel - überlebe so lange wie möglich und jage den Highscore."
+    },
+    "sprint": {
+      "label": "SPRINT",
+      "tooltip": "Lösche {goal} Linien so schnell wie möglich.",
+      "description": "Ein Rennen gegen die Zeit. Lösche genau {goal} Linien so schnell wie möglich. Das Level bleibt bei 1, damit die Geschwindigkeit konstant bleibt.",
+      "howToWin": "Lösche {goal} Linien, bevor du verlierst."
+    },
+    "ultra": {
+      "label": "ULTRA",
+      "tooltip": "Sammle in {minutes} Minuten so viele Punkte wie möglich.",
+      "description": "Zwei Minuten auf der Uhr. Erziele so viele Punkte wie möglich, bevor die Zeit abläuft. Gelöschte Linien erhöhen weiterhin dein Level.",
+      "howToWin": "Erziele den höchsten Score, wenn der {minutes}:00-Timer auf null steht."
+    },
+    "multiplayer": {
+      "label": "MEHRSPIELER",
+      "tooltip": "Lokaler Mehrspieler folgt bald; aktuell wie Marathon.",
+      "description": "Der Mehrspieler-Modus ist noch nicht vollständig umgesetzt. Derzeit spielt sich dieser Modus wie Marathon mit einem einzelnen Spielfeld.",
+      "howToWin": "Bis zum echten Mehrspieler gilt die gleiche Regel wie im Marathon."
+    }
+  },
+  "legal": {
+    "lastUpdated": "Zuletzt aktualisiert {date}",
+    "scrollToTop": "Nach oben scrollen",
+    "privacy": {
+      "title": "Datenschutzerklärung",
+      "overviewTitle": "Überblick",
+      "overviewBody": "Transcendence ist ein Lernprojekt im Rahmen des 42-ft_transcendence-Curriculums. Es ist ein von Fans entwickeltes Tetris-ähnliches Spiel, betreut von einer kleinen Gruppe Studierender. Wir verwenden keine Analysen, Werbung oder sonstiges Tracking. Diese Seite beschreibt, welche sehr begrenzten Daten im Browser verarbeitet werden, wenn du spielst.",
+      "notCollectTitle": "Informationen, die wir nicht erfassen",
+      "notCollect1": "Keine Konten, Namen, E-Mail-Adressen oder sonstige personenbezogene Daten.",
+      "notCollect2": "Keine Analysen, Telemetrie oder Nutzungsverfolgung.",
+      "notCollect3": "Keine Werbung oder Drittanbieter-Tracking-Cookies.",
+      "notCollect4": "Kein Fingerprinting oder Verhaltensprofiling.",
+      "localStorageTitle": "Lokaler Browserspeicher",
+      "localStorageBody": "Deine Spielpräferenzen (z. B. ausgewählte Variante und Spielerzahl) werden in einem Pinia-Store im geöffneten Tab gehalten. Wenn das Projekt diese Präferenzen speichert, geschieht das im Browser-Speicher (zum Beispiel localStorage). Diese Daten verlassen dein Gerät nicht, werden nicht an einen Server gesendet und können jederzeit über die Browser-Einstellungen gelöscht werden.",
+      "thirdPartyTitle": "Inhalte von Drittanbietern",
+      "thirdPartyBody": "Die Credits-Seite lädt Entwickler-Avatare direkt von GitHub (github.com/<handle>.png). Beim Aufruf dieser Seite sendet dein Browser eine Anfrage an GitHub, um das Bild abzurufen. Diese Anfragen werden gemäß der Datenschutzrichtlinie von GitHub verarbeitet. Andere Drittanbieter-Dienste werden von der Anwendung nicht kontaktiert.",
+      "childrenTitle": "Datenschutz von Kindern",
+      "childrenBody": "Da wir keine personenbezogenen Daten erfassen, sammelt die Anwendung wissentlich keine Informationen von irgendjemandem, einschließlich Kindern. Es gibt kein Kontosystem und keine Altersabfrage.",
+      "controlsTitle": "Deine Kontrolle",
+      "controlsBody": "Du kannst lokal gespeicherte Präferenzen jederzeit löschen, indem du die Seitendaten für diese Domain in den Browser-Einstellungen entfernst. Danach werden die Spielpräferenzen beim nächsten Laden auf Standardwerte zurückgesetzt.",
+      "changesTitle": "Änderungen dieser Richtlinie",
+      "changesBody": "Wenn sich das Projekt weiterentwickelt, kann sich auch diese Richtlinie ändern. Aktualisierungen werden im Projekt-Repository veröffentlicht, und das Datum Zuletzt aktualisiert oben zeigt die neueste Fassung.",
+      "contactTitle": "Kontakt",
+      "contactBody": "Fragen oder Bedenken können über ein Issue im Projekt-Repository gemeldet werden:"
+    },
+    "terms": {
+      "title": "Nutzungsbedingungen",
+      "acceptanceTitle": "Akzeptanz",
+      "acceptanceBody": "Durch das Laden oder Spielen dieser Anwendung stimmst du diesen Bedingungen zu. Wenn du nicht einverstanden bist, schließe die Seite und nutze das Projekt nicht weiter.",
+      "educationTitle": "Bildungszweck",
+      "educationBody": "Transcendence ist ein nicht-kommerzielles Lernprojekt im Rahmen des 42-ft_transcendence-Curriculums. Es wird kostenlos für Lernen, Demonstration und persönliches Spielen bereitgestellt. Es gibt kein kommerzielles Angebot, keine kostenpflichtige Stufe und keine In-App-Käufe.",
+      "licenseTitle": "Lizenz",
+      "licenseBody": "Der Quellcode wird im Projekt-Repository veröffentlicht und unter der dort enthaltenen Lizenz verteilt. Mit der Nutzung der Anwendung stimmst du auch den Bedingungen dieser Lizenz zu. Der aktuelle Lizenztext ist abrufbar unter:",
+      "trademarkTitle": "Tetris-Hinweis",
+      "trademarkBody": "\"Tetris\" ist eine eingetragene Marke von Tetris Holding, LLC. Dieses Projekt ist eine inoffizielle, fanbasierte Umsetzung zu Lernzwecken. Es wird weder produziert noch unterstützt oder gesponsert von Tetris Holding, LLC, The Tetris Company, Blue Planet Software oder deren Tochtergesellschaften. Alle Marken, Spielmechaniken und Referenzen gehören ihren jeweiligen Eigentümern und werden hier ausschließlich zu Lern- und Demonstrationszwecken verwendet.",
+      "warrantyTitle": "Keine Gewähr",
+      "warrantyBody": "Die Anwendung wird ohne jegliche Gewährleistung bereitgestellt, ausdrücklich oder stillschweigend, einschließlich aber nicht beschränkt auf Marktgängigkeit, Eignung für einen bestimmten Zweck und Nichtverletzung von Rechten. Die Autoren geben keine Garantien hinsichtlich Verfügbarkeit, Korrektheit oder Eignung für einen bestimmten Zweck.",
+      "liabilityTitle": "Haftungsbeschränkung",
+      "liabilityBody": "Soweit gesetzlich zulässig haften die Autoren oder Mitwirkenden in keinem Fall für direkte, indirekte, zufällige, besondere, beispielhafte oder Folgeschäden (einschließlich Datenverlust, entgangenem Gewinn oder Betriebsunterbrechung), die aus der Nutzung oder Unmöglichkeit der Nutzung der Anwendung entstehen, selbst wenn auf die Möglichkeit solcher Schäden hingewiesen wurde.",
+      "useTitle": "Zulässige Nutzung",
+      "useBody": "Du verpflichtest dich zur Nutzung in gutem Glauben. Versuche nicht, den Dienst zu stören, andere Spieler auszunutzen (in möglichen zukünftigen Mehrspieler-Modi) oder die Anwendung zur Belästigung anderer zu verwenden. Gehe respektvoll mit Mitspielern und Mitwirkenden um.",
+      "changesTitle": "Änderungen dieser Bedingungen",
+      "changesBody": "Diese Bedingungen können mit der Weiterentwicklung des Projekts aktualisiert werden. Änderungen werden im Projekt-Repository veröffentlicht, und das Datum Zuletzt aktualisiert oben zeigt die neueste Fassung. Die weitere Nutzung der Anwendung nach Änderungen gilt als Zustimmung zu den überarbeiteten Bedingungen.",
+      "contactTitle": "Kontakt",
+      "contactBody": "Fragen können über ein Issue im Projekt-Repository gestellt werden:"
+    }
+  },
+  "routes": {
+    "home": "Transcendence - Hauptmenü",
+    "play": "Transcendence - Spielen",
+    "credits": "Transcendence - Credits",
+    "privacy": "Transcendence - Datenschutz",
+    "terms": "Transcendence - Bedingungen"
+  }
+}

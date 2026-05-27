@@ -8,6 +8,8 @@ const props = defineProps<{
   options: readonly T[]
   formatLabel?: (value: T) => string
   ariaLabel?: string
+  prevAriaLabel?: string
+  nextAriaLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -63,7 +65,7 @@ defineExpose({ prev, next })
       type="button"
       class="cycle-selector__arrow cycle-selector__arrow--prev"
       tabindex="-1"
-      aria-label="Previous"
+      :aria-label="prevAriaLabel ?? 'Previous'"
       @mousedown.prevent
       @click="prev"
     >
@@ -80,7 +82,7 @@ defineExpose({ prev, next })
       type="button"
       class="cycle-selector__arrow cycle-selector__arrow--next"
       tabindex="-1"
-      aria-label="Next"
+      :aria-label="nextAriaLabel ?? 'Next'"
       @mousedown.prevent
       @click="next"
     >

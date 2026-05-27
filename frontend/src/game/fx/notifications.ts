@@ -1,21 +1,23 @@
+import { i18n } from '@/i18n'
 import type { LineClearKind, ScoreBreakdown, TSpinKind } from '@/game/scoring/types'
 
 import type { ActionNotification, NotificationTone } from '@/game/fx/types'
 import { NOTIFICATION_TTL_MS } from '@/game/fx/types'
 
 export type NotificationDraft = {
-  text: string
+  textKey: string
+  textParams?: Record<string, number | string>
   tone: NotificationTone
 }
 
 function lineClearLabel(kind: LineClearKind): NotificationDraft | null {
   switch (kind) {
     case 'tetris':
-      return { text: 'TETRIS', tone: 'tetris' }
+      return { textKey: 'game.notifications.tetris', tone: 'tetris' }
     case 'triple':
-      return { text: 'TRIPLE', tone: 'default' }
+      return { textKey: 'game.notifications.triple', tone: 'default' }
     case 'double':
-      return { text: 'DOUBLE', tone: 'default' }
+      return { textKey: 'game.notifications.double', tone: 'default' }
     case 'single':
       return null
     default:
@@ -26,12 +28,12 @@ function lineClearLabel(kind: LineClearKind): NotificationDraft | null {
 function tSpinLabel(kind: TSpinKind, linesCleared: number): NotificationDraft | null {
   if (kind === 'none') return null
   if (kind === 'mini') {
-    return { text: 'MINI T-SPIN', tone: 'tspin' }
+    return { textKey: 'game.notifications.miniTSpin', tone: 'tspin' }
   }
-  if (linesCleared >= 3) return { text: 'T-SPIN TRIPLE', tone: 'tspin' }
-  if (linesCleared === 2) return { text: 'T-SPIN DOUBLE', tone: 'tspin' }
-  if (linesCleared === 1) return { text: 'T-SPIN', tone: 'tspin' }
-  return { text: 'T-SPIN!', tone: 'tspin' }
+  if (linesCleared >= 3) return { textKey: 'game.notifications.tSpinTriple', tone: 'tspin' }
+  if (linesCleared === 2) return { textKey: 'game.notifications.tSpinDouble', tone: 'tspin' }
+  if (linesCleared === 1) return { textKey: 'game.notifications.tSpinSingle', tone: 'tspin' }
+  return { textKey: 'game.notifications.tSpinNoLines', tone: 'tspin' }
 }
 
 /** Build HUD callouts from a scoring breakdown (line clear / T-spin / B2B). */
@@ -47,14 +49,16 @@ export function notificationsFromScoreBreakdown(
     if (!draft) return
     out.push({
       id: `${idPrefix}-${seq++}`,
-      text: draft.text,
+      text: i18n.global.t(draft.textKey, draft.textParams ?? {}),
+      textKey: draft.textKey,
+      textParams: draft.textParams,
       tone: draft.tone,
       expiresAt: now + NOTIFICATION_TTL_MS,
     })
   }
 
   if (breakdown.reason === 'tSpinNoLines') {
-    push({ text: 'T-SPIN!', tone: 'tspin' })
+    push({ textKey: 'game.notifications.tSpinNoLines', tone: 'tspin' })
     return out
   }
 
@@ -68,7 +72,7 @@ export function notificationsFromScoreBreakdown(
   }
 
   if (breakdown.backToBackMultiplier > 1 && breakdown.linesCleared > 0) {
-    push({ text: 'BACK-TO-BACK', tone: 'backToBack' })
+    push({ textKey: 'game.notifications.backToBack', tone: 'backToBack' })
   }
 
   return out
@@ -77,7 +81,9 @@ export function notificationsFromScoreBreakdown(
 export function notificationFromLevelUp(level: number, now: number, id: string): ActionNotification {
   return {
     id,
-    text: `LEVEL ${level}`,
+    text: i18n.global.t('game.notifications.levelUp', { level }),
+    textKey: 'game.notifications.levelUp',
+    textParams: { level },
     tone: 'level',
     expiresAt: now + NOTIFICATION_TTL_MS,
   }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import ActionNotifications from '@/components/game/ActionNotifications.vue'
@@ -18,6 +19,7 @@ import '@/assets/styles/views/game-play-view.css'
 const router = useRouter()
 const store = useGameSessionStore()
 const settings = useGameSettingsStore()
+const { t } = useI18n()
 
 const PAUSE_ITEM_COUNT = 4
 const pauseFocusedIndex = ref(0)
@@ -25,11 +27,11 @@ const showModeHelp = ref(false)
 const pauseMenuRef = useTemplateRef<HTMLElement>('pauseMenu')
 
 const aboutMenuLabel = computed(
-  () => `About ${getGameVariationInfo(store.variant).label}`,
+  () => t('game.pauseAbout', { mode: getGameVariationInfo(store.variant).label }),
 )
 
 const sfxMenuLabel = computed(() =>
-  settings.sfxEnabled ? 'Sound effects: ON' : 'Sound effects: OFF',
+  settings.sfxEnabled ? t('game.pauseSfxOn') : t('game.pauseSfxOff'),
 )
 
 function toggleSfx(): void {
@@ -152,7 +154,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="game-play-view">
-    <h1 class="visually-hidden">Play</h1>
+    <h1 class="visually-hidden">{{ t('game.playHeading') }}</h1>
     <GameHud band="top" />
     <div class="game-play-view__canvas-slot">
       <GameBoard />
@@ -160,9 +162,7 @@ onBeforeUnmount(() => {
     </div>
     <GameHud band="bottom">
       <p class="game-play-view__controls">
-        Move: Left / Right · Rotate: Up, X, Z / Ctrl · Soft: Down · Hard: Space · Hold: C · Pause:
-        Esc · Resume: P · Paused: Up/Down + Enter · Menu (when paused): Esc · Mode help (paused):
-        Esc closes
+        {{ t('game.controlsLine') }}
       </p>
     </GameHud>
     <div
@@ -173,25 +173,22 @@ onBeforeUnmount(() => {
       aria-labelledby="pause-title"
     >
       <div class="game-play-view__pause-panel">
-        <p id="pause-title" class="game-play-view__pause-title">Paused</p>
+        <p id="pause-title" class="game-play-view__pause-title">{{ t('game.pauseTitle') }}</p>
         <div class="game-play-view__pause-mode">
           <GameModeBadge :variation="store.variant" size="md" />
         </div>
-        <p class="game-play-view__pause-copy">
-          Resume: P · Quit: Esc · Move: Up / Down · Select: Enter or Space · Sound: M · Mode help: Esc
-          closes
-        </p>
+        <p class="game-play-view__pause-copy">{{ t('game.pauseCopy') }}</p>
         <section
           ref="pauseMenu"
           class="game-play-view__pause-menu"
           role="menu"
-          aria-label="Pause menu"
+          :aria-label="t('game.pauseMenuAriaLabel')"
           tabindex="0"
           @keydown="onPauseMenuKeydown"
         >
           <ul class="game-play-view__pause-list">
             <MenuItem
-              label="Resume"
+              :label="t('game.pauseResume')"
               kind="action"
               :selected="pauseFocusedIndex === 0"
               @select="pauseFocusedIndex = 0"
@@ -212,7 +209,7 @@ onBeforeUnmount(() => {
               @activate="openModeHelp()"
             />
             <MenuItem
-              label="Quit to menu"
+              :label="t('game.pauseQuit')"
               kind="action"
               :selected="pauseFocusedIndex === 3"
               @select="pauseFocusedIndex = 3"

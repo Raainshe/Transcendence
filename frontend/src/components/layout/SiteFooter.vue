@@ -1,20 +1,22 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/layout/site-footer.css'
 
 const year = new Date().getFullYear()
+const { t } = useI18n()
 
 const hints = [
-  { keys: '\u2191\u2193', label: 'Navigate' },
-  { keys: '\u2190\u2192', label: 'Change' },
-  { keys: 'Enter', label: 'Start' },
+  { keys: '\u2191\u2193', labelKey: 'footer.hintNavigate' },
+  { keys: '\u2190\u2192', labelKey: 'footer.hintChange' },
+  { keys: 'Enter', labelKey: 'footer.hintStart' },
 ] as const
 
 const links = [
-  { to: '/privacy', label: 'Privacy' },
-  { to: '/terms', label: 'Terms' },
-  { to: '/credits', label: 'Developed by' },
+  { to: '/privacy', labelKey: 'footer.privacy' },
+  { to: '/terms', labelKey: 'footer.terms' },
+  { to: '/credits', labelKey: 'footer.developedBy' },
 ] as const
 </script>
 
@@ -28,15 +30,15 @@ const links = [
         :to="link.to"
         class="site-footer__link"
       >
-        {{ link.label }}
+        {{ t(link.labelKey) }}
       </RouterLink>
     </span>
     <span class="site-footer__hint" aria-hidden="true">
-      <span v-for="hint in hints" :key="hint.label" class="site-footer__hint-item">
+      <span v-for="hint in hints" :key="hint.labelKey" class="site-footer__hint-item">
         <span class="site-footer__hint-key">{{ hint.keys }}</span>
-        <span>{{ hint.label }}</span>
+        <span>{{ t(hint.labelKey) }}</span>
       </span>
     </span>
-    <span class="site-footer__version">v0.1.0</span>
+    <span class="site-footer__version">{{ t('footer.version') }}</span>
   </footer>
 </template>
