@@ -194,7 +194,7 @@ function formatPlayers(count: PlayerCount): string {
         label="Variation"
         kind="cycler"
         :selected="focusedIndex === 1"
-        @select="focusItem(2)"
+        @select="focusItem(1)"
       >
         <CycleSelector
           ref="variationCycler"
@@ -208,7 +208,7 @@ function formatPlayers(count: PlayerCount): string {
         label="Players"
         kind="cycler"
         :selected="focusedIndex === 2"
-        @select="focusItem(3)"
+        @select="focusItem(2)"
       >
         <CycleSelector
           ref="playersCycler"
@@ -222,7 +222,7 @@ function formatPlayers(count: PlayerCount): string {
         :label="audioMenuLabel"
         kind="action"
         :selected="focusedIndex === 3"
-        @select="focusItem(1)"
+        @select="focusItem(3)"
         @activate="toggleAudio()"
       />
     </ul>
