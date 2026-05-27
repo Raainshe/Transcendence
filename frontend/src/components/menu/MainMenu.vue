@@ -193,7 +193,7 @@ function formatPlayers(count: PlayerCount): string {
       <MenuItem
         label="Variation"
         kind="cycler"
-        :selected="focusedIndex === 2"
+        :selected="focusedIndex === 1"
         @select="focusItem(2)"
       >
         <CycleSelector
@@ -207,7 +207,7 @@ function formatPlayers(count: PlayerCount): string {
       <MenuItem
         label="Players"
         kind="cycler"
-        :selected="focusedIndex === 3"
+        :selected="focusedIndex === 2"
         @select="focusItem(3)"
       >
         <CycleSelector
@@ -221,7 +221,7 @@ function formatPlayers(count: PlayerCount): string {
       <MenuItem
         :label="audioMenuLabel"
         kind="action"
-        :selected="focusedIndex === 1"
+        :selected="focusedIndex === 3"
         @select="focusItem(1)"
         @activate="toggleAudio()"
       />
