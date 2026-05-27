@@ -124,7 +124,6 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   function buildMatchRecord(): MatchRecordV1 {
     const settings = useGameSettingsStore()
-    const e = engine.value
     return toMatchRecordV1({
       runId: runId.value,
       seed: sessionSeed.value,

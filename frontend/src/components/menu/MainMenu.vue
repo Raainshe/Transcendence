@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import CycleSelector from '@/components/menu/CycleSelector.vue'
@@ -20,6 +21,7 @@ type CyclerHandle = { prev: () => void; next: () => void }
 
 const settings = useGameSettingsStore()
 const router = useRouter()
+const { t } = useI18n()
 
 const ITEM_COUNT = 4
 const focusedIndex = ref(0)
@@ -35,7 +37,9 @@ function uiPrefs() {
 
 const audioOn = computed(() => settings.musicEnabled && settings.sfxEnabled)
 
-const audioMenuLabel = computed(() => (audioOn.value ? 'Music: ON' : 'Music: OFF'))
+const audioMenuLabel = computed(() =>
+  audioOn.value ? t('menu.audioOn') : t('menu.audioOff'),
+)
 
 function ensureAudioUnlocked(): void {
   gameAudio.unlock()
@@ -166,7 +170,7 @@ function formatVariation(value: GameVariation): string {
 }
 
 function formatPlayers(count: PlayerCount): string {
-  return `${count} PLAYER${count === 1 ? '' : 'S'}`
+  return t('menu.playersCount', { count })
 }
 </script>
 
@@ -175,15 +179,15 @@ function formatPlayers(count: PlayerCount): string {
     ref="menu"
     class="main-menu"
     role="menu"
-    aria-label="Main Menu"
+    :aria-label="t('menu.ariaLabel')"
     tabindex="0"
     @keydown="onKeydown"
     @click="ensureAudioUnlocked"
   >
-    <h2 class="main-menu__title">Main Menu</h2>
+    <h2 class="main-menu__title">{{ t('menu.title') }}</h2>
     <ul class="main-menu__list">
       <MenuItem
-        label="New Game"
+        :label="t('menu.newGame')"
         kind="action"
         :selected="focusedIndex === 0"
         @select="focusItem(0)"
@@ -191,38 +195,42 @@ function formatPlayers(count: PlayerCount): string {
       />
      
       <MenuItem
-        label="Variation"
+        :label="t('menu.variation')"
         kind="cycler"
-        :selected="focusedIndex === 2"
-        @select="focusItem(2)"
+        :selected="focusedIndex === 1"
+        @select="focusItem(1)"
       >
         <CycleSelector
           ref="variationCycler"
           v-model="settings.variation"
           :options="GAME_VARIATIONS"
           :format-label="formatVariation"
-          aria-label="Game variation"
+          :aria-label="t('menu.variationAriaLabel')"
+          :prev-aria-label="t('cycler.previous')"
+          :next-aria-label="t('cycler.next')"
         />
       </MenuItem>
       <MenuItem
-        label="Players"
+        :label="t('menu.players')"
         kind="cycler"
-        :selected="focusedIndex === 3"
-        @select="focusItem(3)"
+        :selected="focusedIndex === 2"
+        @select="focusItem(2)"
       >
         <CycleSelector
           ref="playersCycler"
           v-model="settings.playerCount"
           :options="PLAYER_COUNTS"
           :format-label="formatPlayers"
-          aria-label="Number of players"
+          :aria-label="t('menu.playersAriaLabel')"
+          :prev-aria-label="t('cycler.previous')"
+          :next-aria-label="t('cycler.next')"
         />
       </MenuItem>
       <MenuItem
         :label="audioMenuLabel"
         kind="action"
-        :selected="focusedIndex === 1"
-        @select="focusItem(1)"
+        :selected="focusedIndex === 3"
+        @select="focusItem(3)"
         @activate="toggleAudio()"
       />
     </ul>

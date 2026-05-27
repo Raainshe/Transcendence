@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/game/action-notifications.css'
 import type { NotificationTone } from '@/game/fx/types'
@@ -7,6 +8,7 @@ import { useGameFxStore } from '@/stores/gameFx'
 
 const fx = useGameFxStore()
 const { notifications } = storeToRefs(fx)
+const { t } = useI18n()
 
 function toneClass(tone: NotificationTone): string {
   return `action-notifications__item--${tone}`
@@ -21,7 +23,7 @@ function toneClass(tone: NotificationTone): string {
       class="action-notifications__item"
       :class="toneClass(n.tone)"
     >
-      {{ n.text }}
+      {{ t(n.textKey, n.textParams ?? {}) }}
     </p>
   </div>
 </template>

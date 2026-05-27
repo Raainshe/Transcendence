@@ -12,6 +12,8 @@ export type NotificationTone = 'default' | 'tetris' | 'tspin' | 'backToBack' | '
 export type ActionNotification = {
   id: string
   text: string
+  textKey: string
+  textParams?: Record<string, number | string>
   tone: NotificationTone
   expiresAt: number
 }

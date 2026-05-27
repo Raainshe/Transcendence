@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, useId } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/game/game-mode-help.css'
 import { getGameVariationInfo, type GameVariation } from '@/types/game'
@@ -17,6 +18,7 @@ const props = withDefaults(
 )
 
 const tooltipId = useId()
+const { t } = useI18n()
 
 const info = computed(() => getGameVariationInfo(props.variation))
 </script>
@@ -28,10 +30,10 @@ const info = computed(() => getGameVariationInfo(props.variation))
     :data-tooltip="info.tooltip"
     :title="info.tooltip"
     tabindex="0"
-    :aria-label="`Game mode: ${info.label}`"
+    :aria-label="t('game.modeAriaLabel', { mode: info.label })"
     :aria-describedby="tooltipId"
   >
-    <span v-if="showHeading" class="game-mode-badge__heading">Mode</span>
+    <span v-if="showHeading" class="game-mode-badge__heading">{{ t('game.modeHeading') }}</span>
     <span class="game-mode-badge__label">{{ info.label }}</span>
     <span :id="tooltipId" class="visually-hidden">{{ info.tooltip }}</span>
   </span>
