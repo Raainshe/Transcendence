@@ -24,7 +24,7 @@ const { t } = useI18n()
     <p>{{ t('legal.privacy.localStorageBody') }}</p>
 
     <h2>{{ t('legal.privacy.thirdPartyTitle') }}</h2>
-    <p>{{ t('legal.privacy.thirdPartyBody') }}</p>
+    <p>{{ t('legal.privacy.thirdPartyBody', { handle: 'handle' }) }}</p>
 
     <h2>{{ t('legal.privacy.childrenTitle') }}</h2>
     <p>{{ t('legal.privacy.childrenBody') }}</p>

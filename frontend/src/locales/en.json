@@ -135,7 +135,7 @@
       "localStorageTitle": "Local browser storage",
       "localStorageBody": "Your gameplay preferences (such as the selected variation and player count) are kept in a Pinia store inside the running tab. Where the project persists those preferences, it does so using your browser's own storage (for example localStorage). This data never leaves your device, is never sent to a server, and can be cleared at any time from your browser's site-data controls.",
       "thirdPartyTitle": "Third-party content",
-      "thirdPartyBody": "The Credits page loads developer avatars directly from GitHub (github.com/<handle>.png). When you visit that page, your browser makes a request to GitHub to fetch the image. Those requests are handled by GitHub under their own privacy policy. No other third-party services are contacted by the application.",
+      "thirdPartyBody": "The Credits page loads developer avatars directly from GitHub (github.com/{handle}.png). When you visit that page, your browser makes a request to GitHub to fetch the image. Those requests are handled by GitHub under their own privacy policy. No other third-party services are contacted by the application.",
       "childrenTitle": "Children's privacy",
       "childrenBody": "Because we do not collect any personal data, the application does not knowingly gather information from anyone, including children. There is no account system and no age gate.",
       "controlsTitle": "Your controls",
