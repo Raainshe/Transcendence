@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -56,6 +57,76 @@ func TestUsers_DeleteMe(t *testing.T) {
 	mustStatus(t, resp, raw, http.StatusNoContent)
 
 	resp, raw = doJSON(t, http.MethodGet, "/api/v1/users/"+aliceID.String(), "", "")
+	mustStatus(t, resp, raw, http.StatusNotFound)
+}
+
+func TestUsers_OnlineStatus(t *testing.T) {
+	truncate(t)
+	_, token := registerUser(t, "alice", "alice@example.com", "secret12")
+
+	// last_seen_at is written by an async goroutine in the JWT middleware, so the
+	// first authenticated GET may still see is_online=false. Poll until it lands.
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		resp, raw := doJSON(t, http.MethodGet, "/api/v1/users/me", token, "")
+		mustStatus(t, resp, raw, http.StatusOK)
+		var out struct {
+			User struct {
+				IsOnline bool `json:"is_online"`
+			} `json:"user"`
+		}
+		decodeJSON(t, raw, &out)
+		if out.User.IsOnline {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("is_online still false after 2s of authenticated requests (body: %s)", raw)
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+}
+
+func TestUsers_AvatarDelete(t *testing.T) {
+	truncate(t)
+	_, token := registerUser(t, "alice", "alice@example.com", "secret12")
+
+	// Upload avatar
+	resp, raw := uploadAvatar(t, token, "avatar.png", "image/png", tinyPNG(t))
+	mustStatus(t, resp, raw, http.StatusOK)
+	var upload struct {
+		User struct {
+			AvatarURL *string `json:"avatar_url"`
+		} `json:"user"`
+	}
+	decodeJSON(t, raw, &upload)
+	if upload.User.AvatarURL == nil {
+		t.Fatalf("upload: avatar_url is nil; body: %s", raw)
+	}
+	avatarURL := *upload.User.AvatarURL
+
+	// Delete avatar
+	resp, raw = doJSON(t, http.MethodDelete, "/api/v1/users/me/avatar", token, "")
+	mustStatus(t, resp, raw, http.StatusNoContent)
+
+	// /users/me now has null avatar_url
+	resp, raw = doJSON(t, http.MethodGet, "/api/v1/users/me", token, "")
+	mustStatus(t, resp, raw, http.StatusOK)
+	var me struct {
+		User struct {
+			AvatarURL *string `json:"avatar_url"`
+		} `json:"user"`
+	}
+	decodeJSON(t, raw, &me)
+	if me.User.AvatarURL != nil {
+		t.Errorf("after delete, avatar_url = %v; want nil", *me.User.AvatarURL)
+	}
+
+	// The file URL itself 404s
+	resp, raw = doJSON(t, http.MethodGet, avatarURL, "", "")
+	mustStatus(t, resp, raw, http.StatusNotFound)
+
+	// Deleting again → 404
+	resp, raw = doJSON(t, http.MethodDelete, "/api/v1/users/me/avatar", token, "")
 	mustStatus(t, resp, raw, http.StatusNotFound)
 }
 

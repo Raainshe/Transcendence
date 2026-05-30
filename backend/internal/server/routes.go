@@ -44,7 +44,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 		// Auth — protected
 		r.Group(func(r chi.Router) {
-			r.Use(mw.JWTAuth(s.jwtSecret))
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Post("/auth/logout", s.authHandler.Logout)
 			r.Post("/auth/2fa/setup", s.authHandler.Setup2FA)
 			r.Post("/auth/2fa/verify", s.authHandler.Verify2FA)
@@ -58,7 +58,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 		// Users — protected
 		r.Group(func(r chi.Router) {
-			r.Use(mw.JWTAuth(s.jwtSecret))
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Get("/users/me", s.userHandler.GetMe)
 			r.Patch("/users/me", s.userHandler.UpdateMe)
 			r.Delete("/users/me", s.userHandler.DeleteMe)
@@ -79,7 +79,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Get("/games/{id}", s.gameHandler.GetGame)
 		r.Get("/leaderboard", s.gameHandler.GetLeaderboard)
 		r.Group(func(r chi.Router) {
-			r.Use(mw.JWTAuth(s.jwtSecret))
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Post("/games", s.gameHandler.CreateGame)
 		})
 	})

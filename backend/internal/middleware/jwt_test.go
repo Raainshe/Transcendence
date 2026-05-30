@@ -25,7 +25,7 @@ func TestJWTAuth(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handler := middleware.JWTAuth(secret)(next)
+	handler := middleware.JWTAuth(secret, nil)(next)
 
 	tests := []struct {
 		name       string

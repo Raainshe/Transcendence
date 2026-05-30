@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 func recordGame(t *testing.T, token, mode string, score int, win bool) {
@@ -87,6 +89,62 @@ func TestLeaderboard_OrderedByScore(t *testing.T) {
 			t.Errorf("rank %d = %s, want %s", i+1, entries[i].Username, want)
 		}
 	}
+}
+
+func TestGames_ListAndDetail(t *testing.T) {
+	truncate(t)
+	aliceID, aliceTok := registerUser(t, "alice", "alice@example.com", "secret12")
+	bobID, bobTok := registerUser(t, "bob", "bob@example.com", "secret12")
+
+	recordGame(t, aliceTok, "marathon", 100, true)
+	recordGame(t, aliceTok, "sprint", 200, false)
+	recordGame(t, bobTok, "marathon", 300, true)
+
+	// List all → 3 games, total 3
+	resp, raw := doJSON(t, http.MethodGet, "/api/v1/games", "", "")
+	mustStatus(t, resp, raw, http.StatusOK)
+	var all struct {
+		Games []struct{ ID string `json:"id"` } `json:"games"`
+		Total int                                `json:"total"`
+	}
+	decodeJSON(t, raw, &all)
+	if len(all.Games) != 3 || all.Total != 3 {
+		t.Fatalf("list all: got %d games (total %d), want 3/3 (body: %s)", len(all.Games), all.Total, raw)
+	}
+
+	// Filter by Alice → 2 games
+	resp, raw = doJSON(t, http.MethodGet, "/api/v1/games?user_id="+aliceID.String(), "", "")
+	mustStatus(t, resp, raw, http.StatusOK)
+	var alice struct {
+		Games []struct{ ID string `json:"id"` } `json:"games"`
+		Total int                                `json:"total"`
+	}
+	decodeJSON(t, raw, &alice)
+	if len(alice.Games) != 2 || alice.Total != 2 {
+		t.Fatalf("list by alice: got %d games (total %d), want 2/2", len(alice.Games), alice.Total)
+	}
+	_ = bobID
+
+	// Fetch detail of the first game; player record should be present
+	first := alice.Games[0].ID
+	resp, raw = doJSON(t, http.MethodGet, "/api/v1/games/"+first, "", "")
+	mustStatus(t, resp, raw, http.StatusOK)
+	var detail struct {
+		Game struct {
+			ID      string `json:"id"`
+			Players []struct {
+				UserID string `json:"user_id"`
+			} `json:"players"`
+		} `json:"game"`
+	}
+	decodeJSON(t, raw, &detail)
+	if detail.Game.ID != first || len(detail.Game.Players) != 1 || detail.Game.Players[0].UserID != aliceID.String() {
+		t.Errorf("detail = %+v, want id=%s with 1 alice player", detail.Game, first)
+	}
+
+	// Unknown id → 404
+	resp, raw = doJSON(t, http.MethodGet, "/api/v1/games/"+uuid.NewString(), "", "")
+	mustStatus(t, resp, raw, http.StatusNotFound)
 }
 
 func TestLeaderboard_LimitClamping(t *testing.T) {

@@ -19,7 +19,10 @@ type claims struct {
 	jwt.RegisteredClaims
 }
 
-func JWTAuth(secret string) func(http.Handler) http.Handler {
+// JWTAuth validates Bearer tokens and (optionally) reports the authenticated
+// user id to the onSeen callback for last-seen tracking. The callback runs in
+// its own goroutine — it must not block the request and failures are ignored.
+func JWTAuth(secret string, onSeen func(uuid.UUID)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
@@ -40,6 +43,10 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 			if err != nil || !token.Valid {
 				writeJSONError(w, http.StatusUnauthorized, "invalid or expired token")
 				return
+			}
+
+			if onSeen != nil {
+				go onSeen(c.UserID)
 			}
 
 			ctx := context.WithValue(r.Context(), userIDKey, c.UserID)

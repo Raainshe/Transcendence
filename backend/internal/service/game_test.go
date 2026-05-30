@@ -71,6 +71,100 @@ func TestGameService_RecordMatch(t *testing.T) {
 	}
 }
 
+func TestGameService_ListGames(t *testing.T) {
+	tests := []struct {
+		name        string
+		userID      *uuid.UUID
+		inputLimit  int
+		wantLimit   int
+		listFn      func(context.Context, *uuid.UUID, int, int) ([]model.Game, error)
+		countFn     func(context.Context, *uuid.UUID) (int, error)
+		wantTotal   int
+		wantErr     bool
+	}{
+		{name: "default limit (0 -> 20)", inputLimit: 0, wantLimit: 20, wantTotal: 0},
+		{name: "limit > 100 clamped", inputLimit: 999, wantLimit: 100, wantTotal: 0},
+		{name: "within range used as-is", inputLimit: 30, wantLimit: 30, wantTotal: 0},
+		{
+			name:    "repo error",
+			listFn:  func(_ context.Context, _ *uuid.UUID, _, _ int) ([]model.Game, error) { return nil, errors.New("db down") },
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var capturedLimit int
+			repo := &testutil.MockGameRepo{
+				ListGamesFn: tt.listFn,
+				CountGamesFn: tt.countFn,
+			}
+			if repo.ListGamesFn == nil {
+				repo.ListGamesFn = func(_ context.Context, _ *uuid.UUID, limit, _ int) ([]model.Game, error) {
+					capturedLimit = limit
+					return []model.Game{}, nil
+				}
+			}
+			svc := service.NewGameService(repo)
+			_, total, err := svc.ListGames(context.Background(), tt.userID, tt.inputLimit, 0)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if tt.wantLimit != 0 && capturedLimit != tt.wantLimit {
+				t.Errorf("ListGames called with limit=%d, want %d", capturedLimit, tt.wantLimit)
+			}
+			if total != tt.wantTotal {
+				t.Errorf("total = %d, want %d", total, tt.wantTotal)
+			}
+		})
+	}
+}
+
+func TestGameService_GetGame(t *testing.T) {
+	id := uuid.New()
+	tests := []struct {
+		name             string
+		findGameDetailFn func(context.Context, uuid.UUID) (*model.GameDetail, error)
+		wantErr          bool
+	}{
+		{
+			name: "success",
+			findGameDetailFn: func(_ context.Context, _ uuid.UUID) (*model.GameDetail, error) {
+				return &model.GameDetail{Game: model.Game{ID: id, Mode: "marathon"}}, nil
+			},
+		},
+		{
+			name:    "not found defaults",
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &testutil.MockGameRepo{FindGameDetailFn: tt.findGameDetailFn}
+			svc := service.NewGameService(repo)
+			detail, err := svc.GetGame(context.Background(), id)
+			if tt.wantErr {
+				if err == nil {
+					t.Error("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if detail == nil || detail.ID != id {
+				t.Errorf("detail = %+v, want id=%v", detail, id)
+			}
+		})
+	}
+}
+
 func TestGameService_GetLeaderboard(t *testing.T) {
 	var capturedLimit int
 

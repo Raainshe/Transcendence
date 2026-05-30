@@ -22,6 +22,8 @@ type MockUserRepo struct {
 	ListFn           func(ctx context.Context, limit, offset int) ([]model.User, error)
 	CountFn          func(ctx context.Context) (int, error)
 	UpdateFn         func(ctx context.Context, id uuid.UUID, req model.UpdateUserRequest) (*model.User, error)
+	ClearAvatarFn    func(ctx context.Context, id uuid.UUID) error
+	UpdateLastSeenFn func(ctx context.Context, id uuid.UUID) error
 	DeleteFn         func(ctx context.Context, id uuid.UUID) error
 }
 
@@ -70,6 +72,18 @@ func (m *MockUserRepo) Update(ctx context.Context, id uuid.UUID, req model.Updat
 func (m *MockUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	if m.DeleteFn != nil {
 		return m.DeleteFn(ctx, id)
+	}
+	return nil
+}
+func (m *MockUserRepo) ClearAvatar(ctx context.Context, id uuid.UUID) error {
+	if m.ClearAvatarFn != nil {
+		return m.ClearAvatarFn(ctx, id)
+	}
+	return nil
+}
+func (m *MockUserRepo) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
+	if m.UpdateLastSeenFn != nil {
+		return m.UpdateLastSeenFn(ctx, id)
 	}
 	return nil
 }
@@ -139,10 +153,13 @@ func (m *MockRelationshipRepo) ListBlocked(ctx context.Context, userID uuid.UUID
 // ── Game repo mock ────────────────────────────────────────────────────────────
 
 type MockGameRepo struct {
-	RecordMatchFn    func(ctx context.Context, game *model.Game, player *model.GamePlayer) error
-	FindByIDFn       func(ctx context.Context, id uuid.UUID) (*model.Game, error)
+	RecordMatchFn     func(ctx context.Context, game *model.Game, player *model.GamePlayer) error
+	FindByIDFn        func(ctx context.Context, id uuid.UUID) (*model.Game, error)
+	ListGamesFn       func(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
+	CountGamesFn      func(ctx context.Context, userID *uuid.UUID) (int, error)
+	FindGameDetailFn  func(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
 	ListLeaderboardFn func(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
-	GetUserStatsFn   func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	GetUserStatsFn    func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 }
 
 func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error {
@@ -154,6 +171,24 @@ func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player
 func (m *MockGameRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error) {
 	if m.FindByIDFn != nil {
 		return m.FindByIDFn(ctx, id)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockGameRepo) ListGames(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error) {
+	if m.ListGamesFn != nil {
+		return m.ListGamesFn(ctx, userID, limit, offset)
+	}
+	return []model.Game{}, nil
+}
+func (m *MockGameRepo) CountGames(ctx context.Context, userID *uuid.UUID) (int, error) {
+	if m.CountGamesFn != nil {
+		return m.CountGamesFn(ctx, userID)
+	}
+	return 0, nil
+}
+func (m *MockGameRepo) FindGameDetail(ctx context.Context, id uuid.UUID) (*model.GameDetail, error) {
+	if m.FindGameDetailFn != nil {
+		return m.FindGameDetailFn(ctx, id)
 	}
 	return nil, repository.ErrNotFound
 }
@@ -173,12 +208,26 @@ func (m *MockGameRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*mod
 // ── File repo mock ────────────────────────────────────────────────────────────
 
 type MockFileRepo struct {
-	CreateFn func(ctx context.Context, f *model.FileRecord) error
+	CreateFn     func(ctx context.Context, f *model.FileRecord) error
+	FindByPathFn func(ctx context.Context, userID uuid.UUID, fsPath string) (*model.FileRecord, error)
+	DeleteFn     func(ctx context.Context, id uuid.UUID) error
 }
 
 func (m *MockFileRepo) Create(ctx context.Context, f *model.FileRecord) error {
 	if m.CreateFn != nil {
 		return m.CreateFn(ctx, f)
+	}
+	return nil
+}
+func (m *MockFileRepo) FindByPath(ctx context.Context, userID uuid.UUID, fsPath string) (*model.FileRecord, error) {
+	if m.FindByPathFn != nil {
+		return m.FindByPathFn(ctx, userID, fsPath)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockFileRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteFn != nil {
+		return m.DeleteFn(ctx, id)
 	}
 	return nil
 }
