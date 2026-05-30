@@ -46,6 +46,12 @@ func NewServer() *http.Server {
 		uploadDir = "./uploads"
 	}
 
+	return NewServerWithDB(port, dbService, jwtSecret, uploadDir)
+}
+
+// NewServerWithDB builds the HTTP server from pre-constructed dependencies.
+// Intended for integration tests; production code uses NewServer().
+func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir string) *http.Server {
 	userRepo := repository.NewUserRepository(dbService.DB())
 	fileRepo := repository.NewFileRepository(dbService.DB())
 	gameRepo := repository.NewGameRepository(dbService.DB())
