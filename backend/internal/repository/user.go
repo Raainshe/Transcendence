@@ -56,7 +56,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
 		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
-		FROM users WHERE email = $1
+		FROM users WHERE LOWER(email) = LOWER($1)
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, email))
 }
@@ -72,8 +72,8 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 
 func (r *userRepository) List(ctx context.Context, limit, offset int) ([]model.User, error) {
 	const q = `
-		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		SELECT id, username, email, avatar_url, role,
+		       is_2fa_enabled, created_at, updated_at, last_seen_at
 		FROM users ORDER BY created_at DESC LIMIT $1 OFFSET $2
 	`
 	rows, err := r.db.QueryContext(ctx, q, limit, offset)
@@ -86,8 +86,8 @@ func (r *userRepository) List(ctx context.Context, limit, offset int) ([]model.U
 		var u model.User
 		var idStr string
 		if err := rows.Scan(
-			&idStr, &u.Username, &u.Email, &u.PasswordHash, &u.AvatarURL,
-			&u.Role, &u.Is2FAEnabled, &u.TOTPSecret,
+			&idStr, &u.Username, &u.Email, &u.AvatarURL,
+			&u.Role, &u.Is2FAEnabled,
 			&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
 		); err != nil {
 			return nil, err

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -13,10 +14,13 @@ import (
 	"backend/internal/repository"
 )
 
+const MinPasswordLength = 8
+
 var (
-	ErrEmailTaken   = errors.New("email already in use")
+	ErrEmailTaken    = errors.New("email already in use")
 	ErrUsernameTaken = errors.New("username already in use")
 	ErrInvalidCreds  = errors.New("invalid credentials")
+	ErrPasswordWeak  = errors.New("password must be at least 8 characters")
 )
 
 type Claims struct {
@@ -45,7 +49,13 @@ func NewAuthService(users repository.UserRepository, secret string) *AuthService
 }
 
 func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model.User, string, error) {
-	if _, err := s.users.FindByEmail(ctx, req.Email); err == nil {
+	if len(req.Password) < MinPasswordLength {
+		return nil, "", ErrPasswordWeak
+	}
+
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+
+	if _, err := s.users.FindByEmail(ctx, email); err == nil {
 		return nil, "", ErrEmailTaken
 	} else if !errors.Is(err, repository.ErrNotFound) {
 		return nil, "", err
@@ -67,7 +77,7 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model
 	user := &model.User{
 		ID:           uuid.New(),
 		Username:     req.Username,
-		Email:        req.Email,
+		Email:        email,
 		PasswordHash: &hashStr,
 		Role:         "user",
 		CreatedAt:    now,
@@ -83,7 +93,8 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model
 }
 
 func (s *AuthService) Login(ctx context.Context, req LoginRequest) (*model.User, string, error) {
-	user, err := s.users.FindByEmail(ctx, req.Email)
+	email := strings.ToLower(strings.TrimSpace(req.Email))
+	user, err := s.users.FindByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, repository.ErrNotFound) {
 			return nil, "", ErrInvalidCreds

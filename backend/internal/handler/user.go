@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -42,8 +41,16 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
-	offset, _ := strconv.Atoi(r.URL.Query().Get("offset"))
+	limit, ok := parseQueryInt(r, "limit", 0)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "limit must be an integer"})
+		return
+	}
+	offset, ok := parseQueryInt(r, "offset", 0)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "offset must be an integer"})
+		return
+	}
 	users, total, err := h.users.ListUsers(r.Context(), limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list users"})
@@ -97,6 +104,8 @@ func (h *UserHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromContext(r.Context())
 
+	// Override the global 1MB API cap with the larger avatar budget.
+	r.Body = http.MaxBytesReader(w, r.Body, maxAvatarSize)
 	if err := r.ParseMultipartForm(maxAvatarSize); err != nil {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "file too large or invalid form data"})
 		return

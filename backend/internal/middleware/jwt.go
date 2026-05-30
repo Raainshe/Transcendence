@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -23,7 +24,7 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			authHeader := r.Header.Get("Authorization")
 			if !strings.HasPrefix(authHeader, "Bearer ") {
-				http.Error(w, `{"error":"missing or invalid authorization header"}`, http.StatusUnauthorized)
+				writeJSONError(w, http.StatusUnauthorized, "missing or invalid authorization header")
 				return
 			}
 
@@ -37,7 +38,7 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				http.Error(w, `{"error":"invalid or expired token"}`, http.StatusUnauthorized)
+				writeJSONError(w, http.StatusUnauthorized, "invalid or expired token")
 				return
 			}
 
@@ -50,4 +51,10 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 func UserIDFromContext(ctx context.Context) uuid.UUID {
 	id, _ := ctx.Value(userIDKey).(uuid.UUID)
 	return id
+}
+
+func writeJSONError(w http.ResponseWriter, code int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

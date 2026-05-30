@@ -26,12 +26,12 @@ func TestAuthService_Register(t *testing.T) {
 	}{
 		{
 			name:      "success",
-			req:       service.RegisterRequest{Username: "alice", Email: "alice@example.com", Password: "secret"},
+			req:       service.RegisterRequest{Username: "alice", Email: "alice@example.com", Password: "secret12"},
 			wantToken: true,
 		},
 		{
 			name: "email already taken",
-			req:  service.RegisterRequest{Username: "alice", Email: "taken@example.com", Password: "secret"},
+			req:  service.RegisterRequest{Username: "alice", Email: "taken@example.com", Password: "secret12"},
 			findByEmailFn: func(_ context.Context, _ string) (*model.User, error) {
 				return existingUser, nil
 			},
@@ -39,7 +39,7 @@ func TestAuthService_Register(t *testing.T) {
 		},
 		{
 			name: "username already taken",
-			req:  service.RegisterRequest{Username: "taken", Email: "new@example.com", Password: "secret"},
+			req:  service.RegisterRequest{Username: "taken", Email: "new@example.com", Password: "secret12"},
 			findByUsernameFn: func(_ context.Context, _ string) (*model.User, error) {
 				return existingUser, nil
 			},
@@ -47,11 +47,16 @@ func TestAuthService_Register(t *testing.T) {
 		},
 		{
 			name: "db error on create",
-			req:  service.RegisterRequest{Username: "alice", Email: "alice@example.com", Password: "secret"},
+			req:  service.RegisterRequest{Username: "alice", Email: "alice@example.com", Password: "secret12"},
 			createFn: func(_ context.Context, _ *model.User) error {
 				return errors.New("db down")
 			},
 			wantErr: errors.New("db down"),
+		},
+		{
+			name:    "password too short",
+			req:     service.RegisterRequest{Username: "alice", Email: "alice@example.com", Password: "short"},
+			wantErr: service.ErrPasswordWeak,
 		},
 	}
 
@@ -70,7 +75,7 @@ func TestAuthService_Register(t *testing.T) {
 				if err == nil {
 					t.Fatalf("expected error %v, got nil", tt.wantErr)
 				}
-				if tt.wantErr == service.ErrEmailTaken || tt.wantErr == service.ErrUsernameTaken {
+				if tt.wantErr == service.ErrEmailTaken || tt.wantErr == service.ErrUsernameTaken || tt.wantErr == service.ErrPasswordWeak {
 					if !errors.Is(err, tt.wantErr) {
 						t.Errorf("error = %v, want %v", err, tt.wantErr)
 					}

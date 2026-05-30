@@ -3,7 +3,6 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -29,11 +28,11 @@ var validModes = map[string]bool{
 }
 
 func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *GameHandler) CreateGame(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +70,11 @@ func (h *GameHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *GameHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
-	limit, _ := strconv.Atoi(r.URL.Query().Get("limit"))
+	limit, ok := parseQueryInt(r, "limit", 0)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "limit must be an integer"})
+		return
+	}
 	entries, err := h.games.GetLeaderboard(r.Context(), limit)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch leaderboard"})
