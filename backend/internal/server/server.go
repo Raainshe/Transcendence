@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
+	"github.com/google/uuid"
 
 	"backend/internal/database"
 	"backend/internal/handler"
@@ -22,6 +24,7 @@ type Server struct {
 	db          database.Service
 	jwtSecret   string
 	uploadDir   string
+	onSeen      func(uuid.UUID)
 	authHandler *handler.AuthHandler
 	userHandler *handler.UserHandler
 	gameHandler *handler.GameHandler
@@ -61,11 +64,17 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 
+	onSeen := func(id uuid.UUID) {
+		// Best-effort; errors don't surface to the request handler.
+		_ = userRepo.UpdateLastSeen(context.Background(), id)
+	}
+
 	srv := &Server{
 		port:        port,
 		db:          dbService,
 		jwtSecret:   jwtSecret,
 		uploadDir:   uploadDir,
+		onSeen:      onSeen,
 		authHandler: handler.NewAuthHandler(authSvc),
 		userHandler: handler.NewUserHandler(userSvc),
 		gameHandler: handler.NewGameHandler(gameSvc),
