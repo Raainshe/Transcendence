@@ -290,6 +290,48 @@ func TestUserHandler_DeleteMe(t *testing.T) {
 	}
 }
 
+func TestUserHandler_DeleteAvatar(t *testing.T) {
+	user := testutil.NewTestUser()
+	avatarURL := "/uploads/avatars/" + user.ID.String() + "/x.png"
+	userWith := *user
+	userWith.AvatarURL = &avatarURL
+	token := testutil.MakeTestToken(user.ID, testSecret)
+
+	tests := []struct {
+		name       string
+		findByIDFn func(context.Context, uuid.UUID) (*model.User, error)
+		wantStatus int
+	}{
+		{
+			name:       "success",
+			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.User, error) { return &userWith, nil },
+			wantStatus: http.StatusNoContent,
+		},
+		{
+			name:       "no avatar",
+			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.User, error) { return user, nil },
+			wantStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := &testutil.MockUserRepo{FindByIDFn: tt.findByIDFn}
+			h := newUserHandler(t, repo, nil)
+			srv := serveProtected(http.MethodDelete, "/users/me/avatar", h.DeleteAvatar)
+
+			req := httptest.NewRequest(http.MethodDelete, "/users/me/avatar", nil)
+			req.Header.Set("Authorization", "Bearer "+token)
+			w := httptest.NewRecorder()
+			srv.ServeHTTP(w, req)
+
+			if w.Code != tt.wantStatus {
+				t.Errorf("status = %d, want %d (body: %s)", w.Code, tt.wantStatus, w.Body.String())
+			}
+		})
+	}
+}
+
 func TestUserHandler_GetFriends(t *testing.T) {
 	user := testutil.NewTestUser()
 	token := testutil.MakeTestToken(user.ID, testSecret)

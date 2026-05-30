@@ -516,4 +516,76 @@ func TestUserService_UnblockUser(t *testing.T) {
 	}
 }
 
+func TestUserService_DeleteAvatar(t *testing.T) {
+	userID := uuid.New()
+	avatarURL := "/uploads/avatars/" + userID.String() + "/file.png"
+	withAvatar := testutil.NewTestUser()
+	withAvatar.ID = userID
+	withAvatar.AvatarURL = &avatarURL
+	noAvatar := testutil.NewTestUser()
+	noAvatar.ID = userID
+
+	tests := []struct {
+		name             string
+		findByIDFn       func(context.Context, uuid.UUID) (*model.User, error)
+		findByPathFn     func(context.Context, uuid.UUID, string) (*model.FileRecord, error)
+		wantErr          error
+		wantClear        bool
+		wantFileDel      bool
+	}{
+		{
+			name:       "success — file record present",
+			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.User, error) { return withAvatar, nil },
+			findByPathFn: func(_ context.Context, _ uuid.UUID, _ string) (*model.FileRecord, error) {
+				return &model.FileRecord{ID: uuid.New()}, nil
+			},
+			wantClear:   true,
+			wantFileDel: true,
+		},
+		{
+			name:       "success — stale row, no file record (still clears)",
+			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.User, error) { return withAvatar, nil },
+			wantClear:  true,
+		},
+		{
+			name:       "no avatar set",
+			findByIDFn: func(_ context.Context, _ uuid.UUID) (*model.User, error) { return noAvatar, nil },
+			wantErr:    service.ErrNoAvatar,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var clearCalled, fileDelCalled bool
+			users := &testutil.MockUserRepo{
+				FindByIDFn:    tt.findByIDFn,
+				ClearAvatarFn: func(_ context.Context, _ uuid.UUID) error { clearCalled = true; return nil },
+			}
+			files := &testutil.MockFileRepo{
+				FindByPathFn: tt.findByPathFn,
+				DeleteFn:     func(_ context.Context, _ uuid.UUID) error { fileDelCalled = true; return nil },
+			}
+			svc := newUserSvc(t, users, files, nil)
+
+			err := svc.DeleteAvatar(context.Background(), userID)
+
+			if tt.wantErr != nil {
+				if !errors.Is(err, tt.wantErr) {
+					t.Errorf("err = %v, want %v", err, tt.wantErr)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if clearCalled != tt.wantClear {
+				t.Errorf("ClearAvatar called = %v, want %v", clearCalled, tt.wantClear)
+			}
+			if fileDelCalled != tt.wantFileDel {
+				t.Errorf("file Delete called = %v, want %v", fileDelCalled, tt.wantFileDel)
+			}
+		})
+	}
+}
+
 func ptr(s string) *string { return &s }
