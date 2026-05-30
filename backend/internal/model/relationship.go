@@ -1,0 +1,21 @@
+package model
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+const (
+	RelationshipPending  = "pending"
+	RelationshipAccepted = "accepted"
+	RelationshipBlocked  = "blocked"
+)
+
+type Relationship struct {
+	ID          uuid.UUID `json:"id"`
+	RequesterID uuid.UUID `json:"requester_id"`
+	ReceiverID  uuid.UUID `json:"receiver_id"`
+	Status      string    `json:"status"`
+	CreatedAt   time.Time `json:"created_at"`
+}

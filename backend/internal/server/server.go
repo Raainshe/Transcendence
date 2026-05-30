@@ -49,9 +49,10 @@ func NewServer() *http.Server {
 	userRepo := repository.NewUserRepository(dbService.DB())
 	fileRepo := repository.NewFileRepository(dbService.DB())
 	gameRepo := repository.NewGameRepository(dbService.DB())
+	relRepo := repository.NewRelationshipRepository(dbService.DB())
 
 	authSvc := service.NewAuthService(userRepo, jwtSecret)
-	userSvc := service.NewUserService(userRepo, fileRepo, uploadDir)
+	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 
 	srv := &Server{
