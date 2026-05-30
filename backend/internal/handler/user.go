@@ -135,21 +135,141 @@ func (h *UserHandler) DeleteMe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetFriends(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+	friends, err := h.users.GetFriends(r.Context(), userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get friends"})
+		return
+	}
+	if friends == nil {
+		friends = []model.User{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"friends": friends})
+}
+
+func (h *UserHandler) GetPendingRequests(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	requests, err := h.users.GetPendingRequests(r.Context(), userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get friend requests"})
+		return
+	}
+	if requests == nil {
+		requests = []model.User{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requests": requests})
+}
+
+func (h *UserHandler) GetBlockedUsers(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	blocked, err := h.users.GetBlockedUsers(r.Context(), userID)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to get blocked users"})
+		return
+	}
+	if blocked == nil {
+		blocked = []model.User{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"blocked": blocked})
 }
 
 func (h *UserHandler) AddFriend(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+	targetID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		return
+	}
+	err = h.users.SendFriendRequest(r.Context(), userID, targetID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrSelfRelationship):
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cannot add yourself as a friend"})
+		case errors.Is(err, service.ErrRelationshipExists):
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "relationship already exists"})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to send friend request"})
+		}
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *UserHandler) AcceptFriend(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	requesterID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		return
+	}
+	err = h.users.AcceptFriendRequest(r.Context(), userID, requesterID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "friend request not found"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to accept friend request"})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *UserHandler) RemoveFriend(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+	otherID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		return
+	}
+	err = h.users.RemoveFriend(r.Context(), userID, otherID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "friendship not found"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to remove friend"})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *UserHandler) BlockUser(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+	targetID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		return
+	}
+	err = h.users.BlockUser(r.Context(), userID, targetID)
+	if err != nil {
+		switch {
+		case errors.Is(err, service.ErrSelfRelationship):
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "cannot block yourself"})
+		case errors.Is(err, service.ErrRelationshipExists):
+			writeJSON(w, http.StatusConflict, map[string]string{"error": "user is already blocked"})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to block user"})
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *UserHandler) UnblockUser(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	userID := middleware.UserIDFromContext(r.Context())
+	targetID, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid user id"})
+		return
+	}
+	err = h.users.UnblockUser(r.Context(), userID, targetID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "user is not blocked"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to unblock user"})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
