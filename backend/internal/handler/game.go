@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -9,6 +10,7 @@ import (
 
 	"backend/internal/middleware"
 	"backend/internal/model"
+	"backend/internal/repository"
 	"backend/internal/service"
 )
 
@@ -28,11 +30,53 @@ var validModes = map[string]bool{
 }
 
 func (h *GameHandler) ListGames(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
+	var userIDFilter *uuid.UUID
+	if raw := r.URL.Query().Get("user_id"); raw != "" {
+		id, err := uuid.Parse(raw)
+		if err != nil {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "user_id must be a valid UUID"})
+			return
+		}
+		userIDFilter = &id
+	}
+	limit, ok := parseQueryInt(r, "limit", 0)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "limit must be an integer"})
+		return
+	}
+	offset, ok := parseQueryInt(r, "offset", 0)
+	if !ok {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "offset must be an integer"})
+		return
+	}
+
+	games, total, err := h.games.ListGames(r.Context(), userIDFilter, limit, offset)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to list games"})
+		return
+	}
+	if games == nil {
+		games = []model.Game{}
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"games": games, "total": total})
 }
 
 func (h *GameHandler) GetGame(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid game id"})
+		return
+	}
+	detail, err := h.games.GetGame(r.Context(), id)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "game not found"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch game"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"game": detail})
 }
 
 func (h *GameHandler) CreateGame(w http.ResponseWriter, r *http.Request) {

@@ -13,6 +13,9 @@ import (
 type GameRepository interface {
 	RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
+	ListGames(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
+	CountGames(ctx context.Context, userID *uuid.UUID) (int, error)
+	FindGameDetail(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
 	ListLeaderboard(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 }
@@ -71,6 +74,106 @@ func (r *gameRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Gam
 	}
 	g.ID, err = uuid.Parse(idStr)
 	return &g, err
+}
+
+func (r *gameRepository) ListGames(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error) {
+	var (
+		rows *sql.Rows
+		err  error
+	)
+	if userID != nil {
+		const q = `
+			SELECT DISTINCT g.id, g.mode, g.status, g.created_at, g.finished_at
+			FROM games g JOIN game_players gp ON gp.game_id = g.id
+			WHERE gp.user_id = $1
+			ORDER BY g.finished_at DESC NULLS LAST, g.created_at DESC
+			LIMIT $2 OFFSET $3
+		`
+		rows, err = r.db.QueryContext(ctx, q, userID.String(), limit, offset)
+	} else {
+		const q = `
+			SELECT id, mode, status, created_at, finished_at
+			FROM games
+			ORDER BY finished_at DESC NULLS LAST, created_at DESC
+			LIMIT $1 OFFSET $2
+		`
+		rows, err = r.db.QueryContext(ctx, q, limit, offset)
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var games []model.Game
+	for rows.Next() {
+		var g model.Game
+		var idStr string
+		if err := rows.Scan(&idStr, &g.Mode, &g.Status, &g.CreatedAt, &g.FinishedAt); err != nil {
+			return nil, err
+		}
+		g.ID, err = uuid.Parse(idStr)
+		if err != nil {
+			return nil, err
+		}
+		games = append(games, g)
+	}
+	return games, rows.Err()
+}
+
+func (r *gameRepository) CountGames(ctx context.Context, userID *uuid.UUID) (int, error) {
+	var n int
+	if userID != nil {
+		err := r.db.QueryRowContext(ctx,
+			`SELECT COUNT(DISTINCT g.id) FROM games g JOIN game_players gp ON gp.game_id = g.id WHERE gp.user_id = $1`,
+			userID.String(),
+		).Scan(&n)
+		return n, err
+	}
+	err := r.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM games`).Scan(&n)
+	return n, err
+}
+
+func (r *gameRepository) FindGameDetail(ctx context.Context, id uuid.UUID) (*model.GameDetail, error) {
+	game, err := r.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	const q = `
+		SELECT id, game_id, user_id, score, lines_cleared, level_reached, placement, is_winner
+		FROM game_players WHERE game_id = $1
+		ORDER BY score DESC
+	`
+	rows, err := r.db.QueryContext(ctx, q, id.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var players []model.GamePlayer
+	for rows.Next() {
+		var p model.GamePlayer
+		var idStr, gameIDStr, userIDStr string
+		if err := rows.Scan(&idStr, &gameIDStr, &userIDStr,
+			&p.Score, &p.LinesCleared, &p.LevelReached, &p.Placement, &p.IsWinner); err != nil {
+			return nil, err
+		}
+		if p.ID, err = uuid.Parse(idStr); err != nil {
+			return nil, err
+		}
+		if p.GameID, err = uuid.Parse(gameIDStr); err != nil {
+			return nil, err
+		}
+		if p.UserID, err = uuid.Parse(userIDStr); err != nil {
+			return nil, err
+		}
+		players = append(players, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &model.GameDetail{Game: *game, Players: players}, nil
 }
 
 func (r *gameRepository) ListLeaderboard(ctx context.Context, limit int) ([]model.LeaderboardEntry, error) {
