@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -25,7 +26,7 @@ func TestHandler(t *testing.T) {
 	if err != nil {
 		t.Fatalf("error reading response body. Err: %v", err)
 	}
-	if expected != string(body) {
+	if expected != strings.TrimRight(string(body), "\n") {
 		t.Errorf("expected response body to be %v; got %v", expected, string(body))
 	}
 }
