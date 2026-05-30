@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -63,17 +64,25 @@ func TestUsers_OnlineStatus(t *testing.T) {
 	truncate(t)
 	_, token := registerUser(t, "alice", "alice@example.com", "secret12")
 
-	resp, raw := doJSON(t, http.MethodGet, "/api/v1/users/me", token, "")
-	mustStatus(t, resp, raw, http.StatusOK)
-
-	var out struct {
-		User struct {
-			IsOnline bool `json:"is_online"`
-		} `json:"user"`
-	}
-	decodeJSON(t, raw, &out)
-	if !out.User.IsOnline {
-		t.Errorf("user.is_online = false right after authenticated request; want true (body: %s)", raw)
+	// last_seen_at is written by an async goroutine in the JWT middleware, so the
+	// first authenticated GET may still see is_online=false. Poll until it lands.
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		resp, raw := doJSON(t, http.MethodGet, "/api/v1/users/me", token, "")
+		mustStatus(t, resp, raw, http.StatusOK)
+		var out struct {
+			User struct {
+				IsOnline bool `json:"is_online"`
+			} `json:"user"`
+		}
+		decodeJSON(t, raw, &out)
+		if out.User.IsOnline {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("is_online still false after 2s of authenticated requests (body: %s)", raw)
+		}
+		time.Sleep(50 * time.Millisecond)
 	}
 }
 
