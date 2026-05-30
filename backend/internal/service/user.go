@@ -25,19 +25,24 @@ var allowedImageTypes = map[string]string{
 	"image/gif":  ".gif",
 }
 
-var ErrInvalidFileType = errors.New("only jpeg, png, webp, and gif images are allowed")
+var (
+	ErrInvalidFileType    = errors.New("only jpeg, png, webp, and gif images are allowed")
+	ErrSelfRelationship   = errors.New("cannot create a relationship with yourself")
+	ErrRelationshipExists = errors.New("relationship already exists")
+)
 
 type UserService struct {
-	users     repository.UserRepository
-	files     repository.FileRepository
-	uploadDir string
+	users         repository.UserRepository
+	files         repository.FileRepository
+	relationships repository.RelationshipRepository
+	uploadDir     string
 }
 
-func NewUserService(users repository.UserRepository, files repository.FileRepository, uploadDir string) *UserService {
+func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, uploadDir string) *UserService {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
-	return &UserService{users: users, files: files, uploadDir: uploadDir}
+	return &UserService{users: users, files: files, relationships: rels, uploadDir: uploadDir}
 }
 
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -130,4 +135,92 @@ func (s *UserService) UploadAvatar(ctx context.Context, userID uuid.UUID, file m
 
 	// Update user's avatar_url
 	return s.users.Update(ctx, userID, model.UpdateUserRequest{AvatarURL: &avatarURL})
+}
+
+func (s *UserService) GetFriends(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
+	return s.relationships.ListFriends(ctx, userID)
+}
+
+func (s *UserService) GetPendingRequests(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
+	return s.relationships.ListPendingReceived(ctx, userID)
+}
+
+func (s *UserService) GetBlockedUsers(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
+	return s.relationships.ListBlocked(ctx, userID)
+}
+
+func (s *UserService) SendFriendRequest(ctx context.Context, fromID, toID uuid.UUID) error {
+	if fromID == toID {
+		return ErrSelfRelationship
+	}
+	existing, err := s.relationships.Find(ctx, fromID, toID)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return err
+	}
+	if existing != nil {
+		return ErrRelationshipExists
+	}
+	_, err = s.relationships.Create(ctx, fromID, toID, model.RelationshipPending)
+	return err
+}
+
+func (s *UserService) AcceptFriendRequest(ctx context.Context, accepterID, requesterID uuid.UUID) error {
+	rel, err := s.relationships.FindDirectional(ctx, requesterID, accepterID)
+	if err != nil {
+		return err
+	}
+	if rel.Status != model.RelationshipPending {
+		return repository.ErrNotFound
+	}
+	return s.relationships.UpdateStatus(ctx, rel.ID, model.RelationshipAccepted)
+}
+
+func (s *UserService) RemoveFriend(ctx context.Context, userID, otherID uuid.UUID) error {
+	rel, err := s.relationships.Find(ctx, userID, otherID)
+	if err != nil {
+		return err
+	}
+	if rel.Status == model.RelationshipBlocked {
+		return repository.ErrNotFound
+	}
+	return s.relationships.Delete(ctx, rel.ID)
+}
+
+func (s *UserService) BlockUser(ctx context.Context, blockerID, targetID uuid.UUID) error {
+	if blockerID == targetID {
+		return ErrSelfRelationship
+	}
+	existing, err := s.relationships.FindDirectional(ctx, blockerID, targetID)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return err
+	}
+	if existing != nil {
+		if existing.Status == model.RelationshipBlocked {
+			return ErrRelationshipExists
+		}
+		return s.relationships.UpdateStatus(ctx, existing.ID, model.RelationshipBlocked)
+	}
+	// No row in blocker→target direction; remove any reverse row first.
+	reverse, err := s.relationships.FindDirectional(ctx, targetID, blockerID)
+	if err != nil && !errors.Is(err, repository.ErrNotFound) {
+		return err
+	}
+	if reverse != nil {
+		if err := s.relationships.Delete(ctx, reverse.ID); err != nil {
+			return err
+		}
+	}
+	_, err = s.relationships.Create(ctx, blockerID, targetID, model.RelationshipBlocked)
+	return err
+}
+
+func (s *UserService) UnblockUser(ctx context.Context, blockerID, targetID uuid.UUID) error {
+	rel, err := s.relationships.FindDirectional(ctx, blockerID, targetID)
+	if err != nil {
+		return err
+	}
+	if rel.Status != model.RelationshipBlocked {
+		return repository.ErrNotFound
+	}
+	return s.relationships.Delete(ctx, rel.ID)
 }
