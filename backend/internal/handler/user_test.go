@@ -38,7 +38,7 @@ func newUserHandler(t *testing.T, users *testutil.MockUserRepo, rels *testutil.M
 // The returned ServeHTTP can be called with a request that includes an Authorization header.
 func serveProtected(method, pattern string, hfn http.HandlerFunc) http.Handler {
 	r := chi.NewRouter()
-	r.Use(middleware.JWTAuth(testSecret))
+	r.Use(middleware.JWTAuth(testSecret, nil))
 	r.Method(method, pattern, hfn)
 	return r
 }
