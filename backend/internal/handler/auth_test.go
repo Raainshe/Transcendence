@@ -1,6 +1,7 @@
 package handler_test
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -19,8 +20,8 @@ func TestAuthHandler_Register(t *testing.T) {
 	tests := []struct {
 		name             string
 		body             string
-		findByEmailFn    func(interface{}, string) (*model.User, error)
-		findByUsernameFn func(interface{}, string) (*model.User, error)
+		findByEmailFn    func(context.Context, string) (*model.User, error)
+		findByUsernameFn func(context.Context, string) (*model.User, error)
 		wantStatus       int
 		wantKeys         []string
 	}{
@@ -45,7 +46,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		{
 			name: "email already taken",
 			body: `{"username":"alice","email":"taken@example.com","password":"secret123"}`,
-			findByEmailFn: func(_ interface{}, _ string) (*model.User, error) {
+			findByEmailFn: func(_ context.Context, _ string) (*model.User, error) {
 				return existingUser, nil
 			},
 			wantStatus: http.StatusConflict,
@@ -54,7 +55,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		{
 			name: "username already taken",
 			body: `{"username":"taken","email":"new@example.com","password":"secret123"}`,
-			findByUsernameFn: func(_ interface{}, _ string) (*model.User, error) {
+			findByUsernameFn: func(_ context.Context, _ string) (*model.User, error) {
 				return existingUser, nil
 			},
 			wantStatus: http.StatusConflict,
@@ -64,18 +65,10 @@ func TestAuthHandler_Register(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &testutil.MockUserRepo{}
-			if tt.findByEmailFn != nil {
-				repo.FindByEmailFn = func(ctx interface{ Done() <-chan struct{} }, email string) (*model.User, error) {
-					return tt.findByEmailFn(ctx, email)
-				}
+			repo := &testutil.MockUserRepo{
+				FindByEmailFn:    tt.findByEmailFn,
+				FindByUsernameFn: tt.findByUsernameFn,
 			}
-			if tt.findByUsernameFn != nil {
-				repo.FindByUsernameFn = func(ctx interface{ Done() <-chan struct{} }, username string) (*model.User, error) {
-					return tt.findByUsernameFn(ctx, username)
-				}
-			}
-
 			svc := service.NewAuthService(repo, "test-secret")
 			h := handler.NewAuthHandler(svc)
 
@@ -101,14 +94,14 @@ func TestAuthHandler_Login(t *testing.T) {
 	tests := []struct {
 		name          string
 		body          string
-		findByEmailFn func(interface{}, string) (*model.User, error)
+		findByEmailFn func(context.Context, string) (*model.User, error)
 		wantStatus    int
 		wantKeys      []string
 	}{
 		{
 			name: "success",
 			body: `{"email":"test@example.com","password":"correct"}`,
-			findByEmailFn: func(_ interface{}, _ string) (*model.User, error) {
+			findByEmailFn: func(_ context.Context, _ string) (*model.User, error) {
 				return user, nil
 			},
 			wantStatus: http.StatusOK,
@@ -130,12 +123,7 @@ func TestAuthHandler_Login(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &testutil.MockUserRepo{}
-			if tt.findByEmailFn != nil {
-				repo.FindByEmailFn = func(ctx interface{ Done() <-chan struct{} }, email string) (*model.User, error) {
-					return tt.findByEmailFn(ctx, email)
-				}
-			}
+			repo := &testutil.MockUserRepo{FindByEmailFn: tt.findByEmailFn}
 			svc := service.NewAuthService(repo, "test-secret")
 			h := handler.NewAuthHandler(svc)
 
