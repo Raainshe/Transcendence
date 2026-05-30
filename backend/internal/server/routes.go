@@ -1,14 +1,16 @@
 package server
 
 import (
-	"encoding/json"
-	"log"
 	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	chimid "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	"backend/internal/handler"
 	mw "backend/internal/middleware"
 )
 
@@ -27,10 +29,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/", s.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
 
-	// Serve uploaded files (avatars, etc.)
-	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(s.uploadDir))))
+	// Serve uploaded files (avatars, etc.) — no directory listings.
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", noDirListing(s.uploadDir, http.FileServer(http.Dir(s.uploadDir)))))
 
 	r.Route("/api/v1", func(r chi.Router) {
+		r.Use(mw.MaxBodyBytes(1 << 20)) // 1 MB cap for JSON bodies
+
 		// Auth — public
 		r.Post("/auth/register", s.authHandler.Register)
 		r.Post("/auth/login", s.authHandler.Login)
@@ -83,18 +87,33 @@ func (s *Server) RegisterRoutes() http.Handler {
 }
 
 func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	resp := make(map[string]string)
-	resp["message"] = "Hello World"
-
-	jsonResp, err := json.Marshal(resp)
-	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
-	}
-
-	_, _ = w.Write(jsonResp)
+	handler.WriteJSON(w, http.StatusOK, map[string]string{"message": "Hello World"})
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, _ := json.Marshal(s.db.Health())
-	_, _ = w.Write(jsonResp)
+	stats := s.db.Health()
+	code := http.StatusOK
+	if stats["status"] != "up" {
+		code = http.StatusServiceUnavailable
+	}
+	handler.WriteJSON(w, code, stats)
+}
+
+// noDirListing serves files but rejects requests targeting a directory,
+// preventing http.FileServer's default auto-generated directory index.
+func noDirListing(root string, next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		urlPath := r.URL.Path
+		if urlPath == "" || strings.HasSuffix(urlPath, "/") {
+			http.NotFound(w, r)
+			return
+		}
+		full := filepath.Join(root, filepath.Clean("/"+urlPath))
+		info, err := os.Stat(full)
+		if err != nil || info.IsDir() {
+			http.NotFound(w, r)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
