@@ -14,6 +14,12 @@ type Game struct {
 	FinishedAt *time.Time `json:"finished_at"`
 }
 
+// GameDetail is a Game together with its player rows. Returned by GET /games/{id}.
+type GameDetail struct {
+	Game
+	Players []GamePlayer `json:"players"`
+}
+
 type GamePlayer struct {
 	ID           uuid.UUID `json:"id"`
 	GameID       uuid.UUID `json:"game_id"`
