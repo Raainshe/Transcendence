@@ -61,6 +61,12 @@ func TestAuthHandler_Register(t *testing.T) {
 			wantStatus: http.StatusConflict,
 			wantKeys:   []string{"error"},
 		},
+		{
+			name:       "password too short",
+			body:       `{"username":"alice","email":"alice@example.com","password":"short"}`,
+			wantStatus: http.StatusBadRequest,
+			wantKeys:   []string{"error"},
+		},
 	}
 
 	for _, tt := range tests {
