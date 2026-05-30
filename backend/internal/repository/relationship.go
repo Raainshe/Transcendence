@@ -75,13 +75,13 @@ func (r *relationshipRepository) Delete(ctx context.Context, id uuid.UUID) error
 
 func (r *relationshipRepository) ListFriends(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
 	const q = `
-		SELECT u.id, u.username, u.email, u.password_hash, u.avatar_url, u.role,
-		       u.is_2fa_enabled, u.totp_secret, u.created_at, u.updated_at, u.last_seen_at
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role,
+		       u.is_2fa_enabled, u.created_at, u.updated_at, u.last_seen_at
 		FROM relationships rel JOIN users u ON u.id = rel.receiver_id
 		WHERE rel.requester_id = $1 AND rel.status = 'accepted'
 		UNION
-		SELECT u.id, u.username, u.email, u.password_hash, u.avatar_url, u.role,
-		       u.is_2fa_enabled, u.totp_secret, u.created_at, u.updated_at, u.last_seen_at
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role,
+		       u.is_2fa_enabled, u.created_at, u.updated_at, u.last_seen_at
 		FROM relationships rel JOIN users u ON u.id = rel.requester_id
 		WHERE rel.receiver_id = $1 AND rel.status = 'accepted'
 	`
@@ -94,8 +94,8 @@ func (r *relationshipRepository) ListFriends(ctx context.Context, userID uuid.UU
 
 func (r *relationshipRepository) ListPendingReceived(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
 	const q = `
-		SELECT u.id, u.username, u.email, u.password_hash, u.avatar_url, u.role,
-		       u.is_2fa_enabled, u.totp_secret, u.created_at, u.updated_at, u.last_seen_at
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role,
+		       u.is_2fa_enabled, u.created_at, u.updated_at, u.last_seen_at
 		FROM relationships rel JOIN users u ON u.id = rel.requester_id
 		WHERE rel.receiver_id = $1 AND rel.status = 'pending'
 	`
@@ -108,8 +108,8 @@ func (r *relationshipRepository) ListPendingReceived(ctx context.Context, userID
 
 func (r *relationshipRepository) ListBlocked(ctx context.Context, userID uuid.UUID) ([]model.User, error) {
 	const q = `
-		SELECT u.id, u.username, u.email, u.password_hash, u.avatar_url, u.role,
-		       u.is_2fa_enabled, u.totp_secret, u.created_at, u.updated_at, u.last_seen_at
+		SELECT u.id, u.username, u.email, u.avatar_url, u.role,
+		       u.is_2fa_enabled, u.created_at, u.updated_at, u.last_seen_at
 		FROM relationships rel JOIN users u ON u.id = rel.receiver_id
 		WHERE rel.requester_id = $1 AND rel.status = 'blocked'
 	`
@@ -149,8 +149,8 @@ func (r *relationshipRepository) scanUsers(rows *sql.Rows) ([]model.User, error)
 		var u model.User
 		var idStr string
 		if err := rows.Scan(
-			&idStr, &u.Username, &u.Email, &u.PasswordHash, &u.AvatarURL,
-			&u.Role, &u.Is2FAEnabled, &u.TOTPSecret,
+			&idStr, &u.Username, &u.Email, &u.AvatarURL,
+			&u.Role, &u.Is2FAEnabled,
 			&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
 		); err != nil {
 			return nil, err
