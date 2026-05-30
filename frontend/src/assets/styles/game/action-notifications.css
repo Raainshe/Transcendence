@@ -1,0 +1,53 @@
+.action-notifications {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 12%;
+  gap: var(--sp-2);
+  z-index: 5;
+}
+
+.action-notifications__item {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(0.5rem, 2.5vw, var(--fs-sm));
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.8);
+  animation: action-notify-in 0.15s ease-out;
+}
+
+.action-notifications__item--tetris {
+  color: var(--t-cyan);
+  font-size: clamp(0.625rem, 3vw, var(--fs-md));
+}
+
+.action-notifications__item--tspin {
+  color: var(--t-purple);
+}
+
+.action-notifications__item--backToBack {
+  color: var(--accent-selected);
+}
+
+.action-notifications__item--level {
+  color: var(--t-green);
+}
+
+.action-notifications__item--default {
+  color: var(--color-text);
+}
+
+@keyframes action-notify-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}

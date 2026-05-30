@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 import CycleSelector from '@/components/menu/CycleSelector.vue'
 import MenuItem from '@/components/menu/MenuItem.vue'
+import { gameAudio } from '@/game/audio/AudioManager'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import {
   GAME_VARIATIONS,
@@ -19,43 +21,125 @@ type CyclerHandle = { prev: () => void; next: () => void }
 
 const settings = useGameSettingsStore()
 const router = useRouter()
+const { t } = useI18n()
 
-const ITEM_COUNT = 3
+const ITEM_COUNT = 4
 const focusedIndex = ref(0)
+const settingsReady = ref(false)
 
 const menuRef = useTemplateRef<HTMLElement>('menu')
 const variationCyclerRef = useTemplateRef<CyclerHandle>('variationCycler')
 const playersCyclerRef = useTemplateRef<CyclerHandle>('playersCycler')
 
+function uiPrefs() {
+  return { sfxEnabled: settings.sfxEnabled, sfxVolume: settings.sfxVolume }
+}
+
+const audioOn = computed(() => settings.musicEnabled && settings.sfxEnabled)
+
+const audioMenuLabel = computed(() =>
+  audioOn.value ? t('menu.audioOn') : t('menu.audioOff'),
+)
+
+function ensureAudioUnlocked(): void {
+  gameAudio.unlock()
+  gameAudio.setEnabled(settings.sfxEnabled)
+  gameAudio.setMusicEnabled(settings.musicEnabled)
+}
+
+function toggleAudio(): void {
+  gameAudio.unlock()
+  const next = !audioOn.value
+  settings.musicEnabled = next
+  settings.sfxEnabled = next
+  gameAudio.setEnabled(next)
+  gameAudio.setMusicEnabled(next)
+}
+
+function playMove(): void {
+  gameAudio.playUi('move', uiPrefs(), { volumeScale: 0.5 })
+}
+
+function playSelected(): void {
+  gameAudio.playUi('selected', uiPrefs())
+}
+
+function focusItem(index: number): void {
+  if (focusedIndex.value !== index) {
+    playMove()
+  }
+  focusedIndex.value = index
+}
+
 onMounted(() => {
   menuRef.value?.focus()
+  gameAudio.setEnabled(settings.sfxEnabled)
+  gameAudio.setMusicEnabled(settings.musicEnabled)
+  if (settings.musicEnabled) {
+    gameAudio.startMenuMusic()
+  }
+  settingsReady.value = true
 })
 
+onBeforeUnmount(() => {
+  gameAudio.stopMenuMusic()
+})
+
+watch(
+  () => settings.variation,
+  () => {
+    if (!settingsReady.value) return
+    playSelected()
+  },
+)
+
+watch(
+  () => settings.playerCount,
+  () => {
+    if (!settingsReady.value) return
+    playSelected()
+  },
+)
+
 function startNewGame() {
+  playSelected()
+  gameAudio.stopMenuMusic()
   void router.push({ name: 'play' })
 }
 
-function move(delta: 1 | -1) {
-  focusedIndex.value = (focusedIndex.value + delta + ITEM_COUNT) % ITEM_COUNT
+function move(delta: 1 | -1): void {
+  ensureAudioUnlocked()
+  const next = (focusedIndex.value + delta + ITEM_COUNT) % ITEM_COUNT
+  focusItem(next)
 }
 
 function activate() {
+  ensureAudioUnlocked()
   if (focusedIndex.value === 0) {
     startNewGame()
+  } else if (focusedIndex.value === 1) {
+    toggleAudio()
   }
 }
 
-function cycle(delta: 1 | -1) {
-  if (focusedIndex.value === 1) {
+function cycle(delta: 1 | -1): void {
+  ensureAudioUnlocked()
+  if (focusedIndex.value === 2) {
     if (delta === 1) variationCyclerRef.value?.next()
     else variationCyclerRef.value?.prev()
-  } else if (focusedIndex.value === 2) {
+  } else if (focusedIndex.value === 3) {
     if (delta === 1) playersCyclerRef.value?.next()
     else playersCyclerRef.value?.prev()
   }
 }
 
 function onKeydown(event: KeyboardEvent) {
+  ensureAudioUnlocked()
+  if (event.key === 'm' || event.key === 'M') {
+    event.preventDefault()
+    toggleAudio()
+    return
+  }
   switch (event.key) {
     case 'ArrowUp':
       event.preventDefault()
@@ -86,9 +170,8 @@ function formatVariation(value: GameVariation): string {
 }
 
 function formatPlayers(count: PlayerCount): string {
-  return `${count} PLAYER${count === 1 ? '' : 'S'}`
+  return t('menu.playersCount', { count })
 }
-
 </script>
 
 <template>
@@ -96,47 +179,60 @@ function formatPlayers(count: PlayerCount): string {
     ref="menu"
     class="main-menu"
     role="menu"
-    aria-label="Main Menu"
+    :aria-label="t('menu.ariaLabel')"
     tabindex="0"
     @keydown="onKeydown"
+    @click="ensureAudioUnlocked"
   >
-    <h2 class="main-menu__title">Main Menu</h2>
+    <h2 class="main-menu__title">{{ t('menu.title') }}</h2>
     <ul class="main-menu__list">
       <MenuItem
-        label="New Game"
+        :label="t('menu.newGame')"
         kind="action"
         :selected="focusedIndex === 0"
-        @select="focusedIndex = 0"
+        @select="focusItem(0)"
         @activate="startNewGame"
       />
+     
       <MenuItem
-        label="Variation"
+        :label="t('menu.variation')"
         kind="cycler"
         :selected="focusedIndex === 1"
-        @select="focusedIndex = 1"
+        @select="focusItem(1)"
       >
         <CycleSelector
           ref="variationCycler"
           v-model="settings.variation"
           :options="GAME_VARIATIONS"
           :format-label="formatVariation"
-          aria-label="Game variation"
+          :aria-label="t('menu.variationAriaLabel')"
+          :prev-aria-label="t('cycler.previous')"
+          :next-aria-label="t('cycler.next')"
         />
       </MenuItem>
       <MenuItem
-        label="Players"
+        :label="t('menu.players')"
         kind="cycler"
         :selected="focusedIndex === 2"
-        @select="focusedIndex = 2"
+        @select="focusItem(2)"
       >
         <CycleSelector
           ref="playersCycler"
           v-model="settings.playerCount"
           :options="PLAYER_COUNTS"
           :format-label="formatPlayers"
-          aria-label="Number of players"
+          :aria-label="t('menu.playersAriaLabel')"
+          :prev-aria-label="t('cycler.previous')"
+          :next-aria-label="t('cycler.next')"
         />
       </MenuItem>
+      <MenuItem
+        :label="audioMenuLabel"
+        kind="action"
+        :selected="focusedIndex === 3"
+        @select="focusItem(3)"
+        @activate="toggleAudio()"
+      />
     </ul>
   </section>
 </template>

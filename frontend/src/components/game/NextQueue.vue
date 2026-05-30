@@ -1,14 +1,18 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
 import { MINO_COLORS, type PieceType } from '@/game/types'
 
 defineProps<{
   pieces: PieceType[]
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
-  <div class="next-queue" aria-label="Next pieces">
-    <span class="next-queue__label">Next</span>
+  <div class="next-queue" :aria-label="t('game.queue.nextAria')">
+    <span class="next-queue__label">{{ t('game.queue.next') }}</span>
     <div class="next-queue__row" role="list">
       <span
         v-for="(p, i) in pieces"

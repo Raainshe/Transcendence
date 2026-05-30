@@ -1,20 +1,30 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
 import { MINO_COLORS, type PieceType } from '@/game/types'
 
-defineProps<{
+const props = defineProps<{
   holdPiece: PieceType | null
   canHold: boolean
 }>()
+
+const { t } = useI18n()
+const holdPieceAria = computed(() =>
+  props.holdPiece
+    ? t('game.queue.holdFilledAria', { piece: props.holdPiece })
+    : t('game.queue.holdEmptyAria'),
+)
 </script>
 
 <template>
   <div
     class="hold-queue"
     :class="{ 'hold-queue--disabled': !canHold }"
-    aria-label="Hold queue"
+    :aria-label="t('game.queue.holdAria')"
   >
-    <span class="hold-queue__label">Hold</span>
-    <div class="hold-queue__cell" role="img" :aria-label="holdPiece ? `Hold: ${holdPiece}` : 'Hold empty'">
+    <span class="hold-queue__label">{{ t('game.queue.hold') }}</span>
+    <div class="hold-queue__cell" role="img" :aria-label="holdPieceAria">
       <span
         v-if="holdPiece !== null"
         class="hold-queue__mino"

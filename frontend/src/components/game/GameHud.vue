@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import GameModeBadge from '@/components/game/GameModeBadge.vue'
 import HoldQueue from '@/components/game/HoldQueue.vue'
@@ -14,6 +15,7 @@ defineProps<{
 }>()
 
 const store = useGameSessionStore()
+const { t } = useI18n()
 
 function formatMs(ms: number): string {
   const totalSec = Math.floor(ms / 1000)
@@ -46,17 +48,17 @@ const showTimer = computed(() => store.variant === 'sprint' || store.variant ===
 
 const failureLabel = computed(() => {
   const r: GameOverReason | undefined = store.gameOverReason
-  if (r === 'blockOut') return 'BLOCK OUT'
-  if (r === 'lockOut') return 'LOCK OUT'
-  if (r === 'topOut') return 'TOP OUT'
+  if (r === 'blockOut') return t('game.hud.blockOut')
+  if (r === 'lockOut') return t('game.hud.lockOut')
+  if (r === 'topOut') return t('game.hud.topOut')
   return ''
 })
 
 const winTitle = computed(() => {
   const r = store.matchEndReason as MatchWinReason | undefined
-  if (r === 'sprintComplete') return 'Sprint complete!'
-  if (r === 'ultraComplete') return "Time's up!"
-  return 'Complete!'
+  if (r === 'sprintComplete') return t('game.hud.sprintComplete')
+  if (r === 'ultraComplete') return t('game.hud.timesUp')
+  return t('game.hud.complete')
 })
 
 const matchEnded = computed(() => store.matchEndKind !== 'playing')
@@ -67,24 +69,26 @@ const matchEnded = computed(() => store.matchEndKind !== 'playing')
     <HoldQueue :hold-piece="store.holdPiece" :can-hold="store.canHold" />
     <GameModeBadge :variation="store.variant" size="sm" />
     <div class="game-hud__stat game-hud__stat--score">
-      <span class="game-hud__label">Score</span>
+      <span class="game-hud__label">{{ t('game.hud.score') }}</span>
       <span class="game-hud__value">{{ store.score.toLocaleString() }}</span>
       <span v-if="store.backToBackActive" class="game-hud__b2b">B2B</span>
     </div>
     <div v-if="showLevel" class="game-hud__stat">
-      <span class="game-hud__label">Lvl</span>
+      <span class="game-hud__label">{{ t('game.hud.level') }}</span>
       <span class="game-hud__value">{{ store.level }}</span>
     </div>
     <div class="game-hud__stat">
-      <span class="game-hud__label">Lines</span>
+      <span class="game-hud__label">{{ t('game.hud.lines') }}</span>
       <span class="game-hud__value">{{ linesDisplay }}</span>
     </div>
     <div v-if="showTimer" class="game-hud__stat">
-      <span class="game-hud__label">{{ store.variant === 'ultra' ? 'Time' : 'Timer' }}</span>
+      <span class="game-hud__label">{{
+        store.variant === 'ultra' ? t('game.hud.time') : t('game.hud.timer')
+      }}</span>
       <span class="game-hud__value">{{ timerLabel }}</span>
     </div>
     <div v-if="showPhase" class="game-hud__stat game-hud__stat--phase">
-      <span class="game-hud__label">Phase</span>
+      <span class="game-hud__label">{{ t('game.hud.phase') }}</span>
       <span class="game-hud__value game-hud__value--sm">{{ store.phaseLabel }}</span>
     </div>
     <NextQueue :pieces="store.nextPieces" />
@@ -94,14 +98,14 @@ const matchEnded = computed(() => store.matchEndKind !== 'playing')
     <div v-if="matchEnded" class="game-hud__game-over" role="status">
       <template v-if="store.matchEndKind === 'won'">
         <p class="game-hud__go-title game-hud__go-title--win">{{ winTitle }}</p>
-        <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
+        <p class="game-hud__go-score">{{ t('game.hud.score') }}: {{ store.score.toLocaleString() }}</p>
       </template>
       <template v-else>
-        <p class="game-hud__go-title">Game over</p>
+        <p class="game-hud__go-title">{{ t('game.hud.gameOver') }}</p>
         <p v-if="failureLabel" class="game-hud__go-reason">{{ failureLabel }}</p>
-        <p class="game-hud__go-score">Score: {{ store.score.toLocaleString() }}</p>
+        <p class="game-hud__go-score">{{ t('game.hud.score') }}: {{ store.score.toLocaleString() }}</p>
       </template>
-      <p class="game-hud__go-hint">Esc: menu</p>
+      <p class="game-hud__go-hint">{{ t('game.hud.menuHint') }}</p>
     </div>
     <div class="game-hud__slot">
       <slot />

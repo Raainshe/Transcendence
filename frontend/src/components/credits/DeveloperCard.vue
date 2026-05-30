@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/credits/developer-card.css'
 
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>()
 
 const avatarUrl = computed(() => `https://avatars.githubusercontent.com/${props.handle}?s=240`)
+const { t } = useI18n()
 </script>
 
 <template>
@@ -18,12 +20,12 @@ const avatarUrl = computed(() => `https://avatars.githubusercontent.com/${props.
     :href="url"
     target="_blank"
     rel="noopener noreferrer"
-    :aria-label="`${name} on GitHub`"
+    :aria-label="t('credits.developerGithubAria', { name })"
   >
     <img
       class="developer-card__avatar"
       :src="avatarUrl"
-      :alt="`${name} GitHub avatar`"
+      :alt="t('credits.developerAvatarAlt', { name })"
       width="120"
       height="120"
       loading="lazy"
