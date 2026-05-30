@@ -43,6 +43,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusConflict, map[string]string{"error": "email already in use"})
 		case errors.Is(err, service.ErrUsernameTaken):
 			writeJSON(w, http.StatusConflict, map[string]string{"error": "username already in use"})
+		case errors.Is(err, service.ErrPasswordWeak):
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
 		default:
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "registration failed"})
 		}
@@ -98,21 +100,21 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) OAuthRedirect(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *AuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *AuthHandler) Setup2FA(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *AuthHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
 
 func (h *AuthHandler) Disable2FA(w http.ResponseWriter, r *http.Request) {
-	http.Error(w, "not implemented", http.StatusNotImplemented)
+	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
 }
