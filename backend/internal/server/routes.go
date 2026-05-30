@@ -63,6 +63,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Patch("/users/me", s.userHandler.UpdateMe)
 			r.Delete("/users/me", s.userHandler.DeleteMe)
 			r.Post("/users/me/avatar", s.userHandler.UploadAvatar)
+			r.Delete("/users/me/avatar", s.userHandler.DeleteAvatar)
 			r.Get("/users/me/friends", s.userHandler.GetFriends)
 			r.Get("/users/me/friends/requests", s.userHandler.GetPendingRequests)
 			r.Post("/users/me/friends/{id}", s.userHandler.AddFriend)
