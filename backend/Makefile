@@ -37,7 +37,7 @@ test:
 # Integrations Tests for the application
 itest:
 	@echo "Running integration tests..."
-	@go test ./internal/database -v
+	@go test ./internal/... -v -tags=integration -timeout 120s
 
 # Clean the binary
 clean:
