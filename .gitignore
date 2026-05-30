@@ -4,3 +4,4 @@ node_modules/
 __tests__/
 vitest.config.ts
 .env
+.vscode
