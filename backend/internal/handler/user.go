@@ -143,6 +143,20 @@ func (h *UserHandler) DeleteMe(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *UserHandler) DeleteAvatar(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.users.DeleteAvatar(r.Context(), userID); err != nil {
+		switch {
+		case errors.Is(err, service.ErrNoAvatar):
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "no avatar set"})
+		default:
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to delete avatar"})
+		}
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *UserHandler) GetFriends(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromContext(r.Context())
 	friends, err := h.users.GetFriends(r.Context(), userID)

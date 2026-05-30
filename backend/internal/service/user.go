@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,6 +31,7 @@ var (
 	ErrInvalidFileType    = errors.New("only jpeg, png, webp, and gif images are allowed")
 	ErrSelfRelationship   = errors.New("cannot create a relationship with yourself")
 	ErrRelationshipExists = errors.New("relationship already exists")
+	ErrNoAvatar           = errors.New("user has no avatar to delete")
 )
 
 type UserService struct {
@@ -135,6 +138,35 @@ func (s *UserService) UploadAvatar(ctx context.Context, userID uuid.UUID, file m
 
 	// Update user's avatar_url
 	return s.users.Update(ctx, userID, model.UpdateUserRequest{AvatarURL: &avatarURL})
+}
+
+func (s *UserService) DeleteAvatar(ctx context.Context, userID uuid.UUID) error {
+	user, err := s.users.FindByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user.AvatarURL == nil {
+		return ErrNoAvatar
+	}
+
+	// Reconstruct the filesystem path from the URL: avatar_url is "/uploads/avatars/{userID}/{file}".
+	relPath := strings.TrimPrefix(*user.AvatarURL, "/uploads/")
+	fsPath := filepath.Join(s.uploadDir, relPath)
+
+	if record, err := s.files.FindByPath(ctx, userID, fsPath); err == nil {
+		if err := s.files.Delete(ctx, record.ID); err != nil {
+			return fmt.Errorf("delete file record: %w", err)
+		}
+	} else if !errors.Is(err, repository.ErrNotFound) {
+		return err
+	}
+
+	// Best-effort filesystem cleanup. A stale DB row would be worse than an orphan file.
+	if err := os.Remove(fsPath); err != nil && !os.IsNotExist(err) {
+		log.Printf("avatar delete: filesystem cleanup failed for %s: %v", fsPath, err)
+	}
+
+	return s.users.ClearAvatar(ctx, userID)
 }
 
 func (s *UserService) GetFriends(ctx context.Context, userID uuid.UUID) ([]model.User, error) {

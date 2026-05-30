@@ -20,6 +20,8 @@ type UserRepository interface {
 	List(ctx context.Context, limit, offset int) ([]model.User, error)
 	Count(ctx context.Context) (int, error)
 	Update(ctx context.Context, id uuid.UUID, req model.UpdateUserRequest) (*model.User, error)
+	ClearAvatar(ctx context.Context, id uuid.UUID) error
+	UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
 }
 
@@ -122,6 +124,25 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, req model.Upd
 
 func (r *userRepository) Delete(ctx context.Context, id uuid.UUID) error {
 	_, err := r.db.ExecContext(ctx, "DELETE FROM users WHERE id = $1", id.String())
+	return err
+}
+
+// ClearAvatar sets avatar_url to NULL. Separate from Update so that callers
+// can distinguish "no change" from "explicit clear" without the request type
+// gaining sentinel values.
+func (r *userRepository) ClearAvatar(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE users SET avatar_url = NULL, updated_at = now() WHERE id = $1`,
+		id.String(),
+	)
+	return err
+}
+
+func (r *userRepository) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE users SET last_seen_at = now() WHERE id = $1`,
+		id.String(),
+	)
 	return err
 }
 
