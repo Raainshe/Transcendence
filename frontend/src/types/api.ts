@@ -26,6 +26,23 @@ export interface MeResponse {
   user: User
 }
 
+export interface UsersListResponse {
+  users: User[]
+  total: number
+}
+
+export interface FriendsResponse {
+  friends: User[]
+}
+
+export interface FriendRequestsResponse {
+  requests: User[]
+}
+
+export interface BlockedUsersResponse {
+  blocked: User[]
+}
+
 export interface ApiErrorBody {
   error?: string
 }

@@ -39,6 +39,41 @@
   gap: var(--sp-2);
 }
 
+.site-header__nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-1);
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--color-text-dim);
+  padding: 0.2rem 0.35rem;
+  border-radius: var(--radius-sm);
+}
+
+.site-header__nav-link:hover,
+.site-header__nav-link:focus-visible {
+  color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 159, 220, 0.35);
+}
+
+.site-header__nav-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  height: 1rem;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.45rem;
+  background: var(--t-red);
+  color: var(--color-bg);
+}
+
 .site-header__user {
   display: inline-flex;
   align-items: center;

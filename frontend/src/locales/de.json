@@ -12,7 +12,9 @@
     "login": "Anmelden",
     "signUp": "Registrieren",
     "logout": "Abmelden",
-    "signedInAs": "Angemeldet als {username}"
+    "signedInAs": "Angemeldet als {username}",
+    "friends": "Freunde",
+    "friendsPending": "{count} offene Freundschaftsanfragen"
   },
   "auth": {
     "dialogLabel": "Konto",
@@ -232,6 +234,47 @@
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
     }
   },
+  "friends": {
+    "title": "Freunde",
+    "subtitle": "Freunde, Anfragen und blockierte Spieler verwalten",
+    "tabsAria": "Freunde-Bereiche",
+    "tabFriends": "Freunde",
+    "tabRequests": "Anfragen",
+    "tabBlocked": "Blockiert",
+    "tabAdd": "Hinzufügen",
+    "loading": "Wird geladen…",
+    "loadError": "Freundesdaten konnten nicht geladen werden.",
+    "emptyFriends": "Noch keine Freunde. Füge jemanden per Benutzername hinzu.",
+    "emptyRequests": "Keine eingehenden Freundschaftsanfragen.",
+    "emptyBlocked": "Du hast niemanden blockiert.",
+    "requestsHint": "Hier erscheinen nur Anfragen an dich. Gesendete Anfragen werden nicht angezeigt.",
+    "online": "Online",
+    "offline": "Offline",
+    "avatarAlt": "Avatar von {username}",
+    "accept": "Annehmen",
+    "decline": "Ablehnen",
+    "remove": "Entfernen",
+    "block": "Blockieren",
+    "unblock": "Entblocken",
+    "addLabel": "Benutzername",
+    "addPlaceholder": "spielername",
+    "addHint": "Gib den exakten Benutzernamen ein. Das {'@'}-Präfix ist optional.",
+    "addSubmit": "Anfrage senden",
+    "addSending": "Wird gesendet…",
+    "addSuccess": "Freundschaftsanfrage gesendet.",
+    "errors": {
+      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+      "usernameRequired": "Bitte einen Benutzernamen eingeben.",
+      "userNotFound": "Kein Benutzer mit diesem Namen.",
+      "cannotAddSelf": "Du kannst dich nicht selbst hinzufügen.",
+      "relationshipExists": "Es gibt bereits eine Anfrage oder Freundschaft.",
+      "requestNotFound": "Freundschaftsanfrage nicht gefunden.",
+      "friendshipNotFound": "Freundschaft nicht gefunden.",
+      "alreadyBlocked": "Dieser Benutzer ist bereits blockiert.",
+      "notBlocked": "Dieser Benutzer ist nicht blockiert.",
+      "cannotBlockSelf": "Du kannst dich nicht selbst blockieren."
+    }
+  },
   "leaderboard": {
     "title": "Bestenliste",
     "subtitle": "Top-Punkte aus gespeicherten Partien",
@@ -254,6 +297,7 @@
     "privacy": "Transcendence - Datenschutz",
     "terms": "Transcendence - Bedingungen",
     "profile": "Transcendence - Profil",
-    "leaderboard": "Transcendence - Bestenliste"
+    "leaderboard": "Transcendence - Bestenliste",
+    "friends": "Transcendence - Freunde"
   }
 }

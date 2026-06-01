@@ -42,6 +42,12 @@ const router = createRouter({
       name: 'leaderboard',
       component: () => import('@/views/LeaderboardView.vue'),
     },
+    {
+      path: '/friends',
+      name: 'friends',
+      component: () => import('@/views/FriendsView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
   scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) return savedPosition
@@ -49,9 +55,11 @@ const router = createRouter({
   },
 })
 
-router.beforeEach((to) => {
-  if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
-    return { name: 'home', query: { login: '1' } }
+router.beforeEach(async (to) => {
+  const auth = useAuthStore()
+  await auth.whenReady()
+  if (to.meta.requiresAuth && !auth.isAuthenticated) {
+    return { name: 'home', query: { login: '1' }, replace: true }
   }
 })
 

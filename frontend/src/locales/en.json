@@ -12,7 +12,9 @@
     "login": "Log in",
     "signUp": "Sign up",
     "logout": "Log out",
-    "signedInAs": "Signed in as {username}"
+    "signedInAs": "Signed in as {username}",
+    "friends": "Friends",
+    "friendsPending": "{count} pending friend requests"
   },
   "auth": {
     "dialogLabel": "Account",
@@ -232,6 +234,47 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "friends": {
+    "title": "Friends",
+    "subtitle": "Manage friends, requests, and blocked players",
+    "tabsAria": "Friends sections",
+    "tabFriends": "Friends",
+    "tabRequests": "Requests",
+    "tabBlocked": "Blocked",
+    "tabAdd": "Add",
+    "loading": "Loading…",
+    "loadError": "Could not load friends data.",
+    "emptyFriends": "No friends yet. Add someone by username.",
+    "emptyRequests": "No incoming friend requests.",
+    "emptyBlocked": "You have not blocked anyone.",
+    "requestsHint": "Only requests sent to you appear here. Outgoing requests are not listed.",
+    "online": "Online",
+    "offline": "Offline",
+    "avatarAlt": "{username}'s avatar",
+    "accept": "Accept",
+    "decline": "Decline",
+    "remove": "Remove",
+    "block": "Block",
+    "unblock": "Unblock",
+    "addLabel": "Username",
+    "addPlaceholder": "playername",
+    "addHint": "Enter the exact username. The {'@'} prefix is optional.",
+    "addSubmit": "Send request",
+    "addSending": "Sending…",
+    "addSuccess": "Friend request sent.",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "usernameRequired": "Enter a username.",
+      "userNotFound": "No user with that username.",
+      "cannotAddSelf": "You cannot add yourself.",
+      "relationshipExists": "A friend request or friendship already exists.",
+      "requestNotFound": "Friend request not found.",
+      "friendshipNotFound": "Friendship not found.",
+      "alreadyBlocked": "That user is already blocked.",
+      "notBlocked": "That user is not blocked.",
+      "cannotBlockSelf": "You cannot block yourself."
+    }
+  },
   "leaderboard": {
     "title": "Leaderboard",
     "subtitle": "Top scores from recorded matches",
@@ -254,6 +297,7 @@
     "privacy": "Transcendence - Privacy",
     "terms": "Transcendence - Terms",
     "profile": "Transcendence - Profile",
-    "leaderboard": "Transcendence - Leaderboard"
+    "leaderboard": "Transcendence - Leaderboard",
+    "friends": "Transcendence - Friends"
   }
 }

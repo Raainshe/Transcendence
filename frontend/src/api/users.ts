@@ -1,5 +1,18 @@
-import { apiFetch } from '@/api/client'
-import type { MeResponse, UpdateMePayload, UserStats } from '@/types/api'
+import { ApiError, apiFetch } from '@/api/client'
+import type { MeResponse, UpdateMePayload, User, UsersListResponse, UserStats } from '@/types/api'
+
+export function findUserByUsername(username: string): Promise<User | null> {
+  const params = new URLSearchParams({ username })
+  return apiFetch<UsersListResponse>(`/users?${params.toString()}`, {
+    method: 'GET',
+    auth: false,
+  })
+    .then((res) => res.users[0] ?? null)
+    .catch((error: unknown) => {
+      if (error instanceof ApiError && error.status === 404) return null
+      throw error
+    })
+}
 
 export function updateMe(payload: UpdateMePayload): Promise<MeResponse> {
   return apiFetch<MeResponse>('/users/me', {

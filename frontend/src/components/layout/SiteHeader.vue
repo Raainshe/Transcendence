@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink, useRoute } from 'vue-router'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 
 import { resolveAssetUrl } from '@/api/client'
+import * as friendsApi from '@/api/friends'
 import AuthModal, { type AuthModalTab } from '@/components/auth/AuthModal.vue'
 import { SUPPORTED_LOCALES, type AppLocale } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -15,6 +16,7 @@ import '@/assets/styles/layout/site-header.css'
 const blocks = ['yellow', 'cyan', 'purple', 'orange', 'blue', 'green', 'red'] as const
 
 const route = useRoute()
+const router = useRouter()
 const { t } = useI18n()
 const settings = useGameSettingsStore()
 const auth = useAuthStore()
@@ -23,8 +25,37 @@ const { isAuthenticated, user, status: authStatus } = storeToRefs(auth)
 
 const authModalOpen = ref(false)
 const authModalTab = ref<AuthModalTab>('login')
+const pendingRequestCount = ref(0)
 
 const avatarSrc = computed(() => resolveAssetUrl(user.value?.avatar_url))
+
+async function loadPendingRequestCount(): Promise<void> {
+  if (!isAuthenticated.value) {
+    pendingRequestCount.value = 0
+    return
+  }
+  try {
+    const { requests } = await friendsApi.getFriendRequests()
+    pendingRequestCount.value = requests.length
+  } catch {
+    pendingRequestCount.value = 0
+  }
+}
+
+onMounted(() => {
+  void loadPendingRequestCount()
+})
+
+watch(isAuthenticated, () => {
+  void loadPendingRequestCount()
+})
+
+watch(
+  () => route.name,
+  () => {
+    void loadPendingRequestCount()
+  },
+)
 
 function setLocale(nextLocale: AppLocale): void {
   locale.value = nextLocale
@@ -47,10 +78,21 @@ async function onLogout(): Promise<void> {
   await auth.logout()
 }
 
+function clearLoginQuery(): void {
+  if (route.query.login === undefined) return
+  const { login: _login, ...query } = route.query
+  void router.replace({ query })
+}
+
 watch(
-  () => route.query.login,
-  (value) => {
-    if (value === '1' && !isAuthenticated.value) {
+  () => [route.query.login, authStatus.value, isAuthenticated.value] as const,
+  ([login, status, authed]) => {
+    if (authed) {
+      if (login !== undefined) clearLoginQuery()
+      authModalOpen.value = false
+      return
+    }
+    if (login === '1' && status !== 'loading') {
       openAuthModal('login')
     }
   },
@@ -73,6 +115,19 @@ watch(
 
       <div class="site-header__auth">
         <template v-if="isAuthenticated && user">
+          <RouterLink
+            :to="{ name: 'friends' }"
+            class="site-header__nav-link"
+          >
+            {{ t('header.friends') }}
+            <span
+              v-if="pendingRequestCount > 0"
+              class="site-header__nav-badge"
+              :aria-label="t('header.friendsPending', { count: pendingRequestCount })"
+            >
+              {{ pendingRequestCount }}
+            </span>
+          </RouterLink>
           <RouterLink
             :to="{ name: 'profile' }"
             class="site-header__user"

@@ -54,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
   const status = ref<AuthStatus>('idle')
 
   let refreshInFlight: Promise<void> | null = null
+  let sessionRestore: Promise<void> | null = null
 
   const isAuthenticated = computed(() => status.value === 'authenticated' && !!token.value)
 
@@ -219,6 +220,18 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  /** Resolves after the initial session restore attempt (success or guest). */
+  async function whenReady(): Promise<void> {
+    if (status.value === 'authenticated') return
+    if (status.value === 'idle' && !loadStoredAuth()) return
+    if (!sessionRestore) {
+      sessionRestore = hydrate().finally(() => {
+        sessionRestore = null
+      })
+    }
+    await sessionRestore
+  }
+
   return {
     token,
     user,
@@ -228,6 +241,7 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     hydrate,
+    whenReady,
     refreshMe,
     refreshAccessToken,
     checkAndRefreshToken,

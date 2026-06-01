@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -41,6 +42,20 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
+	if username := strings.TrimSpace(r.URL.Query().Get("username")); username != "" {
+		user, err := h.users.GetByUsername(r.Context(), username)
+		if err != nil {
+			if errors.Is(err, repository.ErrNotFound) {
+				writeJSON(w, http.StatusNotFound, map[string]string{"error": "user not found"})
+				return
+			}
+			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch user"})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"users": []model.User{*user}, "total": 1})
+		return
+	}
+
 	limit, ok := parseQueryInt(r, "limit", 0)
 	if !ok {
 		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "limit must be an integer"})

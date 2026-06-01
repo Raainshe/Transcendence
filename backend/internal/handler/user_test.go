@@ -54,12 +54,13 @@ func withChiParam(r *http.Request, key, val string) *http.Request {
 
 func TestUserHandler_ListUsers(t *testing.T) {
 	tests := []struct {
-		name       string
-		query      string
-		listFn     func(context.Context, int, int) ([]model.User, error)
-		countFn    func(context.Context) (int, error)
-		wantStatus int
-		wantKeys   []string
+		name             string
+		query            string
+		listFn           func(context.Context, int, int) ([]model.User, error)
+		countFn          func(context.Context) (int, error)
+		findByUsernameFn func(context.Context, string) (*model.User, error)
+		wantStatus       int
+		wantKeys         []string
 	}{
 		{
 			name:       "success defaults",
@@ -86,11 +87,38 @@ func TestUserHandler_ListUsers(t *testing.T) {
 			wantStatus: http.StatusInternalServerError,
 			wantKeys:   []string{"error"},
 		},
+		{
+			name:  "lookup by username",
+			query: "?username=alice",
+			findByUsernameFn: func(_ context.Context, username string) (*model.User, error) {
+				if username != "alice" {
+					return nil, repository.ErrNotFound
+				}
+				u := testutil.NewTestUser()
+				u.Username = "alice"
+				return u, nil
+			},
+			wantStatus: http.StatusOK,
+			wantKeys:   []string{"users", "total"},
+		},
+		{
+			name:  "username not found",
+			query: "?username=missing",
+			findByUsernameFn: func(_ context.Context, _ string) (*model.User, error) {
+				return nil, repository.ErrNotFound
+			},
+			wantStatus: http.StatusNotFound,
+			wantKeys:   []string{"error"},
+		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			repo := &testutil.MockUserRepo{ListFn: tt.listFn, CountFn: tt.countFn}
+			repo := &testutil.MockUserRepo{
+				ListFn:           tt.listFn,
+				CountFn:          tt.countFn,
+				FindByUsernameFn: tt.findByUsernameFn,
+			}
 			h := newUserHandler(t, repo, nil)
 
 			req := httptest.NewRequest(http.MethodGet, "/users"+tt.query, nil)

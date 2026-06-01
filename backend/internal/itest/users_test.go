@@ -12,6 +12,27 @@ import (
 	"github.com/google/uuid"
 )
 
+func TestUsers_LookupByUsername(t *testing.T) {
+	truncate(t)
+	registerUser(t, "alice", "alice@example.com", "secret12")
+
+	resp, raw := doJSON(t, http.MethodGet, "/api/v1/users?username=alice", "", "")
+	mustStatus(t, resp, raw, http.StatusOK)
+	var found struct {
+		Users []struct {
+			Username string `json:"username"`
+		} `json:"users"`
+		Total int `json:"total"`
+	}
+	decodeJSON(t, raw, &found)
+	if found.Total != 1 || len(found.Users) != 1 || found.Users[0].Username != "alice" {
+		t.Fatalf("lookup alice = %+v, body %s", found, raw)
+	}
+
+	resp, raw = doJSON(t, http.MethodGet, "/api/v1/users?username=nobody", "", "")
+	mustStatus(t, resp, raw, http.StatusNotFound)
+}
+
 func TestUsers_ListPagination(t *testing.T) {
 	truncate(t)
 	for i := 0; i < 25; i++ {
