@@ -53,10 +53,14 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const payload = isJson ? ((await response.json()) as T & ApiErrorBody) : null
 
   if (!response.ok) {
-    const message =
+    let message =
       payload && typeof payload === 'object' && 'error' in payload && payload.error
         ? String(payload.error)
         : response.statusText || 'request failed'
+    if (response.status === 502) {
+      message =
+        'Cannot reach the API server. Is the backend running? (expected at port 8080 for local dev)'
+    }
     throw new ApiError(response.status, message)
   }
 
