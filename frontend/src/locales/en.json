@@ -6,7 +6,8 @@
     "languageLabel": "Language",
     "languageCodes": {
       "en": "EN",
-      "de": "DE"
+      "de": "DE",
+      "fr": "FR"
     },
     "homeAria": "Transcendence home",
     "login": "Log in",
