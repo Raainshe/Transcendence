@@ -218,7 +218,7 @@ func (r *gameRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*m
 	const q = `
 		SELECT
 			COUNT(*)                               AS games_played,
-			SUM(CASE WHEN is_winner THEN 1 ELSE 0 END) AS wins,
+			COALESCE(SUM(CASE WHEN is_winner THEN 1 ELSE 0 END), 0) AS wins,
 			COALESCE(MAX(score), 0)                AS best_score,
 			COALESCE(SUM(lines_cleared), 0)        AS total_lines,
 			COALESCE(AVG(score)::int, 0)           AS avg_score

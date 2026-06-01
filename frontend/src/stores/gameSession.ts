@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, shallowRef } from 'vue'
 
+import { createGame, matchRecordToCreateGame } from '@/api/games'
 import { gameAudio } from '@/game/audio/AudioManager'
 import { Engine } from '@/game/engine/Engine'
 import { InputController } from '@/game/input/InputController'
@@ -15,6 +16,7 @@ import {
   type MatchEndReason,
   type PieceType,
 } from '@/game/types'
+import { useAuthStore } from '@/stores/auth'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import type { GameVariation } from '@/types/game'
@@ -40,6 +42,8 @@ function phaseLabel(phase: EnginePhase): string {
 function defaultSessionSeed(): number {
   return (Math.floor(Math.random() * 2 ** 31) ^ Date.now()) >>> 0 || 1
 }
+
+const submittedRunIds = new Set<string>()
 
 export const useGameSessionStore = defineStore('gameSession', () => {
   const engine = shallowRef<Engine | null>(null)
@@ -119,6 +123,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     if (s.matchEnded && !endedAt.value) {
       endedAt.value = new Date().toISOString()
       lastMatchRecord.value = buildMatchRecord()
+      trySubmitMatch()
     }
   }
 
@@ -139,6 +144,24 @@ export const useGameSessionStore = defineStore('gameSession', () => {
         backToBackCount: backToBackCount.value,
       },
       events: scoreLedger.value,
+    })
+  }
+
+  function trySubmitMatch(): void {
+    const record = lastMatchRecord.value
+    if (!record?.endedAt) return
+    if (submittedRunIds.has(record.runId)) return
+
+    const auth = useAuthStore()
+    if (!auth.isAuthenticated) return
+
+    const payload = matchRecordToCreateGame(record, matchEndKind.value === 'won')
+    if (!payload) return
+
+    submittedRunIds.add(record.runId)
+    void createGame(payload).catch((err: unknown) => {
+      submittedRunIds.delete(record.runId)
+      console.warn('Failed to submit match', err)
     })
   }
 
@@ -191,6 +214,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     if (active.value && !endedAt.value) {
       endedAt.value = new Date().toISOString()
       lastMatchRecord.value = buildMatchRecord()
+      trySubmitMatch()
     }
 
     keyboard?.detach()

@@ -14,6 +14,8 @@ const hints = [
 ] as const
 
 const links = [
+  { to: '/players', labelKey: 'footer.players' },
+  { to: '/leaderboard', labelKey: 'footer.leaderboard' },
   { to: '/privacy', labelKey: 'footer.privacy' },
   { to: '/terms', labelKey: 'footer.terms' },
   { to: '/credits', labelKey: 'footer.developedBy' },

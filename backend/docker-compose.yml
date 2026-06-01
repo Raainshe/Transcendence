@@ -8,6 +8,7 @@ services:
     ports:
       - ${PORT}:${PORT}
     environment:
+      UPLOAD_DIR: /app/uploads
       APP_ENV: ${APP_ENV}
       PORT: ${PORT}
       BLUEPRINT_DB_HOST: ${BLUEPRINT_DB_HOST}
@@ -17,6 +18,8 @@ services:
       BLUEPRINT_DB_PASSWORD: ${BLUEPRINT_DB_PASSWORD}
       BLUEPRINT_DB_SCHEMA: ${BLUEPRINT_DB_SCHEMA}
       JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - uploads_volume_bp:/app/uploads
     depends_on:
       psql_bp:
         condition: service_healthy

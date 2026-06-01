@@ -52,6 +52,10 @@ func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, e
 	return s.users.FindByID(ctx, id)
 }
 
+func (s *UserService) GetByUsername(ctx context.Context, username string) (*model.User, error) {
+	return s.users.FindByUsername(ctx, username)
+}
+
 func (s *UserService) ListUsers(ctx context.Context, limit, offset int) ([]model.User, int, error) {
 	if limit <= 0 {
 		limit = 20

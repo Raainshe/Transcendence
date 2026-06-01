@@ -1,7 +1,7 @@
 .site-footer {
   position: relative;
   z-index: var(--z-footer);
-  padding: var(--sp-3) var(--sp-4);
+  padding: var(--sp-3) var(--layout-chrome-padding-inline);
   display: flex;
   justify-content: space-between;
   align-items: center;

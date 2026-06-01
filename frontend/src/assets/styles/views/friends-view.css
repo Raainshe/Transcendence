@@ -1,0 +1,345 @@
+.friends-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sp-6) var(--sp-4);
+  gap: var(--sp-5);
+}
+
+.friends-view__header {
+  width: min(560px, 100%);
+  text-align: center;
+}
+
+.friends-view__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-lg), 4vw, var(--fs-xl));
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow:
+    0 0 8px rgba(0, 159, 220, 0.7),
+    0 0 18px rgba(0, 159, 220, 0.45);
+}
+
+.friends-view__subtitle {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-dim);
+}
+
+.friends-view__panel {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  padding: var(--sp-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-panel);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.friends-view__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.friends-view__tab {
+  appearance: none;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-dim);
+}
+
+.friends-view__tab:hover,
+.friends-view__tab:focus-visible {
+  color: var(--color-text);
+  border-color: var(--accent);
+  outline: none;
+}
+
+.friends-view__tab--active {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 0 8px rgba(0, 159, 220, 0.35);
+}
+
+.friends-view__tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1rem;
+  height: 1rem;
+  margin-left: var(--sp-1);
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  font-size: 0.45rem;
+  background: var(--t-red);
+  color: var(--color-bg);
+}
+
+.friends-view__status {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-dim);
+}
+
+.friends-view__error {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--t-red);
+  line-height: 1.4;
+}
+
+.friends-view__success {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent-selected);
+}
+
+.friends-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.friends-view__add-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.friends-view__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.friends-view__label {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.friends-view__input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.friends-view__input:focus-visible {
+  outline: none;
+  border-color: var(--accent-selected);
+  box-shadow: 0 0 0 2px rgba(0, 159, 220, 0.35);
+}
+
+.friends-view__hint {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--color-text-dim);
+  line-height: 1.4;
+}
+
+.friends-view__button {
+  appearance: none;
+  font-family: var(--font-display);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--sp-2) var(--sp-4);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--color-bg);
+}
+
+.friends-view__button:hover:not(:disabled),
+.friends-view__button:focus-visible:not(:disabled) {
+  border-color: var(--accent-selected);
+  background: var(--accent-selected);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(0, 159, 220, 0.35);
+}
+
+.friends-view__button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friends-view__button--secondary {
+  border-color: var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.friends-view__button--danger {
+  border-color: var(--t-red);
+  background: transparent;
+  color: var(--t-red);
+}
+
+.friends-view__button--danger:hover:not(:disabled),
+.friends-view__button--danger:focus-visible:not(:disabled) {
+  background: rgba(215, 15, 55, 0.12);
+  box-shadow: 0 0 0 2px rgba(215, 15, 55, 0.35);
+}
+
+.friends-user-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.friends-user-row__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  min-width: 0;
+}
+
+.friends-user-row__avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.friends-user-row__avatar--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-panel);
+  font-family: var(--font-display);
+  font-size: 0.55rem;
+  color: var(--color-text-dim);
+}
+
+.friends-user-row__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.friends-user-row__username {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent-selected);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.friends-user-row__username--link {
+  text-decoration: none;
+}
+
+.friends-user-row__username--link:hover,
+.friends-user-row__username--link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  outline: none;
+}
+
+.friends-user-row__you {
+  font-family: var(--font-mono);
+  font-size: 0.45rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.friends-user-row__online {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--color-text-dim);
+}
+
+.friends-user-row__online--active {
+  color: var(--accent);
+}
+
+.friends-user-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.friends-user-row__action {
+  appearance: none;
+  font-family: var(--font-display);
+  font-size: 0.45rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.friends-user-row__action:hover:not(:disabled),
+.friends-user-row__action:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.friends-user-row__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.friends-user-row__action--primary {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.friends-user-row__action--danger {
+  border-color: var(--t-red);
+  color: var(--t-red);
+}
+
+.friends-user-row__action--danger:hover:not(:disabled),
+.friends-user-row__action--danger:focus-visible:not(:disabled) {
+  border-color: var(--t-red);
+  color: var(--t-red);
+}

@@ -48,6 +48,9 @@ func NewServer() *http.Server {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		log.Fatalf("failed to create upload directory %s: %v", uploadDir, err)
+	}
 
 	return NewServerWithDB(port, dbService, jwtSecret, uploadDir)
 }
