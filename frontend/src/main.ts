@@ -16,7 +16,17 @@ const pinia = createPinia()
 
 app.use(pinia)
 
-void useAuthStore(pinia).hydrate()
+const auth = useAuthStore(pinia)
+void auth.hydrate()
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      void auth.checkAndRefreshToken()
+    }
+  })
+}
+
 app.use(i18n as never)
 app.use(router)
 

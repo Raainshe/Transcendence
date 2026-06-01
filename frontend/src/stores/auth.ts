@@ -3,6 +3,8 @@ import { computed, ref } from 'vue'
 
 import * as authApi from '@/api/auth'
 import * as usersApi from '@/api/users'
+import { shouldRefreshNow } from '@/auth/jwt'
+import { scheduleTokenRefresh, stopTokenRefreshTimer } from '@/auth/tokenRefresh'
 import { ApiError, setBearerToken } from '@/api/client'
 import type { User } from '@/types/api'
 
@@ -51,13 +53,20 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const status = ref<AuthStatus>('idle')
 
+  let refreshInFlight: Promise<void> | null = null
+
   const isAuthenticated = computed(() => status.value === 'authenticated' && !!token.value)
+
+  function armTokenRefresh(nextToken: string): void {
+    scheduleTokenRefresh(nextToken, () => refreshAccessToken())
+  }
 
   function setSession(nextToken: string, nextUser: User): void {
     token.value = nextToken
     user.value = nextUser
     status.value = 'authenticated'
     applySession(nextToken, nextUser)
+    armTokenRefresh(nextToken)
   }
 
   function applyUser(nextUser: User): void {
@@ -67,10 +76,48 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   function clearSession(): void {
+    stopTokenRefreshTimer()
     token.value = null
     user.value = null
     status.value = 'idle'
     applySession(null, null)
+  }
+
+  async function refreshAccessToken(): Promise<void> {
+    if (!token.value) return
+    if (refreshInFlight) return refreshInFlight
+
+    refreshInFlight = (async () => {
+      const currentUser = user.value
+      if (!currentUser) return
+
+      try {
+        const { token: nextToken } = await authApi.refreshToken()
+        token.value = nextToken
+        applySession(nextToken, currentUser)
+        armTokenRefresh(nextToken)
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) {
+          clearSession()
+          return
+        }
+        console.warn('Token refresh failed', error)
+      }
+    })().finally(() => {
+      refreshInFlight = null
+    })
+
+    return refreshInFlight
+  }
+
+  async function checkAndRefreshToken(): Promise<void> {
+    const current = token.value
+    if (!current || status.value !== 'authenticated') return
+    if (shouldRefreshNow(current)) {
+      await refreshAccessToken()
+    } else {
+      armTokenRefresh(current)
+    }
   }
 
   async function refreshMe(): Promise<void> {
@@ -149,15 +196,26 @@ export const useAuthStore = defineStore('auth', () => {
     setBearerToken(stored.token)
     status.value = 'loading'
 
+    let activeToken = stored.token
+
     try {
+      if (shouldRefreshNow(stored.token)) {
+        const { token: refreshed } = await authApi.refreshToken()
+        activeToken = refreshed
+        token.value = refreshed
+        setBearerToken(refreshed)
+        saveStoredAuth({ token: refreshed, user: stored.user })
+      }
+
       const { user: freshUser } = await authApi.getMe()
-      setSession(stored.token, freshUser)
+      setSession(activeToken, freshUser)
     } catch (error) {
       if (error instanceof ApiError && (error.status === 401 || error.status === 404)) {
         clearSession()
         return
       }
       status.value = 'authenticated'
+      armTokenRefresh(activeToken)
     }
   }
 
@@ -171,6 +229,8 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     hydrate,
     refreshMe,
+    refreshAccessToken,
+    checkAndRefreshToken,
     updateProfile,
     uploadAvatar,
     removeAvatar,
