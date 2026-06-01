@@ -37,6 +37,9 @@
   --sp-7: 3rem;
   --sp-8: 4rem;
 
+  /* Header/footer horizontal inset — keep chrome edges aligned. */
+  --layout-chrome-padding-inline: var(--sp-4);
+
   --radius-sm: 2px;
   --radius-md: 4px;
 

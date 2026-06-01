@@ -8,12 +8,15 @@ import { watch } from 'vue'
 import App from './App.vue'
 import { i18n } from './i18n'
 import router from './router'
+import { useAuthStore } from './stores/auth'
 import { useGameSettingsStore } from './stores/gameSettings'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
+
+void useAuthStore(pinia).hydrate()
 app.use(i18n as never)
 app.use(router)
 

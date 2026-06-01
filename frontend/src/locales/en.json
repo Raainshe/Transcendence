@@ -7,6 +7,33 @@
     "languageCodes": {
       "en": "EN",
       "de": "DE"
+    },
+    "homeAria": "Transcendence home",
+    "login": "Log in",
+    "signUp": "Sign up",
+    "logout": "Log out",
+    "signedInAs": "Signed in as {username}"
+  },
+  "auth": {
+    "dialogLabel": "Account",
+    "tabLogin": "Log in",
+    "tabRegister": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "username": "Username",
+    "confirmPassword": "Confirm password",
+    "submitLogin": "Log in",
+    "submitRegister": "Create account",
+    "close": "Close",
+    "errors": {
+      "required": "Please fill in all fields.",
+      "passwordMismatch": "Passwords do not match.",
+      "passwordTooShort": "Password must be at least 8 characters.",
+      "usernameTooLong": "Username must be 32 characters or fewer.",
+      "invalidCredentials": "Invalid email or password.",
+      "emailTaken": "That email is already in use.",
+      "usernameTaken": "That username is already taken.",
+      "generic": "Something went wrong. Please try again."
     }
   },
   "menu": {
