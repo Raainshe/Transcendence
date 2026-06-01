@@ -117,17 +117,17 @@ function activate() {
   ensureAudioUnlocked()
   if (focusedIndex.value === 0) {
     startNewGame()
-  } else if (focusedIndex.value === 1) {
+  } else if (focusedIndex.value === 3) {
     toggleAudio()
   }
 }
 
 function cycle(delta: 1 | -1): void {
   ensureAudioUnlocked()
-  if (focusedIndex.value === 2) {
+  if (focusedIndex.value === 1) {
     if (delta === 1) variationCyclerRef.value?.next()
     else variationCyclerRef.value?.prev()
-  } else if (focusedIndex.value === 3) {
+  } else if (focusedIndex.value === 2) {
     if (delta === 1) playersCyclerRef.value?.next()
     else playersCyclerRef.value?.prev()
   }
