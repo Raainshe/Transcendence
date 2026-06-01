@@ -8,7 +8,7 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <LegalPage :title="t('legal.privacy.title')" updated="May 2026">
+  <LegalPage :title="t('legal.privacy.title')" :updated="t('legal.privacyPageUpdated')">
     <h2>{{ t('legal.privacy.overviewTitle') }}</h2>
     <p>{{ t('legal.privacy.overviewBody') }}</p>
 

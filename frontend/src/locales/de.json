@@ -1,6 +1,17 @@
 {
   "app": {
-    "title": "Transcendence - Tetris"
+    "title": "Transcendence - Tetris",
+    "brandName": "Transcendence"
+  },
+  "audio": {
+    "muteMenuMusic": "Menümusik stummschalten",
+    "unmuteMenuMusic": "Menümusik einschalten",
+    "muteSfx": "Soundeffekte stummschalten",
+    "unmuteSfx": "Soundeffekte einschalten",
+    "muteMenuMusicKey": "Musik stummschalten (M)",
+    "unmuteMenuMusicKey": "Musik einschalten (M)",
+    "muteSfxKey": "Soundeffekte stummschalten (M)",
+    "unmuteSfxKey": "Soundeffekte einschalten (M)"
   },
   "header": {
     "languageLabel": "Sprache",
@@ -61,6 +72,7 @@
     "privacy": "Datenschutz",
     "terms": "AGB",
     "developedBy": "Entwickelt von",
+    "copyright": "© {year} {brand}",
     "hintNavigate": "Navigieren",
     "hintChange": "Ändern",
     "hintStart": "Start",
@@ -85,10 +97,16 @@
     "pauseAbout": "Über {mode}",
     "pauseSfxOn": "Soundeffekte: AN",
     "pauseSfxOff": "Soundeffekte: AUS",
+    "playfieldAria": "Tetris-Spielfeld",
     "hud": {
       "score": "Punkte",
       "level": "Lvl",
       "lines": "Linien",
+      "b2b": "B2B",
+      "phaseGeneration": "GENERATION",
+      "phaseFalling": "FALLEN",
+      "phaseLock": "LOCK",
+      "phaseGameOver": "GAME OVER",
       "time": "Zeit",
       "timer": "Timer",
       "phase": "Phase",
@@ -154,6 +172,8 @@
   },
   "legal": {
     "lastUpdated": "Zuletzt aktualisiert {date}",
+    "privacyPageUpdated": "Mai 2026",
+    "termsPageUpdated": "Mai 2026",
     "scrollToTop": "Nach oben scrollen",
     "privacy": {
       "title": "Datenschutzerklärung",

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import { gameAudio } from '@/game/audio/AudioManager'
 import { useGameSettingsStore } from '@/stores/gameSettings'
@@ -12,30 +13,25 @@ const props = defineProps<{
 }>()
 
 const settings = useGameSettingsStore()
+const { t } = useI18n()
 
 const enabled = computed(() =>
   props.target === 'music' ? settings.musicEnabled : settings.sfxEnabled,
 )
 
-const ariaLabel = computed(() =>
-  props.target === 'music'
-    ? enabled.value
-      ? 'Mute menu music'
-      : 'Unmute menu music'
-    : enabled.value
-      ? 'Mute sound effects'
-      : 'Unmute sound effects',
-)
+const ariaLabel = computed(() => {
+  if (props.target === 'music') {
+    return enabled.value ? t('audio.muteMenuMusic') : t('audio.unmuteMenuMusic')
+  }
+  return enabled.value ? t('audio.muteSfx') : t('audio.unmuteSfx')
+})
 
-const title = computed(() =>
-  props.target === 'music'
-    ? enabled.value
-      ? 'Mute music (M)'
-      : 'Unmute music (M)'
-    : enabled.value
-      ? 'Mute sound effects (M)'
-      : 'Unmute sound effects (M)',
-)
+const title = computed(() => {
+  if (props.target === 'music') {
+    return enabled.value ? t('audio.muteMenuMusicKey') : t('audio.unmuteMenuMusicKey')
+  }
+  return enabled.value ? t('audio.muteSfxKey') : t('audio.unmuteSfxKey')
+})
 
 function toggle(): void {
   gameAudio.unlock()

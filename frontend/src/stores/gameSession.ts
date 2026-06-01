@@ -16,6 +16,7 @@ import {
   type MatchEndReason,
   type PieceType,
 } from '@/game/types'
+import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
@@ -27,13 +28,13 @@ const MAX_FRAME_DT_MS = 100
 function phaseLabel(phase: EnginePhase): string {
   switch (phase) {
     case EnginePhase.Generation:
-      return 'GENERATION'
+      return i18n.global.t('game.hud.phaseGeneration')
     case EnginePhase.Falling:
-      return 'FALLING'
+      return i18n.global.t('game.hud.phaseFalling')
     case EnginePhase.Lock:
-      return 'LOCK'
+      return i18n.global.t('game.hud.phaseLock')
     case EnginePhase.GameOver:
-      return 'GAME OVER'
+      return i18n.global.t('game.hud.phaseGameOver')
     default:
       return String(phase)
   }
@@ -59,7 +60,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   const score = ref(0)
   const backToBackActive = ref(false)
   const backToBackCount = ref(0)
-  const phaseLabelRef = ref('GENERATION')
+  const phaseLabelRef = ref(phaseLabel(EnginePhase.Generation))
   const gameOver = ref(false)
   const gameOverReason = ref<GameOverReason | undefined>(undefined)
   const variant = ref<GameVariation>('marathon')

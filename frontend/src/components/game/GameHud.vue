@@ -71,7 +71,7 @@ const matchEnded = computed(() => store.matchEndKind !== 'playing')
     <div class="game-hud__stat game-hud__stat--score">
       <span class="game-hud__label">{{ t('game.hud.score') }}</span>
       <span class="game-hud__value">{{ store.score.toLocaleString() }}</span>
-      <span v-if="store.backToBackActive" class="game-hud__b2b">B2B</span>
+      <span v-if="store.backToBackActive" class="game-hud__b2b">{{ t('game.hud.b2b') }}</span>
     </div>
     <div v-if="showLevel" class="game-hud__stat">
       <span class="game-hud__label">{{ t('game.hud.level') }}</span>

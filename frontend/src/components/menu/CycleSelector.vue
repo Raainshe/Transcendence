@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T">
-import { nextTick, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 import '@/assets/styles/menu/cycle-selector.css'
 
@@ -15,6 +16,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:modelValue', value: T): void
 }>()
+
+const { t } = useI18n()
+
+const resolvedPrevAria = computed(() => props.prevAriaLabel ?? t('cycler.previous'))
+const resolvedNextAria = computed(() => props.nextAriaLabel ?? t('cycler.next'))
 
 const flash = ref(false)
 let flashTimer: number | undefined
@@ -65,7 +71,7 @@ defineExpose({ prev, next })
       type="button"
       class="cycle-selector__arrow cycle-selector__arrow--prev"
       tabindex="-1"
-      :aria-label="prevAriaLabel ?? 'Previous'"
+      :aria-label="resolvedPrevAria"
       @mousedown.prevent
       @click="prev"
     >
@@ -82,7 +88,7 @@ defineExpose({ prev, next })
       type="button"
       class="cycle-selector__arrow cycle-selector__arrow--next"
       tabindex="-1"
-      :aria-label="nextAriaLabel ?? 'Next'"
+      :aria-label="resolvedNextAria"
       @mousedown.prevent
       @click="next"
     >

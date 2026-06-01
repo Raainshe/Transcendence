@@ -25,7 +25,9 @@ const links = [
 <template>
   <footer class="site-footer">
     <span class="site-footer__left">
-      <span class="site-footer__brand">&copy; {{ year }} Transcendence</span>
+      <span class="site-footer__brand">{{
+        t('footer.copyright', { year, brand: t('app.brandName') })
+      }}</span>
       <RouterLink
         v-for="link in links"
         :key="link.to"

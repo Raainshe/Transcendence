@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 
 import { computeGhostPiece } from '@/game/engine/Ghost'
 import { getOccupiedCells } from '@/game/engine/Tetrimino'
@@ -21,6 +22,7 @@ const MAX_CELL = 30
 const store = useGameSessionStore()
 const fxStore = useGameFxStore()
 const { engine } = storeToRefs(store)
+const { t } = useI18n()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const cellPx = ref(20)
@@ -229,7 +231,7 @@ onBeforeUnmount(() => {
     class="game-board"
     tabindex="0"
     role="application"
-    aria-label="Tetris playfield"
+    :aria-label="t('game.playfieldAria')"
   />
 </template>
 
