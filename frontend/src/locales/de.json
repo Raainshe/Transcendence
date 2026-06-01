@@ -194,11 +194,49 @@
       "contactBody": "Fragen können über ein Issue im Projekt-Repository gestellt werden:"
     }
   },
+  "profile": {
+    "title": "Profil",
+    "username": "Benutzername",
+    "email": "E-Mail",
+    "emailReadOnly": "Die E-Mail kann hier nicht geändert werden.",
+    "save": "Änderungen speichern",
+    "saving": "Speichern…",
+    "saved": "Profil aktualisiert.",
+    "avatar": "Avatar",
+    "avatarAlt": "Dein Profilbild",
+    "uploadAvatar": "Bild hochladen",
+    "removeAvatar": "Avatar entfernen",
+    "avatarHint": "JPEG, PNG, WebP oder GIF. Max. 5 MB.",
+    "statsTitle": "Statistiken",
+    "statsGames": "Gespielte Spiele",
+    "statsWins": "Siege",
+    "statsBest": "Bestpunktzahl",
+    "statsLines": "Gesamte Reihen",
+    "statsAvg": "Durchschnittspunktzahl",
+    "statsEmpty": "Noch keine Spiele aufgezeichnet.",
+    "statsLoadError": "Statistiken konnten nicht geladen werden.",
+    "dangerTitle": "Gefahrenzone",
+    "deleteAccount": "Konto löschen",
+    "deleteTitle": "Konto wirklich löschen?",
+    "deleteBody": "Dies löscht dein Konto und alle zugehörigen Daten dauerhaft. Das kann nicht rückgängig gemacht werden.",
+    "deleteConfirm": "Konto löschen",
+    "deleteCancel": "Abbrechen",
+    "deleting": "Wird gelöscht…",
+    "errors": {
+      "usernameRequired": "Benutzername ist erforderlich.",
+      "usernameTooLong": "Der Benutzername darf höchstens 32 Zeichen lang sein.",
+      "usernameTaken": "Dieser Benutzername ist bereits vergeben.",
+      "avatarType": "Nur JPEG-, PNG-, WebP- und GIF-Bilder sind erlaubt.",
+      "avatarTooLarge": "Das Bild darf höchstens 5 MB groß sein.",
+      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    }
+  },
   "routes": {
     "home": "Transcendence - Hauptmenü",
     "play": "Transcendence - Spielen",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Datenschutz",
-    "terms": "Transcendence - Bedingungen"
+    "terms": "Transcendence - Bedingungen",
+    "profile": "Transcendence - Profil"
   }
 }

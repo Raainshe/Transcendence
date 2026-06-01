@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 
+import { resolveAssetUrl } from '@/api/client'
 import AuthModal, { type AuthModalTab } from '@/components/auth/AuthModal.vue'
 import { SUPPORTED_LOCALES, type AppLocale } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
@@ -13,6 +14,7 @@ import '@/assets/styles/layout/site-header.css'
 
 const blocks = ['yellow', 'cyan', 'purple', 'orange', 'blue', 'green', 'red'] as const
 
+const route = useRoute()
 const { t } = useI18n()
 const settings = useGameSettingsStore()
 const auth = useAuthStore()
@@ -21,6 +23,8 @@ const { isAuthenticated, user, status: authStatus } = storeToRefs(auth)
 
 const authModalOpen = ref(false)
 const authModalTab = ref<AuthModalTab>('login')
+
+const avatarSrc = computed(() => resolveAssetUrl(user.value?.avatar_url))
 
 function setLocale(nextLocale: AppLocale): void {
   locale.value = nextLocale
@@ -42,6 +46,16 @@ function closeAuthModal(): void {
 async function onLogout(): Promise<void> {
   await auth.logout()
 }
+
+watch(
+  () => route.query.login,
+  (value) => {
+    if (value === '1' && !isAuthenticated.value) {
+      openAuthModal('login')
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -59,9 +73,19 @@ async function onLogout(): Promise<void> {
 
       <div class="site-header__auth">
         <template v-if="isAuthenticated && user">
-          <span class="site-header__user" :title="t('header.signedInAs', { username: user.username })">
-            @{{ user.username }}
-          </span>
+          <RouterLink
+            :to="{ name: 'profile' }"
+            class="site-header__user"
+            :title="t('header.signedInAs', { username: user.username })"
+          >
+            <img
+              v-if="avatarSrc"
+              :src="avatarSrc"
+              :alt="t('profile.avatarAlt')"
+              class="site-header__user-avatar"
+            />
+            <span class="site-header__user-name">@{{ user.username }}</span>
+          </RouterLink>
           <button
             type="button"
             class="site-header__auth-button site-header__auth-button--secondary"

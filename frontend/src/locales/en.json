@@ -194,11 +194,49 @@
       "contactBody": "Questions can be raised by opening an issue on the project repository:"
     }
   },
+  "profile": {
+    "title": "Profile",
+    "username": "Username",
+    "email": "Email",
+    "emailReadOnly": "Email cannot be changed here.",
+    "save": "Save changes",
+    "saving": "Saving…",
+    "saved": "Profile updated.",
+    "avatar": "Avatar",
+    "avatarAlt": "Your profile picture",
+    "uploadAvatar": "Upload image",
+    "removeAvatar": "Remove avatar",
+    "avatarHint": "JPEG, PNG, WebP, or GIF. Max 5 MB.",
+    "statsTitle": "Statistics",
+    "statsGames": "Games played",
+    "statsWins": "Wins",
+    "statsBest": "Best score",
+    "statsLines": "Total lines",
+    "statsAvg": "Average score",
+    "statsEmpty": "No games recorded yet.",
+    "statsLoadError": "Could not load statistics.",
+    "dangerTitle": "Danger zone",
+    "deleteAccount": "Delete account",
+    "deleteTitle": "Delete your account?",
+    "deleteBody": "This permanently deletes your account and all associated data. This cannot be undone.",
+    "deleteConfirm": "Delete my account",
+    "deleteCancel": "Cancel",
+    "deleting": "Deleting…",
+    "errors": {
+      "usernameRequired": "Username is required.",
+      "usernameTooLong": "Username must be 32 characters or fewer.",
+      "usernameTaken": "That username is already taken.",
+      "avatarType": "Only JPEG, PNG, WebP, and GIF images are allowed.",
+      "avatarTooLarge": "Image must be 5 MB or smaller.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
   "routes": {
     "home": "Transcendence - Main Menu",
     "play": "Transcendence - Play",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Privacy",
-    "terms": "Transcendence - Terms"
+    "terms": "Transcendence - Terms",
+    "profile": "Transcendence - Profile"
   }
 }

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import { useAuthStore } from '@/stores/auth'
 import HomeView from '@/views/HomeView.vue'
 
 const router = createRouter({
@@ -30,11 +31,23 @@ const router = createRouter({
       name: 'terms',
       component: () => import('@/views/TermsView.vue'),
     },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
   scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) return savedPosition
     return { top: 0 }
   },
+})
+
+router.beforeEach((to) => {
+  if (to.meta.requiresAuth && !useAuthStore().isAuthenticated) {
+    return { name: 'home', query: { login: '1' } }
+  }
 })
 
 export default router

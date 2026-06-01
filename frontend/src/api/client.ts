@@ -1,7 +1,14 @@
 import type { ApiErrorBody } from '@/types/api'
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? ''
 const API_PREFIX = '/api/v1'
+
+/** Resolve avatar or upload paths from the API for use in img src. */
+export function resolveAssetUrl(path: string | null | undefined): string | null {
+  if (!path) return null
+  if (path.startsWith('http://') || path.startsWith('https://')) return path
+  return `${API_BASE}${path.startsWith('/') ? path : `/${path}`}`
+}
 
 let bearerToken: string | null = null
 
@@ -28,7 +35,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const { auth = true, ...init } = options
   const headers = new Headers(init.headers)
 
+  const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData
   const hasJsonBody =
+    !isFormData &&
     init.body !== undefined &&
     init.body !== null &&
     typeof init.body === 'string' &&

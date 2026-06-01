@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
 import * as authApi from '@/api/auth'
+import * as usersApi from '@/api/users'
 import { ApiError, setBearerToken } from '@/api/client'
 import type { User } from '@/types/api'
 
@@ -59,11 +60,22 @@ export const useAuthStore = defineStore('auth', () => {
     applySession(nextToken, nextUser)
   }
 
+  function applyUser(nextUser: User): void {
+    if (!token.value) return
+    user.value = nextUser
+    applySession(token.value, nextUser)
+  }
+
   function clearSession(): void {
     token.value = null
     user.value = null
     status.value = 'idle'
     applySession(null, null)
+  }
+
+  async function refreshMe(): Promise<void> {
+    const { user: freshUser } = await authApi.getMe()
+    applyUser(freshUser)
   }
 
   async function login(email: string, password: string): Promise<void> {
@@ -105,6 +117,26 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function updateProfile(username: string): Promise<void> {
+    const { user: nextUser } = await usersApi.updateMe({ username })
+    applyUser(nextUser)
+  }
+
+  async function uploadAvatar(file: File): Promise<void> {
+    const { user: nextUser } = await usersApi.uploadAvatar(file)
+    applyUser(nextUser)
+  }
+
+  async function removeAvatar(): Promise<void> {
+    await usersApi.deleteAvatar()
+    await refreshMe()
+  }
+
+  async function deleteAccount(): Promise<void> {
+    await usersApi.deleteMe()
+    clearSession()
+  }
+
   async function hydrate(): Promise<void> {
     const stored = loadStoredAuth()
     if (!stored) {
@@ -138,6 +170,11 @@ export const useAuthStore = defineStore('auth', () => {
     register,
     logout,
     hydrate,
+    refreshMe,
+    updateProfile,
+    uploadAvatar,
+    removeAvatar,
+    deleteAccount,
     clearSession,
   }
 })

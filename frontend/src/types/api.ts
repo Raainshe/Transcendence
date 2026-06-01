@@ -29,3 +29,16 @@ export interface MeResponse {
 export interface ApiErrorBody {
   error?: string
 }
+
+export interface UpdateMePayload {
+  username?: string
+  avatar_url?: string
+}
+
+export interface UserStats {
+  games_played: number
+  wins: number
+  best_score: number
+  total_lines: number
+  avg_score: number
+}
