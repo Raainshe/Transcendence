@@ -31,6 +31,27 @@ func recordGame(t *testing.T, token, mode string, score int, win bool) {
 	mustStatus(t, resp, raw, http.StatusCreated)
 }
 
+func TestGames_StatsEmptyForNewUser(t *testing.T) {
+	truncate(t)
+	userID, _ := registerUser(t, "alice", "alice@example.com", "secret12")
+
+	resp, raw := doJSON(t, http.MethodGet, "/api/v1/users/"+userID.String()+"/stats", "", "")
+	mustStatus(t, resp, raw, http.StatusOK)
+
+	var stats struct {
+		GamesPlayed int `json:"games_played"`
+		Wins        int `json:"wins"`
+		BestScore   int `json:"best_score"`
+		TotalLines  int `json:"total_lines"`
+		AvgScore    int `json:"avg_score"`
+	}
+	decodeJSON(t, raw, &stats)
+	if stats.GamesPlayed != 0 || stats.Wins != 0 || stats.BestScore != 0 ||
+		stats.TotalLines != 0 || stats.AvgScore != 0 {
+		t.Errorf("stats = %+v, want all zeros", stats)
+	}
+}
+
 func TestGames_RecordAndStats(t *testing.T) {
 	truncate(t)
 	userID, token := registerUser(t, "alice", "alice@example.com", "secret12")
