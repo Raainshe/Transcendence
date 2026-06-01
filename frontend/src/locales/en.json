@@ -53,6 +53,7 @@
     "next": "Next"
   },
   "footer": {
+    "leaderboard": "Leaderboard",
     "privacy": "Privacy",
     "terms": "Terms",
     "developedBy": "Developed by",
@@ -231,12 +232,28 @@
       "generic": "Something went wrong. Please try again."
     }
   },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "subtitle": "Top scores from recorded matches",
+    "loading": "Loading leaderboard…",
+    "loadError": "Could not load the leaderboard.",
+    "empty": "No scores recorded yet. Play a match while signed in to appear here.",
+    "colRank": "Rank",
+    "colPlayer": "Player",
+    "colScore": "Score",
+    "colLines": "Lines",
+    "colLevel": "Level",
+    "colMode": "Mode",
+    "colDate": "Date",
+    "avatarAlt": "{username}'s avatar"
+  },
   "routes": {
     "home": "Transcendence - Main Menu",
     "play": "Transcendence - Play",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Privacy",
     "terms": "Transcendence - Terms",
-    "profile": "Transcendence - Profile"
+    "profile": "Transcendence - Profile",
+    "leaderboard": "Transcendence - Leaderboard"
   }
 }

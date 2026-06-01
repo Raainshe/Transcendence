@@ -42,3 +42,35 @@ export interface UserStats {
   total_lines: number
   avg_score: number
 }
+
+export interface CreateGamePayload {
+  mode: string
+  score: number
+  lines_cleared: number
+  level_reached: number
+  started_at: string
+  finished_at: string
+  is_winner: boolean
+}
+
+export interface LeaderboardEntry {
+  rank: number
+  user_id: string
+  username: string
+  avatar_url: string | null
+  score: number
+  lines_cleared: number
+  level_reached: number
+  mode: string
+  finished_at: string | null
+}
+
+export interface CreateGameResponse {
+  game: {
+    id: string
+    mode: string
+    status: string
+    created_at: string
+    finished_at: string | null
+  }
+}

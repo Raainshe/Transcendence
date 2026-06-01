@@ -53,6 +53,7 @@
     "next": "Weiter"
   },
   "footer": {
+    "leaderboard": "Bestenliste",
     "privacy": "Datenschutz",
     "terms": "AGB",
     "developedBy": "Entwickelt von",
@@ -231,12 +232,28 @@
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
     }
   },
+  "leaderboard": {
+    "title": "Bestenliste",
+    "subtitle": "Top-Punkte aus gespeicherten Partien",
+    "loading": "Bestenliste wird geladen…",
+    "loadError": "Die Bestenliste konnte nicht geladen werden.",
+    "empty": "Noch keine Punkte. Melde dich an und spiele eine Partie, um hier zu erscheinen.",
+    "colRank": "Rang",
+    "colPlayer": "Spieler",
+    "colScore": "Punkte",
+    "colLines": "Linien",
+    "colLevel": "Level",
+    "colMode": "Modus",
+    "colDate": "Datum",
+    "avatarAlt": "Avatar von {username}"
+  },
   "routes": {
     "home": "Transcendence - Hauptmenü",
     "play": "Transcendence - Spielen",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Datenschutz",
     "terms": "Transcendence - Bedingungen",
-    "profile": "Transcendence - Profil"
+    "profile": "Transcendence - Profil",
+    "leaderboard": "Transcendence - Bestenliste"
   }
 }
