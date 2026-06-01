@@ -1,6 +1,9 @@
 include:
   - backend/docker-compose.yml
 
+volumes:
+  uploads_volume_bp:
+
 services:
   frontend:
     build:
