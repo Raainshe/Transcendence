@@ -1,5 +1,11 @@
 import { apiFetch } from '@/api/client'
-import type { CreateGamePayload, CreateGameResponse, LeaderboardEntry } from '@/types/api'
+import type {
+  CreateGamePayload,
+  CreateGameResponse,
+  GameDetailResponse,
+  GamesListResponse,
+  LeaderboardEntry,
+} from '@/types/api'
 import type { MatchRecordV1 } from '@/game/scoring/types'
 
 export function matchRecordToCreateGame(
@@ -22,6 +28,31 @@ export function createGame(payload: CreateGamePayload): Promise<CreateGameRespon
   return apiFetch<CreateGameResponse>('/games', {
     method: 'POST',
     body: JSON.stringify(payload),
+  })
+}
+
+export type ListGamesParams = {
+  userId?: string
+  limit?: number
+  offset?: number
+}
+
+export function listGames(params: ListGamesParams = {}): Promise<GamesListResponse> {
+  const search = new URLSearchParams()
+  if (params.userId) search.set('user_id', params.userId)
+  if (params.limit !== undefined && params.limit > 0) search.set('limit', String(params.limit))
+  if (params.offset !== undefined && params.offset > 0) search.set('offset', String(params.offset))
+  const query = search.toString()
+  return apiFetch<GamesListResponse>(`/games${query ? `?${query}` : ''}`, {
+    method: 'GET',
+    auth: false,
+  })
+}
+
+export function getGame(gameId: string): Promise<GameDetailResponse> {
+  return apiFetch<GameDetailResponse>(`/games/${gameId}`, {
+    method: 'GET',
+    auth: false,
   })
 }
 

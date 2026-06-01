@@ -1,0 +1,98 @@
+.players-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--sp-6) var(--sp-4);
+  gap: var(--sp-5);
+}
+
+.players-view__header {
+  width: min(560px, 100%);
+  text-align: center;
+}
+
+.players-view__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(var(--fs-lg), 4vw, var(--fs-xl));
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  text-transform: uppercase;
+  text-shadow:
+    0 0 8px rgba(0, 159, 220, 0.7),
+    0 0 18px rgba(0, 159, 220, 0.45);
+}
+
+.players-view__subtitle {
+  margin: var(--sp-2) 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-dim);
+}
+
+.players-view__panel {
+  box-sizing: border-box;
+  width: min(560px, 100%);
+  padding: var(--sp-5);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-panel);
+}
+
+.players-view__status {
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-dim);
+}
+
+.players-view__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.players-view__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  margin-top: var(--sp-4);
+}
+
+.players-view__page-info {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  color: var(--color-text-dim);
+}
+
+.players-view__page-btn {
+  appearance: none;
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--sp-1) var(--sp-3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text);
+}
+
+.players-view__page-btn:hover:not(:disabled),
+.players-view__page-btn:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
+}
+
+.players-view__page-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

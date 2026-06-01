@@ -122,6 +122,18 @@
   word-break: break-word;
 }
 
+.leaderboard-view__username--link {
+  text-decoration: none;
+  color: var(--accent-selected);
+}
+
+.leaderboard-view__username--link:hover,
+.leaderboard-view__username--link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  outline: none;
+}
+
 .leaderboard-view__score {
   font-family: var(--font-display);
   color: var(--accent);

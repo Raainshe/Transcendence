@@ -179,7 +179,12 @@ async function onAddFriend(): Promise<void> {
             {{ t('friends.emptyFriends') }}
           </p>
           <ul v-else class="friends-view__list">
-            <UserRow v-for="friend in friends" :key="friend.id" :user="friend">
+            <UserRow
+              v-for="friend in friends"
+              :key="friend.id"
+              :user="friend"
+              :profile-to="{ name: 'userProfile', params: { id: friend.id } }"
+            >
               <template #actions>
                 <button
                   type="button"
@@ -208,7 +213,12 @@ async function onAddFriend(): Promise<void> {
             {{ t('friends.emptyRequests') }}
           </p>
           <ul v-else class="friends-view__list">
-            <UserRow v-for="requester in requests" :key="requester.id" :user="requester">
+            <UserRow
+              v-for="requester in requests"
+              :key="requester.id"
+              :user="requester"
+              :profile-to="{ name: 'userProfile', params: { id: requester.id } }"
+            >
               <template #actions>
                 <button
                   type="button"
@@ -238,7 +248,12 @@ async function onAddFriend(): Promise<void> {
             {{ t('friends.emptyBlocked') }}
           </p>
           <ul v-else class="friends-view__list">
-            <UserRow v-for="blockedUser in blocked" :key="blockedUser.id" :user="blockedUser">
+            <UserRow
+              v-for="blockedUser in blocked"
+              :key="blockedUser.id"
+              :user="blockedUser"
+              :profile-to="{ name: 'userProfile', params: { id: blockedUser.id } }"
+            >
               <template #actions>
                 <button
                   type="button"

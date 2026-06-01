@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
 
 import { resolveAssetUrl } from '@/api/client'
 import * as gamesApi from '@/api/games'
@@ -122,7 +123,12 @@ function formatScore(score: number): string {
                   >
                     {{ playerInitials(row.username) }}
                   </span>
-                  <span class="leaderboard-view__username">{{ row.username }}</span>
+                  <RouterLink
+                    :to="{ name: 'userProfile', params: { id: row.user_id } }"
+                    class="leaderboard-view__username leaderboard-view__username--link"
+                  >
+                    {{ row.username }}
+                  </RouterLink>
                 </div>
               </td>
               <td class="leaderboard-view__score leaderboard-view__num">

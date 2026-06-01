@@ -26,6 +26,42 @@ export interface MeResponse {
   user: User
 }
 
+export interface UserResponse {
+  user: User
+}
+
+export interface GameSummary {
+  id: string
+  mode: string
+  status: string
+  created_at: string
+  finished_at: string | null
+}
+
+export interface GamePlayer {
+  id: string
+  game_id: string
+  user_id: string
+  score: number
+  lines_cleared: number
+  level_reached: number
+  placement: number | null
+  is_winner: boolean
+}
+
+export interface GameDetail extends GameSummary {
+  players: GamePlayer[]
+}
+
+export interface GamesListResponse {
+  games: GameSummary[]
+  total: number
+}
+
+export interface GameDetailResponse {
+  game: GameDetail
+}
+
 export interface UsersListResponse {
   users: User[]
   total: number

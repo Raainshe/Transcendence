@@ -55,6 +55,7 @@
     "next": "Weiter"
   },
   "footer": {
+    "players": "Spieler",
     "leaderboard": "Bestenliste",
     "privacy": "Datenschutz",
     "terms": "AGB",
@@ -275,6 +276,46 @@
       "cannotBlockSelf": "Du kannst dich nicht selbst blockieren."
     }
   },
+  "matchHistory": {
+    "title": "Spielverlauf",
+    "loading": "Partien werden geladen…",
+    "loadError": "Spielverlauf konnte nicht geladen werden.",
+    "empty": "Noch keine gespeicherten Partien.",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "page": "Seite {current} von {total}",
+    "detailTitle": "Partiedetails",
+    "detailError": "Partiedetails konnten nicht geladen werden.",
+    "close": "Schließen",
+    "colPlayer": "Spieler",
+    "colScore": "Punkte",
+    "colLines": "Linien",
+    "colLevel": "Level",
+    "colResult": "Ergebnis",
+    "you": "Du",
+    "playerShort": "Spieler {id}",
+    "win": "Sieg"
+  },
+  "userProfile": {
+    "title": "Spielerprofil",
+    "back": "Zurück zum Menü",
+    "loading": "Profil wird geladen…",
+    "notFound": "Spieler nicht gefunden.",
+    "loadError": "Profil konnte nicht geladen werden.",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "players": {
+    "title": "Spieler",
+    "subtitle": "Registrierte Spieler durchsuchen",
+    "loading": "Spieler werden geladen…",
+    "loadError": "Spieler konnten nicht geladen werden.",
+    "empty": "Keine Spieler gefunden.",
+    "prev": "Zurück",
+    "next": "Weiter",
+    "page": "Seite {current} von {total}",
+    "you": "Du"
+  },
   "leaderboard": {
     "title": "Bestenliste",
     "subtitle": "Top-Punkte aus gespeicherten Partien",
@@ -298,6 +339,8 @@
     "terms": "Transcendence - Bedingungen",
     "profile": "Transcendence - Profil",
     "leaderboard": "Transcendence - Bestenliste",
-    "friends": "Transcendence - Freunde"
+    "friends": "Transcendence - Freunde",
+    "userProfile": "Transcendence - Spieler",
+    "players": "Transcendence - Spieler"
   }
 }

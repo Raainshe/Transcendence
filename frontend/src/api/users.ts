@@ -1,5 +1,35 @@
 import { ApiError, apiFetch } from '@/api/client'
-import type { MeResponse, UpdateMePayload, User, UsersListResponse, UserStats } from '@/types/api'
+import type {
+  MeResponse,
+  UpdateMePayload,
+  User,
+  UserResponse,
+  UsersListResponse,
+  UserStats,
+} from '@/types/api'
+
+export function getUser(userId: string): Promise<User> {
+  return apiFetch<UserResponse>(`/users/${userId}`, {
+    method: 'GET',
+    auth: false,
+  }).then((res) => res.user)
+}
+
+export type ListUsersParams = {
+  limit?: number
+  offset?: number
+}
+
+export function listUsers(params: ListUsersParams = {}): Promise<UsersListResponse> {
+  const search = new URLSearchParams()
+  if (params.limit !== undefined && params.limit > 0) search.set('limit', String(params.limit))
+  if (params.offset !== undefined && params.offset > 0) search.set('offset', String(params.offset))
+  const query = search.toString()
+  return apiFetch<UsersListResponse>(`/users${query ? `?${query}` : ''}`, {
+    method: 'GET',
+    auth: false,
+  })
+}
 
 export function findUserByUsername(username: string): Promise<User | null> {
   const params = new URLSearchParams({ username })

@@ -267,6 +267,25 @@
   white-space: nowrap;
 }
 
+.friends-user-row__username--link {
+  text-decoration: none;
+}
+
+.friends-user-row__username--link:hover,
+.friends-user-row__username--link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  outline: none;
+}
+
+.friends-user-row__you {
+  font-family: var(--font-mono);
+  font-size: 0.45rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .friends-user-row__online {
   font-family: var(--font-mono);
   font-size: 0.5rem;

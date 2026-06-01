@@ -48,6 +48,16 @@ const router = createRouter({
       component: () => import('@/views/FriendsView.vue'),
       meta: { requiresAuth: true },
     },
+    {
+      path: '/users/:id',
+      name: 'userProfile',
+      component: () => import('@/views/UserProfileView.vue'),
+    },
+    {
+      path: '/players',
+      name: 'players',
+      component: () => import('@/views/PlayersView.vue'),
+    },
   ],
   scrollBehavior(_to, _from, savedPosition) {
     if (savedPosition) return savedPosition

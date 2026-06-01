@@ -55,6 +55,7 @@
     "next": "Next"
   },
   "footer": {
+    "players": "Players",
     "leaderboard": "Leaderboard",
     "privacy": "Privacy",
     "terms": "Terms",
@@ -275,6 +276,46 @@
       "cannotBlockSelf": "You cannot block yourself."
     }
   },
+  "matchHistory": {
+    "title": "Match history",
+    "loading": "Loading matches…",
+    "loadError": "Could not load match history.",
+    "empty": "No recorded matches yet.",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "detailTitle": "Match details",
+    "detailError": "Could not load match details.",
+    "close": "Close",
+    "colPlayer": "Player",
+    "colScore": "Score",
+    "colLines": "Lines",
+    "colLevel": "Level",
+    "colResult": "Result",
+    "you": "You",
+    "playerShort": "Player {id}",
+    "win": "Win"
+  },
+  "userProfile": {
+    "title": "Player profile",
+    "back": "Back to menu",
+    "loading": "Loading profile…",
+    "notFound": "Player not found.",
+    "loadError": "Could not load profile.",
+    "online": "Online",
+    "offline": "Offline"
+  },
+  "players": {
+    "title": "Players",
+    "subtitle": "Browse registered players",
+    "loading": "Loading players…",
+    "loadError": "Could not load players.",
+    "empty": "No players found.",
+    "prev": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "you": "You"
+  },
   "leaderboard": {
     "title": "Leaderboard",
     "subtitle": "Top scores from recorded matches",
@@ -298,6 +339,8 @@
     "terms": "Transcendence - Terms",
     "profile": "Transcendence - Profile",
     "leaderboard": "Transcendence - Leaderboard",
-    "friends": "Transcendence - Friends"
+    "friends": "Transcendence - Friends",
+    "userProfile": "Transcendence - Player",
+    "players": "Transcendence - Players"
   }
 }

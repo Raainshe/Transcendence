@@ -3,6 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import GameDetailModal from '@/components/game/GameDetailModal.vue'
+import MatchHistoryList from '@/components/game/MatchHistoryList.vue'
 import DeleteAccountModal from '@/components/profile/DeleteAccountModal.vue'
 import { ApiError, resolveAssetUrl } from '@/api/client'
 import * as usersApi from '@/api/users'
@@ -31,6 +33,9 @@ const statsLoading = ref(false)
 const deleteModalOpen = ref(false)
 const deleteError = ref<string | null>(null)
 const isDeleting = ref(false)
+
+const selectedGameId = ref<string | null>(null)
+const gameDetailOpen = ref(false)
 
 const user = computed(() => auth.user)
 const avatarSrc = computed(() => resolveAssetUrl(user.value?.avatar_url))
@@ -135,6 +140,16 @@ async function onRemoveAvatar(): Promise<void> {
   } finally {
     isRemovingAvatar.value = false
   }
+}
+
+function openGameDetail(gameId: string): void {
+  selectedGameId.value = gameId
+  gameDetailOpen.value = true
+}
+
+function closeGameDetail(): void {
+  gameDetailOpen.value = false
+  selectedGameId.value = null
 }
 
 async function onDeleteAccount(): Promise<void> {
@@ -268,6 +283,13 @@ async function onDeleteAccount(): Promise<void> {
       </div>
     </section>
 
+    <section class="profile-view__panel" aria-labelledby="profile-history-heading">
+      <h2 id="profile-history-heading" class="profile-view__section-title">
+        {{ t('matchHistory.title') }}
+      </h2>
+      <MatchHistoryList v-if="user" :user-id="user.id" @select="openGameDetail" />
+    </section>
+
     <section class="profile-view__panel profile-view__danger" aria-labelledby="profile-danger-heading">
       <h2 id="profile-danger-heading" class="profile-view__section-title">
         {{ t('profile.dangerTitle') }}
@@ -281,6 +303,13 @@ async function onDeleteAccount(): Promise<void> {
         {{ t('profile.deleteAccount') }}
       </button>
     </section>
+
+    <GameDetailModal
+      :open="gameDetailOpen"
+      :game-id="selectedGameId"
+      :highlight-user-id="user?.id"
+      @close="closeGameDetail"
+    />
 
     <DeleteAccountModal
       :open="deleteModalOpen"

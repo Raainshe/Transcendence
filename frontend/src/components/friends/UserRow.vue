@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { RouterLink } from 'vue-router'
 
 import { resolveAssetUrl } from '@/api/client'
 import type { User } from '@/types/api'
 
 const props = defineProps<{
   user: User
+  profileTo?: { name: 'userProfile'; params: { id: string } }
+  youLabel?: string
 }>()
 
 const { t } = useI18n()
@@ -38,7 +41,15 @@ const onlineLabel = computed(() =>
         {{ initials }}
       </span>
       <div class="friends-user-row__meta">
-        <span class="friends-user-row__username">@{{ user.username }}</span>
+        <RouterLink
+          v-if="profileTo"
+          :to="profileTo"
+          class="friends-user-row__username friends-user-row__username--link"
+        >
+          @{{ user.username }}
+        </RouterLink>
+        <span v-else class="friends-user-row__username">@{{ user.username }}</span>
+        <span v-if="youLabel" class="friends-user-row__you">{{ youLabel }}</span>
         <span
           class="friends-user-row__online"
           :class="{ 'friends-user-row__online--active': user.is_online }"
