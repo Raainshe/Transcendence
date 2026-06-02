@@ -114,7 +114,6 @@ function formatScore(score: number): string {
                     class="leaderboard-view__avatar"
                     width="32"
                     height="32"
-                    loading="lazy"
                   />
                   <span
                     v-else

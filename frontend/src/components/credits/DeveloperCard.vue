@@ -28,7 +28,6 @@ const { t } = useI18n()
       :alt="t('credits.developerAvatarAlt', { name })"
       width="120"
       height="120"
-      loading="lazy"
       decoding="async"
       referrerpolicy="no-referrer"
     />
