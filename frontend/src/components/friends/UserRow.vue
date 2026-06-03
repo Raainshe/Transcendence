@@ -31,7 +31,6 @@ const onlineLabel = computed(() =>
         class="friends-user-row__avatar"
         width="40"
         height="40"
-        loading="lazy"
       />
       <span
         v-else
