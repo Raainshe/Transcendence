@@ -25,8 +25,13 @@ const router = useRouter()
 const route = useRoute()
 const store = useGameSessionStore()
 const matchStore = useMatchStore()
-const { opponentList: opponents, matchEnded, matchResults, gameId: matchGameId } =
-  storeToRefs(matchStore)
+const {
+  opponentList: opponents,
+  matchEnded,
+  matchResults,
+  gameId: matchGameId,
+  reconnecting: matchReconnecting,
+} = storeToRefs(matchStore)
 const settings = useGameSettingsStore()
 const { t } = useI18n()
 
@@ -161,6 +166,10 @@ async function initSession(): Promise<void> {
     if (matchId) {
       const stashedSeed = readMultiplayerSeed(matchId)
       await matchStore.bootstrap(matchId)
+      if (matchStore.matchEnded) {
+        sessionReady.value = true
+        return
+      }
       matchStore.ensurePlayersRoster(matchId)
       const seed = stashedSeed ?? matchStore.getSharedSeed()
       if (!seed || seed <= 0) {
@@ -198,7 +207,7 @@ onBeforeUnmount(() => {
     <GameHud band="top" />
     <div class="game-play-view__arena">
       <div class="game-play-view__canvas-slot">
-        <GameBoard v-if="sessionReady" />
+        <GameBoard v-if="sessionReady && !matchEnded" />
         <ActionNotifications />
       </div>
       <aside
@@ -215,6 +224,7 @@ onBeforeUnmount(() => {
           :lines="opp.lines"
           :level="opp.level"
           :alive="opp.alive"
+          :connected="opp.connected"
           :board-b64="opp.board"
         />
       </aside>

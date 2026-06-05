@@ -164,6 +164,7 @@ type MockGameRepo struct {
 	GetUserStatsFn      func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 	IsGamePlayerFn      func(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
 	ListMatchPlayersFn        func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	ListMatchResultsFn        func(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error)
 	FinishMultiplayerMatchFn  func(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
@@ -226,6 +227,12 @@ func (m *MockGameRepo) ListMatchPlayers(ctx context.Context, gameID uuid.UUID) (
 		return m.ListMatchPlayersFn(ctx, gameID)
 	}
 	return []model.MatchPlayerView{}, nil
+}
+func (m *MockGameRepo) ListMatchResults(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error) {
+	if m.ListMatchResultsFn != nil {
+		return m.ListMatchResultsFn(ctx, gameID)
+	}
+	return nil, repository.ErrNotFound
 }
 func (m *MockGameRepo) FinishMultiplayerMatch(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error {
 	if m.FinishMultiplayerMatchFn != nil {

@@ -72,6 +72,10 @@ const showMultiplayerWaiting = computed(
     !matchStore.matchEnded,
 )
 
+const showReconnecting = computed(
+  () => store.multiplayerGameId != null && matchStore.reconnecting && !matchStore.matchEnded,
+)
+
 const showSoloGameOver = computed(
   () => matchEnded.value && !store.multiplayerGameId && !matchStore.matchEnded,
 )
@@ -105,6 +109,9 @@ const showSoloGameOver = computed(
       <span class="game-hud__value game-hud__value--sm">{{ store.phaseLabel }}</span>
     </div>
     <NextQueue :pieces="store.nextPieces" />
+    <p v-if="showReconnecting" class="game-hud__reconnect" role="status">
+      {{ t('game.reconnecting') }}
+    </p>
   </header>
 
   <footer v-else class="game-hud game-hud--footer" aria-live="polite">
@@ -237,5 +244,14 @@ const showSoloGameOver = computed(
   margin: 0;
   font-size: 0.5rem;
   color: var(--color-text-dim);
+}
+
+.game-hud__reconnect {
+  margin: 0;
+  width: 100%;
+  text-align: center;
+  font-size: 0.5rem;
+  color: var(--t-amber, var(--color-text-dim));
+  letter-spacing: 0.04em;
 }
 </style>

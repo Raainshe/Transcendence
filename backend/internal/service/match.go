@@ -54,11 +54,23 @@ func (s *MatchService) GetMatch(ctx context.Context, callerID, gameID uuid.UUID)
 		return nil, err
 	}
 
-	return &model.MatchDetail{
+	detail := &model.MatchDetail{
 		GameID:     gameID,
 		Status:     game.Status,
 		Mode:       game.Mode,
 		SharedSeed: *lobby.SharedSeed,
 		Players:    players,
-	}, nil
+	}
+
+	if game.Status == "finished" {
+		results, err := s.games.ListMatchResults(ctx, gameID)
+		if err != nil && !errors.Is(err, repository.ErrNotFound) {
+			return nil, err
+		}
+		if results != nil {
+			detail.Results = results
+		}
+	}
+
+	return detail, nil
 }

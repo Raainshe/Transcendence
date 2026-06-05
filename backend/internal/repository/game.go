@@ -22,6 +22,7 @@ type GameRepository interface {
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
 	ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	ListMatchResults(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error)
 	FinishMultiplayerMatch(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
@@ -347,6 +348,61 @@ func (r *gameRepository) ListMatchPlayers(ctx context.Context, gameID uuid.UUID)
 		players = []model.MatchPlayerView{}
 	}
 	return players, nil
+}
+
+func (r *gameRepository) ListMatchResults(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error) {
+	const q = `
+		SELECT u.id, u.username, gp.score, gp.lines_cleared, gp.level_reached,
+		       COALESCE(gp.placement, 0), gp.is_winner
+		FROM game_players gp
+		JOIN users u ON u.id = gp.user_id
+		WHERE gp.game_id = $1
+		ORDER BY COALESCE(gp.placement, 999), gp.id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, q, gameID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		payload model.MatchEndedPayload
+		players []model.MatchEndedPlayer
+	)
+	for rows.Next() {
+		var (
+			p         model.MatchEndedPlayer
+			userIDStr string
+		)
+		if err := rows.Scan(
+			&userIDStr,
+			&p.Username,
+			&p.Score,
+			&p.Lines,
+			&p.Level,
+			&p.Placement,
+			&p.IsWinner,
+		); err != nil {
+			return nil, err
+		}
+		p.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, err
+		}
+		if p.IsWinner {
+			winnerID := p.UserID
+			payload.WinnerUserID = &winnerID
+		}
+		players = append(players, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(players) == 0 {
+		return nil, ErrNotFound
+	}
+	payload.Players = players
+	return &payload, nil
 }
 
 func (r *gameRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error) {

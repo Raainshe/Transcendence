@@ -47,7 +47,9 @@ type Handler struct {
 }
 
 func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder) *Handler {
-	return &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches}
+	h := &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches}
+	hub.SetDisconnectTimeoutHandler(h.forfeitOnDisconnect)
+	return h
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -134,8 +136,20 @@ func (h *Handler) handleMatchSubscribe(c *Client, room string) {
 		return
 	}
 
+	wasDisconnected := h.hub.Disconnect().MarkReconnected(gameID, c.UserID())
+
 	h.hub.Subscribe(c, room)
 	h.hub.ReplayMatchStates(gameID, c)
+	h.hub.ReplayDisconnected(gameID, c)
+
+	if wasDisconnected {
+		env, err := NewEnvelope(TypePlayerReconnected, model.PlayerConnectionBroadcast{
+			UserID: c.UserID().String(),
+		})
+		if err == nil {
+			h.hub.BroadcastMatch(gameID, env)
+		}
+	}
 }
 
 func (h *Handler) handlePlayerState(c *Client, room string, rawPayload json.RawMessage) {

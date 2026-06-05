@@ -9,11 +9,17 @@ type MatchPlayerView struct {
 }
 
 type MatchDetail struct {
-	GameID     uuid.UUID         `json:"game_id"`
-	Status     string            `json:"status"`
-	Mode       string            `json:"mode"`
-	SharedSeed int64             `json:"shared_seed"`
-	Players    []MatchPlayerView `json:"players"`
+	GameID     uuid.UUID          `json:"game_id"`
+	Status     string             `json:"status"`
+	Mode       string             `json:"mode"`
+	SharedSeed int64              `json:"shared_seed"`
+	Players    []MatchPlayerView  `json:"players"`
+	Results    *MatchEndedPayload `json:"results,omitempty"`
+}
+
+// PlayerConnectionBroadcast is sent for player.disconnected and player.reconnected.
+type PlayerConnectionBroadcast struct {
+	UserID string `json:"user_id"`
 }
 
 // PlayerEliminatedUpload is the client-sent payload for player.eliminated.

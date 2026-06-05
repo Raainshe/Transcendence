@@ -7,29 +7,55 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+
+	"backend/internal/model"
 )
 
+type DisconnectTimeoutHandler func(gameID, userID uuid.UUID)
+
 type Hub struct {
-	mu          sync.RWMutex
-	rooms       map[string]map[*Client]struct{}
-	clients     map[*Client]struct{}
-	matchStates *MatchStateStore
-	rateLimiter *RateLimiter
-	lifecycle   *MatchLifecycle
+	mu                   sync.RWMutex
+	rooms                map[string]map[*Client]struct{}
+	clients              map[*Client]struct{}
+	matchStates          *MatchStateStore
+	rateLimiter          *RateLimiter
+	lifecycle            *MatchLifecycle
+	disconnect           *DisconnectTracker
+	onDisconnectTimeout  DisconnectTimeoutHandler
 }
 
 func NewHub() *Hub {
-	return &Hub{
+	h := &Hub{
 		rooms:       make(map[string]map[*Client]struct{}),
 		clients:     make(map[*Client]struct{}),
 		matchStates: NewMatchStateStore(),
 		rateLimiter: NewRateLimiter(),
 		lifecycle:   NewMatchLifecycle(),
 	}
+	h.disconnect = NewDisconnectTracker(h.handleDisconnectTimeout)
+	return h
+}
+
+func (h *Hub) SetDisconnectTimeoutHandler(fn DisconnectTimeoutHandler) {
+	h.onDisconnectTimeout = fn
+}
+
+func (h *Hub) Disconnect() *DisconnectTracker {
+	return h.disconnect
+}
+
+func (h *Hub) handleDisconnectTimeout(gameID, userID uuid.UUID) {
+	if h.onDisconnectTimeout != nil {
+		h.onDisconnectTimeout(gameID, userID)
+	}
 }
 
 func (h *Hub) Lifecycle() *MatchLifecycle {
 	return h.lifecycle
+}
+
+func (h *Hub) MatchStates() *MatchStateStore {
+	return h.matchStates
 }
 
 func (h *Hub) Register(c *Client) {
@@ -57,8 +83,28 @@ func (h *Hub) Unregister(c *Client) {
 
 	for _, room := range roomsToCheck {
 		if strings.HasPrefix(room, "match:") {
+			gameID, err := uuid.Parse(strings.TrimPrefix(room, "match:"))
+			if err != nil {
+				continue
+			}
+			h.handleMatchClientDisconnect(gameID, c.UserID())
 			h.evictMatchRoomIfEmpty(room)
 		}
+	}
+}
+
+func (h *Hub) handleMatchClientDisconnect(gameID, userID uuid.UUID) {
+	if h.lifecycle.IsFinished(gameID) || h.lifecycle.IsEliminated(gameID, userID) {
+		return
+	}
+	if !h.disconnect.MarkDisconnected(gameID, userID) {
+		return
+	}
+	env, err := NewEnvelope(TypePlayerDisconnected, model.PlayerConnectionBroadcast{
+		UserID: userID.String(),
+	})
+	if err == nil {
+		h.BroadcastMatch(gameID, env)
 	}
 }
 
@@ -71,7 +117,7 @@ func (h *Hub) evictMatchRoomIfEmpty(room string) {
 	members := h.rooms[room]
 	empty := len(members) == 0
 	h.mu.RUnlock()
-	if empty {
+	if empty && h.lifecycle.IsFinished(gameID) {
 		h.EvictMatch(gameID)
 	}
 }
@@ -81,8 +127,9 @@ func (h *Hub) BroadcastMatch(gameID uuid.UUID, env Envelope) {
 	h.Broadcast(MatchRoomID(gameID.String()), env)
 }
 
-// EvictMatch clears cached state for a finished or empty match room.
+// EvictMatch clears cached state for a finished match.
 func (h *Hub) EvictMatch(gameID uuid.UUID) {
+	h.disconnect.Evict(gameID)
 	h.matchStates.Evict(gameID)
 	h.rateLimiter.EvictMatch(gameID)
 	h.lifecycle.Evict(gameID)
@@ -198,6 +245,22 @@ func (h *Hub) ReplayMatchStates(gameID uuid.UUID, subscriber *Client) {
 			Level:  st.Level,
 			Alive:  st.Alive,
 			Board:  st.Board,
+		})
+		if err != nil {
+			continue
+		}
+		h.SendToClient(subscriber, env)
+	}
+}
+
+// ReplayDisconnected sends player.disconnected for currently disconnected opponents.
+func (h *Hub) ReplayDisconnected(gameID uuid.UUID, subscriber *Client) {
+	for _, userID := range h.disconnect.ListDisconnected(gameID) {
+		if userID == subscriber.UserID() {
+			continue
+		}
+		env, err := NewEnvelope(TypePlayerDisconnected, model.PlayerConnectionBroadcast{
+			UserID: userID.String(),
 		})
 		if err != nil {
 			continue

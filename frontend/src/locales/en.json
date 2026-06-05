@@ -133,11 +133,13 @@
       "howToWin": "How to win",
       "backToGame": "Back to game"
     },
+    "reconnecting": "Reconnecting…",
     "opponents": {
       "title": "Opponents",
       "score": "{score} · {lines}L · Lv{level}",
       "out": "OUT",
       "waiting": "Syncing",
+      "disconnected": "Disconnected",
       "unknown": "Opponent",
       "boardAria": "{name}'s board"
     },

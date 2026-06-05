@@ -133,11 +133,13 @@
       "howToWin": "Comment gagner",
       "backToGame": "Retour au jeu"
     },
+    "reconnecting": "Reconnexion…",
     "opponents": {
       "title": "Adversaires",
       "score": "{score} · {lines}L · Niv{level}",
       "out": "ÉLIMINÉ",
       "waiting": "Sync",
+      "disconnected": "Déconnecté",
       "unknown": "Adversaire",
       "boardAria": "Plateau de {name}"
     },

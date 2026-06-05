@@ -11,13 +11,17 @@ const sendPlayerState = vi.fn()
 
 vi.mock('@/composables/useMatchSocket', () => {
   const connected = { value: true }
+  const reconnecting = { value: false }
   return {
     WS_TYPE_ERROR: 'error',
     WS_TYPE_PLAYER_STATE: 'player.state',
+    WS_TYPE_PLAYER_DISCONNECTED: 'player.disconnected',
+    WS_TYPE_PLAYER_RECONNECTED: 'player.reconnected',
     WS_TYPE_PLAYER_ELIMINATED: 'player.eliminated',
     WS_TYPE_MATCH_ENDED: 'match.ended',
     useMatchSocket: () => ({
       connected,
+      reconnecting,
       connect: vi.fn(),
       disconnect: vi.fn(),
       retryPendingConnect: vi.fn(),
@@ -204,6 +208,64 @@ describe('useMatchStore opponentList', () => {
     expect(store.matchResults?.winner_user_id).toBe(OPP_ID)
     expect(session.matchEndKind).toBe('lost')
     expect(session.active).toBe(false)
+  })
+
+  it('marks opponent disconnected and reconnected from broadcasts', () => {
+    const store = useMatchStore()
+    store.players = [
+      { user_id: SELF_ID, username: 'self', avatar_url: null },
+      { user_id: OPP_ID, username: 'rival', avatar_url: null },
+    ]
+
+    store.applyOpponentDisconnected({ user_id: OPP_ID })
+    expect(store.opponentList[0]?.connected).toBe(false)
+
+    store.applyOpponentReconnected({ user_id: OPP_ID })
+    expect(store.opponentList[0]?.connected).toBe(true)
+  })
+
+  it('bootstrap with finished match applies stored results', async () => {
+    const { getMatch } = await import('@/api/matches')
+    vi.mocked(getMatch).mockResolvedValue({
+      game_id: 'game-finished',
+      status: 'finished',
+      mode: 'multiplayer',
+      shared_seed: 123,
+      players: [
+        { user_id: SELF_ID, username: 'self', avatar_url: null },
+        { user_id: OPP_ID, username: 'rival', avatar_url: null },
+      ],
+      results: {
+        winner_user_id: OPP_ID,
+        players: [
+          {
+            user_id: SELF_ID,
+            username: 'self',
+            score: 100,
+            lines: 1,
+            level: 1,
+            placement: 2,
+            is_winner: false,
+          },
+          {
+            user_id: OPP_ID,
+            username: 'rival',
+            score: 500,
+            lines: 5,
+            level: 2,
+            placement: 1,
+            is_winner: true,
+          },
+        ],
+      },
+    })
+
+    const store = useMatchStore()
+    const ok = await store.bootstrap('game-finished')
+
+    expect(ok).toBe(false)
+    expect(store.matchEnded).toBe(true)
+    expect(store.matchResults?.winner_user_id).toBe(OPP_ID)
   })
 
   it('notifyLocalElimination sends only once', () => {

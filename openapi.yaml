@@ -208,6 +208,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/MatchPlayer'
+        results:
+          type: object
+          nullable: true
+          description: Present when status is finished; same shape as match.ended payload.
 
     StartLobbyResult:
       type: object
@@ -992,6 +996,11 @@ paths:
         `{ "type": "player.eliminated", "room": "match:{gameId}", "payload": { "reason": "topOut|lockOut|blockOut", "score": 0, "lines": 0, "level": 1 } }`
         Server tracks placements, broadcasts `player.eliminated`, and ends the match
         when one player remains or all are eliminated (all-dead tie-break: highest score wins; ties = no winner).
+
+        **Disconnect / reconnect** (server → clients, 30s grace before forfeit elimination):
+        `{ "type": "player.disconnected", "payload": { "user_id": "<uuid>" } }`
+        `{ "type": "player.reconnected", "payload": { "user_id": "<uuid>" } }`
+        On subscribe, disconnected opponents are replayed to the reconnecting client.
 
         **Match ended** (server → clients):
         `{ "type": "match.ended", "payload": { "winner_user_id": "<uuid>|null", "players": [...] } }`

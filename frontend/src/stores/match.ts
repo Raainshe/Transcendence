@@ -5,7 +5,9 @@ import { getMatch } from '@/api/matches'
 import {
   WS_TYPE_ERROR,
   WS_TYPE_MATCH_ENDED,
+  WS_TYPE_PLAYER_DISCONNECTED,
   WS_TYPE_PLAYER_ELIMINATED,
+  WS_TYPE_PLAYER_RECONNECTED,
   WS_TYPE_PLAYER_STATE,
   type WsEnvelope,
   useMatchSocket,
@@ -21,6 +23,7 @@ import { useGameSessionStore } from '@/stores/gameSession'
 import type {
   MatchEndedPayload,
   MatchPlayerView,
+  PlayerConnectionBroadcast,
   PlayerEliminatedBroadcast,
   PlayerStateBroadcast,
 } from '@/types/api'
@@ -30,6 +33,7 @@ const SEND_INTERVAL_MS = 150
 export type OpponentView = PlayerStateBroadcast & {
   username: string
   avatar_url: string | null
+  connected: boolean
 }
 
 function normalizeUserId(id: string | null | undefined): string | null {
@@ -43,7 +47,7 @@ function isSelfPlayer(userId: string, selfId: string | null | undefined): boolea
   return normalizeUserId(userId) === normalizedSelf
 }
 
-function placeholderOpponent(player: MatchPlayerView): OpponentView {
+function placeholderOpponent(player: MatchPlayerView, connected = true): OpponentView {
   return {
     user_id: player.user_id,
     username: player.username,
@@ -53,7 +57,17 @@ function placeholderOpponent(player: MatchPlayerView): OpponentView {
     level: 1,
     alive: true,
     board: '',
+    connected,
   }
+}
+
+function opponentConnected(
+  userId: string,
+  disconnected: Set<string>,
+): boolean {
+  const key = normalizeUserId(userId)
+  if (!key) return true
+  return !disconnected.has(key)
 }
 
 export const useMatchStore = defineStore('match', () => {
@@ -63,10 +77,12 @@ export const useMatchStore = defineStore('match', () => {
   const gameId = ref<string | null>(null)
   const players = ref<MatchPlayerView[]>([])
   const opponents = ref<Map<string, OpponentView>>(new Map())
+  const disconnectedOpponents = ref<Set<string>>(new Set())
   const matchError = ref<string | null>(null)
   const matchEnded = ref(false)
   const matchResults = ref<MatchEndedPayload | null>(null)
   const connected = computed(() => socket.connected.value)
+  const reconnecting = computed(() => socket.reconnecting.value)
   const bootstrapFailed = ref(false)
 
   let lastSentAt = 0
@@ -85,11 +101,20 @@ export const useMatchStore = defineStore('match', () => {
           [...opponents.value.values()].find(
             (o) => normalizeUserId(o.user_id) === normalizeUserId(player.user_id),
           )
-        return live ?? placeholderOpponent(player)
+        const view = live ?? placeholderOpponent(player)
+        return {
+          ...view,
+          connected: opponentConnected(view.user_id, disconnectedOpponents.value),
+        }
       })
     }
 
-    return [...opponents.value.values()].filter((o) => !isSelfPlayer(o.user_id, selfId))
+    return [...opponents.value.values()]
+      .filter((o) => !isSelfPlayer(o.user_id, selfId))
+      .map((view) => ({
+        ...view,
+        connected: opponentConnected(view.user_id, disconnectedOpponents.value),
+      }))
   })
 
   function playerMeta(userId: string): { username: string; avatar_url: string | null } {
@@ -111,6 +136,7 @@ export const useMatchStore = defineStore('match', () => {
     gameId.value = null
     players.value = []
     opponents.value = new Map()
+    disconnectedOpponents.value = new Set()
     matchError.value = null
     matchEnded.value = false
     matchResults.value = null
@@ -155,6 +181,7 @@ export const useMatchStore = defineStore('match', () => {
     const preservedPlayers = gameId.value === id && players.value.length > 0 ? [...players.value] : []
     socket.disconnect()
     opponents.value = new Map()
+    disconnectedOpponents.value = new Set()
     matchError.value = null
     bootstrapFailed.value = false
     lastSentAt = 0
@@ -183,6 +210,16 @@ export const useMatchStore = defineStore('match', () => {
       if (sharedSeed > 0) {
         stashMultiplayerSeed(id, sharedSeed)
       }
+
+      if (detail.status === 'finished') {
+        if (detail.results) {
+          applyMatchEnded(detail.results)
+        } else {
+          matchEnded.value = true
+        }
+        return false
+      }
+
       return true
     } catch {
       bootstrapFailed.value = true
@@ -207,8 +244,10 @@ export const useMatchStore = defineStore('match', () => {
       ...payload,
       username: meta.username,
       avatar_url: meta.avatar_url,
+      connected: true,
     })
     opponents.value = next
+    clearDisconnected(payload.user_id)
   }
 
   function applyOpponentEliminated(payload: PlayerEliminatedBroadcast): void {
@@ -231,8 +270,35 @@ export const useMatchStore = defineStore('match', () => {
       level: existing?.level ?? 1,
       alive: false,
       board: existing?.board ?? '',
+      connected: true,
     })
     opponents.value = next
+    clearDisconnected(payload.user_id)
+  }
+
+  function markDisconnected(userId: string): void {
+    const key = normalizeUserId(userId)
+    if (!key || isSelfPlayer(userId, auth.user?.id)) return
+    const next = new Set(disconnectedOpponents.value)
+    next.add(key)
+    disconnectedOpponents.value = next
+  }
+
+  function clearDisconnected(userId: string): void {
+    const key = normalizeUserId(userId)
+    if (!key) return
+    if (!disconnectedOpponents.value.has(key)) return
+    const next = new Set(disconnectedOpponents.value)
+    next.delete(key)
+    disconnectedOpponents.value = next
+  }
+
+  function applyOpponentDisconnected(payload: PlayerConnectionBroadcast): void {
+    markDisconnected(payload.user_id)
+  }
+
+  function applyOpponentReconnected(payload: PlayerConnectionBroadcast): void {
+    clearDisconnected(payload.user_id)
   }
 
   function applyMatchEnded(payload: MatchEndedPayload): void {
@@ -246,6 +312,14 @@ export const useMatchStore = defineStore('match', () => {
     if (env.type === WS_TYPE_ERROR) {
       const payload = env.payload as { error?: string } | undefined
       matchError.value = payload?.error ?? 'websocket error'
+      return
+    }
+    if (env.type === WS_TYPE_PLAYER_DISCONNECTED && env.payload) {
+      applyOpponentDisconnected(env.payload as PlayerConnectionBroadcast)
+      return
+    }
+    if (env.type === WS_TYPE_PLAYER_RECONNECTED && env.payload) {
+      applyOpponentReconnected(env.payload as PlayerConnectionBroadcast)
       return
     }
     if (env.type === WS_TYPE_PLAYER_ELIMINATED && env.payload) {
@@ -295,7 +369,9 @@ export const useMatchStore = defineStore('match', () => {
     clearTokenWatch()
 
     const tryConnect = (): void => {
-      socket.connect(id, handleEnvelope)
+      socket.connect(id, handleEnvelope, {
+        shouldReconnect: () => gameId.value === id && !matchEnded.value,
+      })
       socket.retryPendingConnect()
     }
 
@@ -349,6 +425,7 @@ export const useMatchStore = defineStore('match', () => {
     matchEnded,
     matchResults,
     connected,
+    reconnecting,
     bootstrapFailed,
     bootstrap,
     getSharedSeed,
@@ -359,6 +436,8 @@ export const useMatchStore = defineStore('match', () => {
     maybeSendLocalState,
     notifyLocalElimination,
     applyOpponentState,
+    applyOpponentDisconnected,
+    applyOpponentReconnected,
     applyMatchEnded,
   }
 })

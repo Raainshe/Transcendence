@@ -133,11 +133,13 @@
       "howToWin": "So gewinnst du",
       "backToGame": "Zurück ins Spiel"
     },
+    "reconnecting": "Verbindung wird wiederhergestellt…",
     "opponents": {
       "title": "Gegner",
       "score": "{score} · {lines}L · Lv{level}",
       "out": "RAUS",
       "waiting": "Sync",
+      "disconnected": "Getrennt",
       "unknown": "Gegner",
       "boardAria": "Brett von {name}"
     },

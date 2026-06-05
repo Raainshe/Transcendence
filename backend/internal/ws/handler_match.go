@@ -49,6 +49,7 @@ func (h *Handler) processElimination(
 	if !registered {
 		return
 	}
+	h.hub.Disconnect().ClearUser(gameID, userID)
 
 	board := ""
 	if cached, ok := h.hub.matchStates.Get(gameID, userID); ok {
@@ -153,6 +154,27 @@ func (h *Handler) finishMatch(gameID uuid.UUID, survivorID *uuid.UUID, allElimin
 	}
 	h.hub.BroadcastMatch(gameID, endedEnv)
 	h.hub.EvictMatch(gameID)
+}
+
+func (h *Handler) forfeitOnDisconnect(gameID, userID uuid.UUID) {
+	if h.hub.Lifecycle().IsFinished(gameID) || h.hub.Lifecycle().IsEliminated(gameID, userID) {
+		return
+	}
+
+	score, lines, level := 0, 0, 1
+	if cached, ok := h.hub.matchStates.Get(gameID, userID); ok {
+		score = cached.Score
+		lines = cached.Lines
+		level = cached.Level
+	}
+
+	h.ensureLifecycle(gameID)
+	h.processElimination(nil, gameID, userID, model.PlayerEliminatedUpload{
+		Reason: "forfeit",
+		Score:  score,
+		Lines:  lines,
+		Level:  level,
+	})
 }
 
 func (h *Handler) parseMatchRoom(c *Client, room string) (uuid.UUID, bool) {

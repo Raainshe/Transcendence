@@ -188,6 +188,11 @@ export interface MatchDetail {
   mode: string
   shared_seed: number
   players: MatchPlayerView[]
+  results?: MatchEndedPayload
+}
+
+export interface PlayerConnectionBroadcast {
+  user_id: string
 }
 
 export interface MatchResponse {

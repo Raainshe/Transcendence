@@ -19,6 +19,7 @@ const props = defineProps<{
   lines: number
   level: number
   alive: boolean
+  connected?: boolean
   boardB64: string
 }>()
 
@@ -31,6 +32,7 @@ const displayName = computed(() => props.username || t('game.opponents.unknown')
 const avatarSrc = computed(() => resolveAssetUrl(props.avatarUrl))
 const initials = computed(() => displayName.value.slice(0, 2).toUpperCase())
 const waitingForBoard = computed(() => !props.boardB64)
+const isDisconnected = computed(() => props.alive && props.connected === false)
 
 function paint(): void {
   const canvas = canvasRef.value
@@ -94,7 +96,10 @@ onMounted(() => {
         class="opponent-board__canvas"
         :aria-label="t('game.opponents.boardAria', { name: displayName })"
       />
-      <div v-if="waitingForBoard" class="opponent-board__wait-overlay" role="status">
+      <div v-if="isDisconnected" class="opponent-board__wait-overlay" role="status">
+        {{ t('game.opponents.disconnected') }}
+      </div>
+      <div v-else-if="waitingForBoard" class="opponent-board__wait-overlay" role="status">
         {{ t('game.opponents.waiting') }}
       </div>
       <div v-else-if="!alive" class="opponent-board__out-overlay" role="status">
