@@ -86,6 +86,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 		// WebSocket — JWT via ?token= query param
 		r.Get("/ws", s.wsHandler.ServeHTTP)
 
+		// Matches — protected
+		r.Group(func(r chi.Router) {
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			r.Get("/matches/{id}", s.matchHandler.Get)
+		})
+
 		// Lobbies — protected
 		r.Group(func(r chi.Router) {
 			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))

@@ -30,6 +30,7 @@ type Server struct {
 	userHandler  *handler.UserHandler
 	gameHandler  *handler.GameHandler
 	lobbyHandler *handler.LobbyHandler
+	matchHandler *handler.MatchHandler
 	wsHandler    *ws.Handler
 }
 
@@ -72,6 +73,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)
+	matchSvc := service.NewMatchService(gameRepo, lobbyRepo)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -88,7 +90,8 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		userHandler:  handler.NewUserHandler(userSvc),
 		gameHandler:  handler.NewGameHandler(gameSvc),
 		lobbyHandler: handler.NewLobbyHandler(lobbySvc),
-		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc),
+		matchHandler: handler.NewMatchHandler(matchSvc),
+		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo),
 	}
 
 	return &http.Server{

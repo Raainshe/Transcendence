@@ -192,4 +192,10 @@ func TestLobbyService_StartLobby_Success(t *testing.T) {
 	if len(bus.Messages) < 2 {
 		t.Fatalf("broadcast messages = %d, want at least 2", len(bus.Messages))
 	}
+	if len(bus.AutoJoinCalls) != 1 {
+		t.Fatalf("auto-join calls = %d, want 1", len(bus.AutoJoinCalls))
+	}
+	if bus.AutoJoinCalls[0].LobbyID != lobby.ID || bus.AutoJoinCalls[0].GameID != result.GameID {
+		t.Fatalf("auto-join = %+v, want lobby %s game %s", bus.AutoJoinCalls[0], lobby.ID, result.GameID)
+	}
 }

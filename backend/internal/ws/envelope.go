@@ -6,7 +6,13 @@ const (
 	TypeLobbyUpdated = "lobby.updated"
 	TypeLobbyClosed  = "lobby.closed"
 	TypeMatchStart   = "match.start"
+	TypePlayerState  = "player.state"
 	TypeError        = "error"
+
+	MatrixWidth        = 10
+	MatrixTotalHeight  = 40
+	MatrixCellCount    = MatrixWidth * MatrixTotalHeight
+	MaxPlayerStateScore = 9_999_999
 )
 
 type Envelope struct {
@@ -24,4 +30,8 @@ func NewEnvelope(typ string, payload any) (Envelope, error) {
 
 func LobbyRoomID(lobbyID string) string {
 	return "lobby:" + lobbyID
+}
+
+func MatchRoomID(gameID string) string {
+	return "match:" + gameID
 }

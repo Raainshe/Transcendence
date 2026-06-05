@@ -32,6 +32,7 @@ type LobbyRepository interface {
 	LinkGame(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error
 	MemberCount(ctx context.Context, lobbyID uuid.UUID) (int, error)
 	IsMember(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
+	FindByGameID(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
 }
 
 type lobbyRepository struct {
@@ -79,6 +80,14 @@ func (r *lobbyRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Lo
 		FROM lobbies WHERE id = $1
 	`
 	return r.scanLobby(r.db.QueryRowContext(ctx, q, id.String()))
+}
+
+func (r *lobbyRepository) FindByGameID(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error) {
+	const q = `
+		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at
+		FROM lobbies WHERE game_id = $1
+	`
+	return r.scanLobby(r.db.QueryRowContext(ctx, q, gameID.String()))
 }
 
 func (r *lobbyRepository) FindByInviteCode(ctx context.Context, code string) (*model.Lobby, error) {

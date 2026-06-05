@@ -3,6 +3,7 @@ package ws
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"strings"
 
@@ -10,15 +11,22 @@ import (
 	"github.com/gorilla/websocket"
 
 	"backend/internal/auth"
+	"backend/internal/model"
 )
 
 type MemberChecker interface {
 	IsMember(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
 }
 
-type subscribeMessage struct {
-	Type string `json:"type"`
-	Room string `json:"room"`
+type GamePlayerChecker interface {
+	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
+}
+
+type incomingMessage struct {
+	Type    string          `json:"type"`
+	Room    string          `json:"room"`
+	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -29,10 +37,11 @@ type Handler struct {
 	hub       *Hub
 	jwtSecret string
 	lobbies   MemberChecker
+	games     GamePlayerChecker
 }
 
-func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker) *Handler {
-	return &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies}
+func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker) *Handler {
+	return &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -63,21 +72,34 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) handleMessage(c *Client, msg []byte) {
-	var sub subscribeMessage
-	if err := json.Unmarshal(msg, &sub); err != nil {
+	var incoming incomingMessage
+	if err := json.Unmarshal(msg, &incoming); err != nil {
 		h.sendError(c, "invalid message")
 		return
 	}
-	if sub.Type != "subscribe" {
-		h.sendError(c, "unsupported message type")
-		return
-	}
 
-	room := strings.TrimSpace(sub.Room)
-	if !strings.HasPrefix(room, "lobby:") {
-		h.sendError(c, "invalid room")
-		return
+	switch incoming.Type {
+	case "subscribe":
+		h.handleSubscribe(c, strings.TrimSpace(incoming.Room))
+	case TypePlayerState:
+		h.handlePlayerState(c, strings.TrimSpace(incoming.Room), incoming.Payload)
+	default:
+		h.sendError(c, "unsupported message type")
 	}
+}
+
+func (h *Handler) handleSubscribe(c *Client, room string) {
+	switch {
+	case strings.HasPrefix(room, "lobby:"):
+		h.handleLobbySubscribe(c, room)
+	case strings.HasPrefix(room, "match:"):
+		h.handleMatchSubscribe(c, room)
+	default:
+		h.sendError(c, "invalid room")
+	}
+}
+
+func (h *Handler) handleLobbySubscribe(c *Client, room string) {
 	lobbyID, err := uuid.Parse(strings.TrimPrefix(room, "lobby:"))
 	if err != nil {
 		h.sendError(c, "invalid lobby id")
@@ -91,6 +113,102 @@ func (h *Handler) handleMessage(c *Client, msg []byte) {
 	}
 
 	h.hub.Subscribe(c, room)
+}
+
+func (h *Handler) handleMatchSubscribe(c *Client, room string) {
+	gameID, err := uuid.Parse(strings.TrimPrefix(room, "match:"))
+	if err != nil {
+		h.sendError(c, "invalid match id")
+		return
+	}
+
+	if !h.verifyMatchParticipant(c, gameID) {
+		return
+	}
+
+	h.hub.Subscribe(c, room)
+	h.hub.ReplayMatchStates(gameID, c)
+}
+
+func (h *Handler) handlePlayerState(c *Client, room string, rawPayload json.RawMessage) {
+	if !strings.HasPrefix(room, "match:") {
+		h.sendError(c, "invalid room")
+		return
+	}
+
+	gameID, err := uuid.Parse(strings.TrimPrefix(room, "match:"))
+	if err != nil {
+		h.sendError(c, "invalid match id")
+		return
+	}
+
+	if !h.verifyMatchParticipant(c, gameID) {
+		return
+	}
+
+	var upload PlayerStateUpload
+	if err := json.Unmarshal(rawPayload, &upload); err != nil {
+		h.sendError(c, "invalid player state")
+		return
+	}
+	if err := ValidatePlayerStateUpload(upload); err != nil {
+		switch {
+		case errors.Is(err, ErrInvalidBoard):
+			h.sendError(c, "invalid board")
+		case errors.Is(err, ErrInvalidPlayerState):
+			h.sendError(c, "invalid player state")
+		default:
+			h.sendError(c, "invalid player state")
+		}
+		return
+	}
+
+	if !h.hub.AllowPlayerState(gameID, c.UserID()) {
+		return
+	}
+
+	cached := CachedPlayerState{
+		UserID: c.UserID(),
+		Score:  upload.Score,
+		Lines:  upload.Lines,
+		Level:  upload.Level,
+		Alive:  upload.Alive,
+		Board:  upload.Board,
+	}
+	h.hub.StorePlayerState(gameID, c.UserID(), cached)
+
+	broadcast := PlayerStateBroadcast{
+		UserID: c.UserID().String(),
+		Score:  upload.Score,
+		Lines:  upload.Lines,
+		Level:  upload.Level,
+		Alive:  upload.Alive,
+		Board:  upload.Board,
+	}
+	env, err := NewEnvelope(TypePlayerState, broadcast)
+	if err != nil {
+		return
+	}
+	h.hub.BroadcastMatchExcept(gameID, c, env)
+}
+
+func (h *Handler) verifyMatchParticipant(c *Client, gameID uuid.UUID) bool {
+	ok, err := h.games.IsGamePlayer(context.Background(), gameID, c.UserID())
+	if err != nil || !ok {
+		h.sendError(c, "not a match participant")
+		return false
+	}
+
+	game, err := h.games.FindByID(context.Background(), gameID)
+	if err != nil {
+		h.sendError(c, "match not found")
+		return false
+	}
+	if game.Status != "in_progress" {
+		h.sendError(c, "match is not in progress")
+		return false
+	}
+	return true
 }
 
 func (h *Handler) sendError(c *Client, message string) {

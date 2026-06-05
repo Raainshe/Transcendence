@@ -161,7 +161,9 @@ type MockGameRepo struct {
 	CountGamesFn      func(ctx context.Context, userID *uuid.UUID) (int, error)
 	FindGameDetailFn  func(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
 	ListLeaderboardFn func(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
-	GetUserStatsFn    func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	GetUserStatsFn      func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	IsGamePlayerFn      func(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
+	ListMatchPlayersFn  func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
 }
 
 func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error {
@@ -211,6 +213,18 @@ func (m *MockGameRepo) GetUserStats(ctx context.Context, userID uuid.UUID) (*mod
 		return m.GetUserStatsFn(ctx, userID)
 	}
 	return &model.UserStats{}, nil
+}
+func (m *MockGameRepo) IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error) {
+	if m.IsGamePlayerFn != nil {
+		return m.IsGamePlayerFn(ctx, gameID, userID)
+	}
+	return false, nil
+}
+func (m *MockGameRepo) ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error) {
+	if m.ListMatchPlayersFn != nil {
+		return m.ListMatchPlayersFn(ctx, gameID)
+	}
+	return []model.MatchPlayerView{}, nil
 }
 
 // ── File repo mock ────────────────────────────────────────────────────────────
@@ -306,6 +320,7 @@ type MockLobbyRepo struct {
 	LinkGameFn                func(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error
 	MemberCountFn             func(ctx context.Context, lobbyID uuid.UUID) (int, error)
 	IsMemberFn                func(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
+	FindByGameIDFn            func(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
 }
 
 func (m *MockLobbyRepo) Create(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error {
@@ -380,12 +395,23 @@ func (m *MockLobbyRepo) IsMember(ctx context.Context, lobbyID, userID uuid.UUID)
 	}
 	return false, nil
 }
+func (m *MockLobbyRepo) FindByGameID(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error) {
+	if m.FindByGameIDFn != nil {
+		return m.FindByGameIDFn(ctx, gameID)
+	}
+	return nil, repository.ErrNotFound
+}
 
 // ── Lobby broadcaster mock ────────────────────────────────────────────────────
 
 type MockBroadcaster struct {
-	BroadcastLobbyFn func(lobbyID uuid.UUID, env ws.Envelope)
-	Messages         []ws.Envelope
+	BroadcastLobbyFn              func(lobbyID uuid.UUID, env ws.Envelope)
+	SubscribeAllInLobbyToMatchFn  func(lobbyID, gameID uuid.UUID)
+	Messages                      []ws.Envelope
+	AutoJoinCalls                 []struct {
+		LobbyID uuid.UUID
+		GameID  uuid.UUID
+	}
 }
 
 func (m *MockBroadcaster) BroadcastLobby(lobbyID uuid.UUID, env ws.Envelope) {
@@ -394,5 +420,16 @@ func (m *MockBroadcaster) BroadcastLobby(lobbyID uuid.UUID, env ws.Envelope) {
 		return
 	}
 	m.Messages = append(m.Messages, env)
+}
+
+func (m *MockBroadcaster) SubscribeAllInLobbyToMatch(lobbyID, gameID uuid.UUID) {
+	if m.SubscribeAllInLobbyToMatchFn != nil {
+		m.SubscribeAllInLobbyToMatchFn(lobbyID, gameID)
+		return
+	}
+	m.AutoJoinCalls = append(m.AutoJoinCalls, struct {
+		LobbyID uuid.UUID
+		GameID  uuid.UUID
+	}{LobbyID: lobbyID, GameID: gameID})
 }
 

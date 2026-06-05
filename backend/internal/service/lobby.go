@@ -31,6 +31,7 @@ const inviteCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 type LobbyBroadcaster interface {
 	BroadcastLobby(lobbyID uuid.UUID, env ws.Envelope)
+	SubscribeAllInLobbyToMatch(lobbyID, gameID uuid.UUID)
 }
 
 type LobbyService struct {
@@ -307,6 +308,7 @@ func (s *LobbyService) broadcastMatchStart(lobbyID uuid.UUID, result *model.Star
 		return
 	}
 	s.bus.BroadcastLobby(lobbyID, env)
+	s.bus.SubscribeAllInLobbyToMatch(lobbyID, result.GameID)
 }
 
 func generateInviteCode() (string, error) {

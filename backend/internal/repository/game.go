@@ -19,6 +19,8 @@ type GameRepository interface {
 	FindGameDetail(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
 	ListLeaderboard(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
+	ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
 }
 
 type gameRepository struct {
@@ -247,6 +249,55 @@ func (r *gameRepository) ListLeaderboard(ctx context.Context, limit int) ([]mode
 		entries = append(entries, e)
 	}
 	return entries, rows.Err()
+}
+
+func (r *gameRepository) IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error) {
+	const q = `SELECT 1 FROM game_players WHERE game_id = $1 AND user_id = $2 LIMIT 1`
+	var one int
+	err := r.db.QueryRowContext(ctx, q, gameID.String(), userID.String()).Scan(&one)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *gameRepository) ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error) {
+	const q = `
+		SELECT u.id, u.username, u.avatar_url
+		FROM game_players gp
+		JOIN users u ON u.id = gp.user_id
+		WHERE gp.game_id = $1
+		ORDER BY gp.id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, q, gameID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var players []model.MatchPlayerView
+	for rows.Next() {
+		var p model.MatchPlayerView
+		var userIDStr string
+		if err := rows.Scan(&userIDStr, &p.Username, &p.AvatarURL); err != nil {
+			return nil, err
+		}
+		p.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, err
+		}
+		players = append(players, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if players == nil {
+		players = []model.MatchPlayerView{}
+	}
+	return players, nil
 }
 
 func (r *gameRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error) {
