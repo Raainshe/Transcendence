@@ -164,9 +164,8 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     if (!payload) return
 
     submittedRunIds.add(record.runId)
-    void createGame(payload).catch((err: unknown) => {
+    void createGame(payload).catch(() => {
       submittedRunIds.delete(record.runId)
-      console.warn('Failed to submit match', err)
     })
   }
 
@@ -182,10 +181,10 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   }
 
   function beginMultiplayerMatch(gameId: string, seed: number): void {
-    multiplayerGameId.value = gameId
     const settings = useGameSettingsStore()
     settings.variation = 'multiplayer'
     beginSession(seed)
+    multiplayerGameId.value = gameId
   }
 
   function beginSessionFromRouteMatch(gameId: string): boolean {

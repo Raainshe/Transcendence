@@ -133,6 +133,14 @@
       "howToWin": "How to win",
       "backToGame": "Back to game"
     },
+    "opponents": {
+      "title": "Opponents",
+      "score": "{score} · {lines}L · Lv{level}",
+      "out": "OUT",
+      "waiting": "Syncing",
+      "unknown": "Opponent",
+      "boardAria": "{name}'s board"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",
@@ -169,7 +177,7 @@
       "label": "MULTIPLAYER",
       "tooltip": "Create or join an online lobby, then play on parallel boards.",
       "description": "Sign in, create a lobby or join with an invite code, ready up with friends, and start a shared match.",
-      "howToWin": "Outscore your opponents on your own board. Live opponent views arrive in a later update."
+      "howToWin": "Play on your own board while watching opponents live. Survive and outscore rivals until the match ends."
     }
   },
   "lobby": {

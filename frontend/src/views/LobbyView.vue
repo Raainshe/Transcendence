@@ -10,6 +10,7 @@ import {
 } from '@/composables/useLobbySocket'
 import { useGameSessionStore } from '@/stores/gameSession'
 import { useLobbyStore } from '@/stores/lobby'
+import { useMatchStore } from '@/stores/match'
 import { useAuthStore } from '@/stores/auth'
 import type { LobbyMember, StartLobbyResult } from '@/types/api'
 
@@ -20,6 +21,7 @@ const router = useRouter()
 const { t } = useI18n()
 const auth = useAuthStore()
 const lobbyStore = useLobbyStore()
+const matchStore = useMatchStore()
 const gameSession = useGameSessionStore()
 const { connect, disconnect } = useLobbySocket()
 
@@ -59,6 +61,7 @@ function isHostMember(member: LobbyMember): boolean {
 function goToMatch(result: StartLobbyResult): void {
   if (navigatingToMatch) return
   navigatingToMatch = true
+  matchStore.seedFromMatchStart(result.game_id, result.players, result.shared_seed)
   gameSession.beginMultiplayerMatch(result.game_id, result.shared_seed)
   void router.push({ name: 'play', query: { match: result.game_id } })
 }
@@ -70,10 +73,10 @@ function handleWsEnvelope(env: { type: string; payload?: unknown }): void {
     return
   }
   if (env.type === WS_TYPE_LOBBY_CLOSED && lobbyStore.closedReason) {
-    closedMessage.value =
-      lobbyStore.closedReason === 'host_left'
-        ? t('lobby.closedHostLeft')
-        : t('lobby.closedStarted')
+    if (lobbyStore.closedReason === 'started') {
+      return
+    }
+    closedMessage.value = t('lobby.closedHostLeft')
     void router.push({ name: 'home' })
   }
 }
@@ -119,10 +122,15 @@ onMounted(async () => {
   if (lobbyStore.lobby?.status === 'closed' && lobbyStore.lobby.game_id) {
     const seed = lobbyStore.lobby.shared_seed
     if (seed) {
+      const players = lobbyStore.lobby.members.map((m) => ({
+        user_id: m.user_id,
+        username: m.username,
+        avatar_url: m.avatar_url,
+      }))
       goToMatch({
         game_id: lobbyStore.lobby.game_id,
         shared_seed: seed,
-        players: [],
+        players,
       })
       return
     }

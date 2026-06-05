@@ -133,6 +133,14 @@
       "howToWin": "Comment gagner",
       "backToGame": "Retour au jeu"
     },
+    "opponents": {
+      "title": "Adversaires",
+      "score": "{score} · {lines}L · Niv{level}",
+      "out": "ÉLIMINÉ",
+      "waiting": "Sync",
+      "unknown": "Adversaire",
+      "boardAria": "Plateau de {name}"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",
@@ -169,7 +177,7 @@
       "label": "MULTIJOUEUR",
       "tooltip": "Créez ou rejoignez un salon en ligne, puis jouez sur des plateaux parallèles.",
       "description": "Connectez-vous, créez un salon ou rejoignez avec un code d'invitation, préparez-vous avec vos amis et lancez une partie commune.",
-      "howToWin": "Battez vos adversaires sur votre propre plateau. Les vues adverses en direct arriveront plus tard."
+      "howToWin": "Jouez sur votre plateau en regardant les adversaires en direct. Survivez et marquez plus de points jusqu'à la fin du match."
     }
   },
   "lobby": {

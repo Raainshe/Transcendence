@@ -133,6 +133,14 @@
       "howToWin": "So gewinnst du",
       "backToGame": "Zurück ins Spiel"
     },
+    "opponents": {
+      "title": "Gegner",
+      "score": "{score} · {lines}L · Lv{level}",
+      "out": "RAUS",
+      "waiting": "Sync",
+      "unknown": "Gegner",
+      "boardAria": "Brett von {name}"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "DREIFACH",
@@ -169,7 +177,7 @@
       "label": "MEHRSPIELER",
       "tooltip": "Erstelle oder tritt einer Online-Lobby bei und spielt auf parallelen Brettern.",
       "description": "Melde dich an, erstelle eine Lobby oder tritt mit einem Einladungscode bei, macht euch bereit und startet ein gemeinsames Match.",
-      "howToWin": "Erziele auf deinem Brett mehr Punkte als deine Gegner. Live-Gegner-Ansichten folgen in einem späteren Update."
+      "howToWin": "Spiele auf deinem eigenen Brett und beobachte Gegner live. Überlebe und erziele mehr Punkte, bis das Match endet."
     }
   },
   "lobby": {

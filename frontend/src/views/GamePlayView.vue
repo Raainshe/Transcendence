@@ -1,30 +1,40 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 import ActionNotifications from '@/components/game/ActionNotifications.vue'
 import GameBoard from '@/components/game/GameBoard.vue'
+import OpponentBoard from '@/components/game/OpponentBoard.vue'
 import { gameAudio } from '@/game/audio/AudioManager'
 import GameHud from '@/components/game/GameHud.vue'
 import GameModeBadge from '@/components/game/GameModeBadge.vue'
 import GameModeHelpModal from '@/components/game/GameModeHelpModal.vue'
 import MenuItem from '@/components/menu/MenuItem.vue'
+import { readMultiplayerSeed, stashMultiplayerSeed } from '@/stores/lobby'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import { useGameSessionStore } from '@/stores/gameSession'
+import { useMatchStore } from '@/stores/match'
 import { getGameVariationInfo } from '@/types/game'
 
 import '@/assets/styles/views/game-play-view.css'
 
 const router = useRouter()
+const route = useRoute()
 const store = useGameSessionStore()
+const matchStore = useMatchStore()
+const { opponentList: opponents } = storeToRefs(matchStore)
 const settings = useGameSettingsStore()
 const { t } = useI18n()
 
 const PAUSE_ITEM_COUNT = 4
 const pauseFocusedIndex = ref(0)
 const showModeHelp = ref(false)
+const sessionReady = ref(false)
 const pauseMenuRef = useTemplateRef<HTMLElement>('pauseMenu')
+
+const isMultiplayer = computed(() => store.multiplayerGameId != null)
 
 const aboutMenuLabel = computed(
   () => t('game.pauseAbout', { mode: getGameVariationInfo(store.variant).label }),
@@ -143,12 +153,40 @@ function onGlobalKeydown(e: KeyboardEvent): void {
   }
 }
 
+async function initSession(): Promise<void> {
+  const matchId = typeof route.query.match === 'string' ? route.query.match : null
+  try {
+    if (matchId) {
+      const stashedSeed = readMultiplayerSeed(matchId)
+      await matchStore.bootstrap(matchId)
+      matchStore.ensurePlayersRoster(matchId)
+      const seed = stashedSeed ?? matchStore.getSharedSeed()
+      if (!seed || seed <= 0) {
+        void router.replace({ name: 'home' })
+        return
+      }
+      stashMultiplayerSeed(matchId, seed)
+      store.beginMultiplayerMatch(matchId, seed)
+      matchStore.connect(matchId)
+      sessionReady.value = true
+    } else {
+      store.beginSession()
+      sessionReady.value = true
+    }
+  } catch {
+    void router.replace({ name: 'home' })
+  }
+}
+
 onMounted(() => {
   window.addEventListener('keydown', onGlobalKeydown)
+  void initSession()
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
+  matchStore.disconnect()
+  store.endSession()
 })
 </script>
 
@@ -156,9 +194,28 @@ onBeforeUnmount(() => {
   <div class="game-play-view">
     <h1 class="visually-hidden">{{ t('game.playHeading') }}</h1>
     <GameHud band="top" />
-    <div class="game-play-view__canvas-slot">
-      <GameBoard />
-      <ActionNotifications />
+    <div class="game-play-view__arena">
+      <div class="game-play-view__canvas-slot">
+        <GameBoard v-if="sessionReady" />
+        <ActionNotifications />
+      </div>
+      <aside
+        v-if="sessionReady && isMultiplayer && opponents.length > 0"
+        class="game-play-view__opponents"
+        :aria-label="t('game.opponents.title')"
+      >
+        <OpponentBoard
+          v-for="opp in opponents"
+          :key="opp.user_id"
+          :username="opp.username"
+          :avatar-url="opp.avatar_url"
+          :score="opp.score"
+          :lines="opp.lines"
+          :level="opp.level"
+          :alive="opp.alive"
+          :board-b64="opp.board"
+        />
+      </aside>
     </div>
     <GameHud band="bottom">
       <p class="game-play-view__controls">

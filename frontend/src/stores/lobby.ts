@@ -14,9 +14,10 @@ import {
 } from '@/composables/useLobbySocket'
 import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
-import type { LobbyDetail, StartLobbyResult } from '@/types/api'
+import type { LobbyDetail, MatchPlayerView, StartLobbyResult } from '@/types/api'
 
 const MP_SEED_PREFIX = 'mp:'
+const MP_PLAYERS_PREFIX = 'mp-players:'
 
 export function stashMultiplayerSeed(gameId: string, seed: number): void {
   if (typeof sessionStorage === 'undefined') return
@@ -36,6 +37,27 @@ export function readMultiplayerSeed(gameId: string): number | null {
     return Number.isFinite(n) && n > 0 ? n : null
   } catch {
     return null
+  }
+}
+
+export function stashMatchPlayers(gameId: string, players: MatchPlayerView[]): void {
+  if (typeof sessionStorage === 'undefined' || players.length === 0) return
+  try {
+    sessionStorage.setItem(`${MP_PLAYERS_PREFIX}${gameId}`, JSON.stringify(players))
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+export function readMatchPlayers(gameId: string): MatchPlayerView[] {
+  if (typeof sessionStorage === 'undefined') return []
+  try {
+    const raw = sessionStorage.getItem(`${MP_PLAYERS_PREFIX}${gameId}`)
+    if (!raw) return []
+    const parsed = JSON.parse(raw) as MatchPlayerView[]
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
   }
 }
 
@@ -147,6 +169,7 @@ export const useLobbyStore = defineStore('lobby', () => {
     try {
       const result = await lobbiesApi.startLobby(lobby.value.id)
       stashMultiplayerSeed(result.game_id, result.shared_seed)
+      stashMatchPlayers(result.game_id, result.players)
       return result
     } catch (err) {
       error.value = mapError(err)
@@ -189,6 +212,7 @@ export const useLobbyStore = defineStore('lobby', () => {
         const payload = env.payload as MatchStartPayload | undefined
         if (!payload?.game_id) return null
         stashMultiplayerSeed(payload.game_id, payload.shared_seed)
+        stashMatchPlayers(payload.game_id, payload.players)
         return {
           game_id: payload.game_id,
           shared_seed: payload.shared_seed,

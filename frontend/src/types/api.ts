@@ -175,3 +175,33 @@ export interface StartLobbyResult {
   shared_seed: number
   players: MatchStartPlayer[]
 }
+
+export interface MatchPlayerView {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
+export interface MatchDetail {
+  game_id: string
+  status: string
+  mode: string
+  shared_seed: number
+  players: MatchPlayerView[]
+}
+
+export interface MatchResponse {
+  match: MatchDetail | null
+}
+
+export interface PlayerStateUpload {
+  score: number
+  lines: number
+  level: number
+  alive: boolean
+  board: string
+}
+
+export interface PlayerStateBroadcast extends PlayerStateUpload {
+  user_id: string
+}
