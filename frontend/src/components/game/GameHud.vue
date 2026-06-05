@@ -7,6 +7,7 @@ import HoldQueue from '@/components/game/HoldQueue.vue'
 import NextQueue from '@/components/game/NextQueue.vue'
 import type { GameOverReason, MatchWinReason } from '@/game/types'
 import { useGameSessionStore } from '@/stores/gameSession'
+import { useMatchStore } from '@/stores/match'
 import { SPRINT_LINE_GOAL } from '@/types/game'
 
 defineProps<{
@@ -15,6 +16,7 @@ defineProps<{
 }>()
 
 const store = useGameSessionStore()
+const matchStore = useMatchStore()
 const { t } = useI18n()
 
 function formatMs(ms: number): string {
@@ -62,6 +64,17 @@ const winTitle = computed(() => {
 })
 
 const matchEnded = computed(() => store.matchEndKind !== 'playing')
+
+const showMultiplayerWaiting = computed(
+  () =>
+    store.multiplayerGameId != null &&
+    matchEnded.value &&
+    !matchStore.matchEnded,
+)
+
+const showSoloGameOver = computed(
+  () => matchEnded.value && !store.multiplayerGameId && !matchStore.matchEnded,
+)
 </script>
 
 <template>
@@ -95,7 +108,12 @@ const matchEnded = computed(() => store.matchEndKind !== 'playing')
   </header>
 
   <footer v-else class="game-hud game-hud--footer" aria-live="polite">
-    <div v-if="matchEnded" class="game-hud__game-over" role="status">
+    <div v-if="showMultiplayerWaiting" class="game-hud__game-over" role="status">
+      <p class="game-hud__go-title">{{ t('game.matchResults.youOut') }}</p>
+      <p v-if="failureLabel" class="game-hud__go-reason">{{ failureLabel }}</p>
+      <p class="game-hud__go-hint">{{ t('game.matchResults.waiting') }}</p>
+    </div>
+    <div v-else-if="showSoloGameOver" class="game-hud__game-over" role="status">
       <template v-if="store.matchEndKind === 'won'">
         <p class="game-hud__go-title game-hud__go-title--win">{{ winTitle }}</p>
         <p class="game-hud__go-score">{{ t('game.hud.score') }}: {{ store.score.toLocaleString() }}</p>

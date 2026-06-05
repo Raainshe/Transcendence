@@ -91,7 +91,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		gameHandler:  handler.NewGameHandler(gameSvc),
 		lobbyHandler: handler.NewLobbyHandler(lobbySvc),
 		matchHandler: handler.NewMatchHandler(matchSvc),
-		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo),
+		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
 	}
 
 	return &http.Server{

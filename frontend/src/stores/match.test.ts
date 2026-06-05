@@ -2,20 +2,27 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 
 import { useAuthStore } from '@/stores/auth'
+import { useGameSessionStore } from '@/stores/gameSession'
 import { useMatchStore } from '@/stores/match'
 import type { User } from '@/types/api'
 
+const sendPlayerEliminated = vi.fn()
+const sendPlayerState = vi.fn()
+
 vi.mock('@/composables/useMatchSocket', () => {
-  const connected = { value: false }
+  const connected = { value: true }
   return {
     WS_TYPE_ERROR: 'error',
     WS_TYPE_PLAYER_STATE: 'player.state',
+    WS_TYPE_PLAYER_ELIMINATED: 'player.eliminated',
+    WS_TYPE_MATCH_ENDED: 'match.ended',
     useMatchSocket: () => ({
       connected,
       connect: vi.fn(),
       disconnect: vi.fn(),
       retryPendingConnect: vi.fn(),
-      sendPlayerState: vi.fn(),
+      sendPlayerState,
+      sendPlayerEliminated,
     }),
   }
 })
@@ -43,6 +50,8 @@ function testUser(id: string, username: string): User {
 
 describe('useMatchStore opponentList', () => {
   beforeEach(() => {
+    sendPlayerEliminated.mockClear()
+    sendPlayerState.mockClear()
     setActivePinia(createPinia())
     const auth = useAuthStore()
     auth.$patch({
@@ -131,5 +140,85 @@ describe('useMatchStore opponentList', () => {
     expect(store.opponents.size).toBe(0)
     expect(store.opponentList).toHaveLength(1)
     expect(store.opponentList[0]?.board).toBe('')
+  })
+
+  it('marks opponent eliminated from player.eliminated broadcast', () => {
+    const store = useMatchStore()
+    store.players = [
+      { user_id: SELF_ID, username: 'self', avatar_url: null },
+      { user_id: OPP_ID, username: 'rival', avatar_url: null },
+    ]
+    store.applyOpponentState({
+      user_id: OPP_ID,
+      score: 300,
+      lines: 2,
+      level: 2,
+      alive: true,
+      board: 'dGVzdA==',
+    })
+
+    store.applyOpponentState({
+      user_id: OPP_ID,
+      score: 300,
+      lines: 2,
+      level: 2,
+      alive: false,
+      board: 'dGVzdA==',
+    })
+
+    expect(store.opponentList[0]?.alive).toBe(false)
+  })
+
+  it('stores match.ended results and stops the session', () => {
+    const store = useMatchStore()
+    store.gameId = 'game-1'
+    const session = useGameSessionStore()
+    session.multiplayerGameId = 'game-1'
+    session.active = true
+
+    store.applyMatchEnded({
+      winner_user_id: OPP_ID,
+      players: [
+        {
+          user_id: SELF_ID,
+          username: 'self',
+          score: 100,
+          lines: 1,
+          level: 1,
+          placement: 2,
+          is_winner: false,
+        },
+        {
+          user_id: OPP_ID,
+          username: 'rival',
+          score: 500,
+          lines: 5,
+          level: 2,
+          placement: 1,
+          is_winner: true,
+        },
+      ],
+    })
+
+    expect(store.matchEnded).toBe(true)
+    expect(store.matchResults?.winner_user_id).toBe(OPP_ID)
+    expect(session.matchEndKind).toBe('lost')
+    expect(session.active).toBe(false)
+  })
+
+  it('notifyLocalElimination sends only once', () => {
+    const store = useMatchStore()
+    store.gameId = 'game-1'
+
+    store.notifyLocalElimination('topOut', { score: 50, lines: 1, level: 1 })
+    store.notifyLocalElimination('topOut', { score: 50, lines: 1, level: 1 })
+
+    expect(sendPlayerEliminated).toHaveBeenCalledTimes(1)
+    expect(sendPlayerEliminated).toHaveBeenCalledWith('game-1', {
+      reason: 'topOut',
+      score: 50,
+      lines: 1,
+      level: 1,
+    })
   })
 })

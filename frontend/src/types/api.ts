@@ -205,3 +205,32 @@ export interface PlayerStateUpload {
 export interface PlayerStateBroadcast extends PlayerStateUpload {
   user_id: string
 }
+
+export interface PlayerEliminatedUpload {
+  reason: string
+  score: number
+  lines: number
+  level: number
+}
+
+export interface PlayerEliminatedBroadcast {
+  user_id: string
+  reason: string
+  placement: number
+}
+
+export interface MatchEndedPlayer {
+  user_id: string
+  username: string
+  score: number
+  lines: number
+  level: number
+  placement: number
+  is_winner: boolean
+  elimination_reason?: string | null
+}
+
+export interface MatchEndedPayload {
+  winner_user_id?: string | null
+  players: MatchEndedPlayer[]
+}

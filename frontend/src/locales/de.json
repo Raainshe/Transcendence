@@ -141,6 +141,17 @@
       "unknown": "Gegner",
       "boardAria": "Brett von {name}"
     },
+    "matchResults": {
+      "youWon": "Du hast gewonnen!",
+      "youOut": "Du bist raus",
+      "waiting": "Warte auf das Match-Ergebnis…",
+      "noWinner": "Match vorbei — kein Sieger",
+      "winner": "{name} gewinnt!",
+      "matchOver": "Match vorbei",
+      "you": "(du)",
+      "home": "Hauptmenü",
+      "viewMatch": "Match-Details"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "DREIFACH",

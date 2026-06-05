@@ -21,6 +21,11 @@ type MemberChecker interface {
 type GamePlayerChecker interface {
 	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
+	ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+}
+
+type MatchEnder interface {
+	EndMatch(ctx context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error)
 }
 
 type incomingMessage struct {
@@ -38,10 +43,11 @@ type Handler struct {
 	jwtSecret string
 	lobbies   MemberChecker
 	games     GamePlayerChecker
+	matches   MatchEnder
 }
 
-func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker) *Handler {
-	return &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games}
+func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder) *Handler {
+	return &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches}
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +89,8 @@ func (h *Handler) handleMessage(c *Client, msg []byte) {
 		h.handleSubscribe(c, strings.TrimSpace(incoming.Room))
 	case TypePlayerState:
 		h.handlePlayerState(c, strings.TrimSpace(incoming.Room), incoming.Payload)
+	case TypePlayerEliminated:
+		h.handlePlayerEliminated(c, strings.TrimSpace(incoming.Room), incoming.Payload)
 	default:
 		h.sendError(c, "unsupported message type")
 	}
@@ -176,6 +184,15 @@ func (h *Handler) handlePlayerState(c *Client, room string, rawPayload json.RawM
 		Board:  upload.Board,
 	}
 	h.hub.StorePlayerState(gameID, c.UserID(), cached)
+
+	if !upload.Alive && !h.hub.Lifecycle().IsFinished(gameID) && !h.hub.Lifecycle().IsEliminated(gameID, c.UserID()) {
+		h.processElimination(c, gameID, c.UserID(), model.PlayerEliminatedUpload{
+			Reason: "blockOut",
+			Score:  upload.Score,
+			Lines:  upload.Lines,
+			Level:  upload.Level,
+		})
+	}
 
 	broadcast := PlayerStateBroadcast{
 		UserID: c.UserID().String(),

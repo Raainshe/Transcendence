@@ -15,6 +15,7 @@ type Hub struct {
 	clients     map[*Client]struct{}
 	matchStates *MatchStateStore
 	rateLimiter *RateLimiter
+	lifecycle   *MatchLifecycle
 }
 
 func NewHub() *Hub {
@@ -23,7 +24,12 @@ func NewHub() *Hub {
 		clients:     make(map[*Client]struct{}),
 		matchStates: NewMatchStateStore(),
 		rateLimiter: NewRateLimiter(),
+		lifecycle:   NewMatchLifecycle(),
 	}
+}
+
+func (h *Hub) Lifecycle() *MatchLifecycle {
+	return h.lifecycle
 }
 
 func (h *Hub) Register(c *Client) {
@@ -66,9 +72,20 @@ func (h *Hub) evictMatchRoomIfEmpty(room string) {
 	empty := len(members) == 0
 	h.mu.RUnlock()
 	if empty {
-		h.matchStates.Evict(gameID)
-		h.rateLimiter.EvictMatch(gameID)
+		h.EvictMatch(gameID)
 	}
+}
+
+// BroadcastMatch fans out to all clients in match:{gameID}.
+func (h *Hub) BroadcastMatch(gameID uuid.UUID, env Envelope) {
+	h.Broadcast(MatchRoomID(gameID.String()), env)
+}
+
+// EvictMatch clears cached state for a finished or empty match room.
+func (h *Hub) EvictMatch(gameID uuid.UUID) {
+	h.matchStates.Evict(gameID)
+	h.rateLimiter.EvictMatch(gameID)
+	h.lifecycle.Evict(gameID)
 }
 
 func (h *Hub) Subscribe(c *Client, room string) {

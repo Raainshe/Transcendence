@@ -99,9 +99,9 @@ Goal: Server decides when the match is over; results persist correctly.
 Backend:
   1. Message: player.eliminated { reason: topOut|lockOut|blockOut }.
   2. Server tracks alive_count and placements per match.
-  3. End rules (document in README):
+  3. End rules:
        - Winner = last alive player when all others eliminated.
-       - If everyone eliminated: no winner OR highest score (pick one policy).
+       - If everyone eliminated: highest score wins; tied scores = no winner.
   4. On match end: set games.finished_at, update game_players (score, lines,
      level, placement, is_winner).
   5. Event: match.ended { winner_user_id?, placements[], final_stats[] }.

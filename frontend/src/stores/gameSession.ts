@@ -19,8 +19,10 @@ import {
 import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
 import { readMultiplayerSeed } from '@/stores/lobby'
+import { useMatchStore } from '@/stores/match'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
+import type { MatchEndedPayload } from '@/types/api'
 import type { GameVariation } from '@/types/game'
 
 /** Max delta per frame to avoid huge jumps after tab backgrounding. */
@@ -125,8 +127,32 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
     if (s.matchEnded && !endedAt.value) {
       endedAt.value = new Date().toISOString()
-      lastMatchRecord.value = buildMatchRecord()
-      trySubmitMatch()
+      if (multiplayerGameId.value) {
+        const reason = s.gameOverReason ?? 'blockOut'
+        useMatchStore().notifyLocalElimination(reason, {
+          score: score.value,
+          lines: lines.value,
+          level: level.value,
+        })
+      } else {
+        lastMatchRecord.value = buildMatchRecord()
+        trySubmitMatch()
+      }
+    }
+  }
+
+  function applyServerMatchEnd(payload: MatchEndedPayload): void {
+    const selfId = useAuthStore().user?.id
+    const winnerId = payload.winner_user_id
+    const won =
+      winnerId != null &&
+      selfId != null &&
+      winnerId.trim().toLowerCase() === selfId.trim().toLowerCase()
+    matchEndKind.value = won ? 'won' : 'lost'
+    active.value = false
+    paused.value = false
+    if (!endedAt.value) {
+      endedAt.value = new Date().toISOString()
     }
   }
 
@@ -316,5 +342,6 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     pause,
     resume,
     buildMatchRecord,
+    applyServerMatchEnd,
   }
 })

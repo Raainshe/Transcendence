@@ -5,9 +5,11 @@ import "encoding/json"
 const (
 	TypeLobbyUpdated = "lobby.updated"
 	TypeLobbyClosed  = "lobby.closed"
-	TypeMatchStart   = "match.start"
-	TypePlayerState  = "player.state"
-	TypeError        = "error"
+	TypeMatchStart       = "match.start"
+	TypeMatchEnded       = "match.ended"
+	TypePlayerState      = "player.state"
+	TypePlayerEliminated = "player.eliminated"
+	TypeError            = "error"
 
 	MatrixWidth        = 10
 	MatrixTotalHeight  = 40

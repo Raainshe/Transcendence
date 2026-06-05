@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -21,6 +22,7 @@ type GameRepository interface {
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
 	ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	FinishMultiplayerMatch(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
 type gameRepository struct {
@@ -88,6 +90,53 @@ func (r *gameRepository) CreateMultiplayerMatch(ctx context.Context, game *model
 		if _, err := tx.ExecContext(ctx, insertPlayer,
 			p.ID.String(), p.GameID.String(), p.UserID.String(),
 			p.Score, p.LinesCleared, p.LevelReached, p.Placement, p.IsWinner,
+		); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *gameRepository) FinishMultiplayerMatch(
+	ctx context.Context,
+	gameID uuid.UUID,
+	finishedAt time.Time,
+	players []model.GamePlayer,
+) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	const updateGame = `
+		UPDATE games
+		SET status = 'finished', finished_at = $1
+		WHERE id = $2 AND status = 'in_progress'
+	`
+	res, err := tx.ExecContext(ctx, updateGame, finishedAt, gameID.String())
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+
+	const updatePlayer = `
+		UPDATE game_players
+		SET score = $1, lines_cleared = $2, level_reached = $3, placement = $4, is_winner = $5
+		WHERE game_id = $6 AND user_id = $7
+	`
+	for i := range players {
+		p := &players[i]
+		if _, err := tx.ExecContext(ctx, updatePlayer,
+			p.Score, p.LinesCleared, p.LevelReached, p.Placement, p.IsWinner,
+			gameID.String(), p.UserID.String(),
 		); err != nil {
 			return err
 		}

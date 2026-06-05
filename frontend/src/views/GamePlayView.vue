@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router'
 
 import ActionNotifications from '@/components/game/ActionNotifications.vue'
 import GameBoard from '@/components/game/GameBoard.vue'
+import MatchResultsOverlay from '@/components/game/MatchResultsOverlay.vue'
 import OpponentBoard from '@/components/game/OpponentBoard.vue'
 import { gameAudio } from '@/game/audio/AudioManager'
 import GameHud from '@/components/game/GameHud.vue'
@@ -24,7 +25,8 @@ const router = useRouter()
 const route = useRoute()
 const store = useGameSessionStore()
 const matchStore = useMatchStore()
-const { opponentList: opponents } = storeToRefs(matchStore)
+const { opponentList: opponents, matchEnded, matchResults, gameId: matchGameId } =
+  storeToRefs(matchStore)
 const settings = useGameSettingsStore()
 const { t } = useI18n()
 
@@ -222,8 +224,13 @@ onBeforeUnmount(() => {
         {{ t('game.controlsLine') }}
       </p>
     </GameHud>
+    <MatchResultsOverlay
+      v-if="matchEnded && matchResults && matchGameId"
+      :game-id="matchGameId"
+      :results="matchResults"
+    />
     <div
-      v-if="store.paused"
+      v-if="store.paused && !matchEnded"
       class="game-play-view__pause-overlay"
       role="dialog"
       aria-modal="true"

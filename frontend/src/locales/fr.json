@@ -141,6 +141,17 @@
       "unknown": "Adversaire",
       "boardAria": "Plateau de {name}"
     },
+    "matchResults": {
+      "youWon": "Tu as gagné !",
+      "youOut": "Tu es éliminé",
+      "waiting": "En attente du résultat…",
+      "noWinner": "Partie terminée — pas de gagnant",
+      "winner": "{name} gagne !",
+      "matchOver": "Partie terminée",
+      "you": "(toi)",
+      "home": "Menu principal",
+      "viewMatch": "Détails de la partie"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",

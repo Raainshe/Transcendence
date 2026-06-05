@@ -988,6 +988,14 @@ paths:
         Server validates membership, rate-limits (~100 ms), caches state, and
         broadcasts `player.state` to other clients in the match room.
 
+        **Report elimination** (match participants only, game `in_progress`):
+        `{ "type": "player.eliminated", "room": "match:{gameId}", "payload": { "reason": "topOut|lockOut|blockOut", "score": 0, "lines": 0, "level": 1 } }`
+        Server tracks placements, broadcasts `player.eliminated`, and ends the match
+        when one player remains or all are eliminated (all-dead tie-break: highest score wins; ties = no winner).
+
+        **Match ended** (server → clients):
+        `{ "type": "match.ended", "payload": { "winner_user_id": "<uuid>|null", "players": [...] } }`
+
         Malformed or unauthorized messages receive `{ "type": "error", "payload": { "error": "..." } }`.
       tags: [Lobbies]
       parameters:

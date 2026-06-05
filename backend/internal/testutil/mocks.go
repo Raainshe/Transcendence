@@ -163,7 +163,8 @@ type MockGameRepo struct {
 	ListLeaderboardFn func(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
 	GetUserStatsFn      func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
 	IsGamePlayerFn      func(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
-	ListMatchPlayersFn  func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	ListMatchPlayersFn        func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	FinishMultiplayerMatchFn  func(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
 func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error {
@@ -225,6 +226,12 @@ func (m *MockGameRepo) ListMatchPlayers(ctx context.Context, gameID uuid.UUID) (
 		return m.ListMatchPlayersFn(ctx, gameID)
 	}
 	return []model.MatchPlayerView{}, nil
+}
+func (m *MockGameRepo) FinishMultiplayerMatch(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error {
+	if m.FinishMultiplayerMatchFn != nil {
+		return m.FinishMultiplayerMatchFn(ctx, gameID, finishedAt, players)
+	}
+	return nil
 }
 
 // ── File repo mock ────────────────────────────────────────────────────────────

@@ -24,10 +24,21 @@ func validBoardB64WS() string {
 	return base64.StdEncoding.EncodeToString(make([]byte, ws.MatrixCellCount))
 }
 
-func startWSTestServer(t *testing.T, lobbies ws.MemberChecker, games ws.GamePlayerChecker) (string, *ws.Hub) {
+type mockMatchEnder struct {
+	endFn func(ctx context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error)
+}
+
+func (m *mockMatchEnder) EndMatch(ctx context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error) {
+	if m.endFn != nil {
+		return m.endFn(ctx, in)
+	}
+	return &model.MatchEndedPayload{}, nil
+}
+
+func startWSTestServer(t *testing.T, lobbies ws.MemberChecker, games ws.GamePlayerChecker, matches ws.MatchEnder) (string, *ws.Hub) {
 	t.Helper()
 	hub := ws.NewHub()
-	handler := ws.NewHandler(hub, testJWTSecret, lobbies, games)
+	handler := ws.NewHandler(hub, testJWTSecret, lobbies, games, matches)
 	srv := httptest.NewServer(http.HandlerFunc(handler.ServeHTTP))
 	t.Cleanup(srv.Close)
 	return strings.Replace(srv.URL, "http://", "ws://", 1), hub
@@ -67,7 +78,7 @@ func TestWSHandler_MatchSubscribeDeniedForNonMember(t *testing.T) {
 			return false, nil
 		},
 	}
-	url, _ := startWSTestServer(t, &testutil.MockLobbyRepo{}, games)
+	url, _ := startWSTestServer(t, &testutil.MockLobbyRepo{}, games, nil)
 	conn := dialWS(t, url, token)
 
 	if err := conn.WriteJSON(map[string]string{
@@ -80,6 +91,88 @@ func TestWSHandler_MatchSubscribeDeniedForNonMember(t *testing.T) {
 	env := readEnvelope(t, conn)
 	if env.Type != ws.TypeError {
 		t.Fatalf("type = %s, want error", env.Type)
+	}
+}
+
+func TestWSHandler_PlayerEliminatedEndsMatch(t *testing.T) {
+	gameID := uuid.New()
+	hostID := uuid.New()
+	guestID := uuid.New()
+	hostToken := testutil.MakeTestToken(hostID, testJWTSecret)
+	guestToken := testutil.MakeTestToken(guestID, testJWTSecret)
+
+	inProgress := &model.Game{ID: gameID, Mode: "multiplayer", Status: "in_progress"}
+	ended := false
+
+	games := &testutil.MockGameRepo{
+		IsGamePlayerFn: func(_ context.Context, gid, uid uuid.UUID) (bool, error) {
+			return gid == gameID && (uid == hostID || uid == guestID), nil
+		},
+		FindByIDFn: func(_ context.Context, id uuid.UUID) (*model.Game, error) {
+			if id == gameID {
+				return inProgress, nil
+			}
+			return nil, nil
+		},
+		ListMatchPlayersFn: func(_ context.Context, _ uuid.UUID) ([]model.MatchPlayerView, error) {
+			return []model.MatchPlayerView{
+				{UserID: hostID, Username: "host"},
+				{UserID: guestID, Username: "guest"},
+			}, nil
+		},
+	}
+
+	matches := &mockMatchEnder{
+		endFn: func(_ context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error) {
+			ended = true
+			if in.SurvivorID == nil || *in.SurvivorID != guestID {
+				t.Fatalf("survivor = %+v, want guest", in.SurvivorID)
+			}
+			return &model.MatchEndedPayload{WinnerUserID: in.SurvivorID}, nil
+		},
+	}
+
+	url, _ := startWSTestServer(t, &testutil.MockLobbyRepo{}, games, matches)
+	hostConn := dialWS(t, url, hostToken)
+	guestConn := dialWS(t, url, guestToken)
+
+	subscribe := func(conn *websocket.Conn) {
+		t.Helper()
+		if err := conn.WriteJSON(map[string]string{
+			"type": "subscribe",
+			"room": ws.MatchRoomID(gameID.String()),
+		}); err != nil {
+			t.Fatalf("subscribe: %v", err)
+		}
+	}
+	subscribe(hostConn)
+	subscribe(guestConn)
+
+	elim := map[string]any{
+		"type": ws.TypePlayerEliminated,
+		"room": ws.MatchRoomID(gameID.String()),
+		"payload": map[string]any{
+			"reason": "topOut",
+			"score":  100,
+			"lines":  1,
+			"level":  1,
+		},
+	}
+	if err := hostConn.WriteJSON(elim); err != nil {
+		t.Fatalf("write elimination: %v", err)
+	}
+
+	for {
+		env := readEnvelope(t, guestConn)
+		if env.Type == ws.TypeMatchEnded {
+			break
+		}
+		if env.Type != ws.TypePlayerEliminated && env.Type != ws.TypePlayerState {
+			t.Fatalf("unexpected type = %s", env.Type)
+		}
+	}
+	if !ended {
+		t.Fatal("EndMatch was not called")
 	}
 }
 
@@ -111,7 +204,7 @@ func TestWSHandler_PlayerStateRelayAndReplay(t *testing.T) {
 		},
 	}
 
-	url, hub := startWSTestServer(t, &testutil.MockLobbyRepo{}, games)
+	url, hub := startWSTestServer(t, &testutil.MockLobbyRepo{}, games, nil)
 	hostConn := dialWS(t, url, hostToken)
 	guestConn := dialWS(t, url, guestToken)
 

@@ -1,9 +1,11 @@
 import { ref } from 'vue'
 
 import { useAuthStore } from '@/stores/auth'
-import type { PlayerStateUpload } from '@/types/api'
+import type { PlayerEliminatedUpload, PlayerStateUpload } from '@/types/api'
 
 export const WS_TYPE_PLAYER_STATE = 'player.state'
+export const WS_TYPE_PLAYER_ELIMINATED = 'player.eliminated'
+export const WS_TYPE_MATCH_ENDED = 'match.ended'
 export const WS_TYPE_ERROR = 'error'
 
 export type WsEnvelope = {
@@ -104,11 +106,23 @@ export function useMatchSocket() {
     )
   }
 
+  function sendPlayerEliminated(gameId: string, payload: PlayerEliminatedUpload): void {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return
+    socket.send(
+      JSON.stringify({
+        type: WS_TYPE_PLAYER_ELIMINATED,
+        room: matchRoom(gameId),
+        payload,
+      }),
+    )
+  }
+
   return {
     connected,
     connect,
     disconnect,
     retryPendingConnect,
     sendPlayerState,
+    sendPlayerEliminated,
   }
 }

@@ -141,6 +141,17 @@
       "unknown": "Opponent",
       "boardAria": "{name}'s board"
     },
+    "matchResults": {
+      "youWon": "You won!",
+      "youOut": "You're out",
+      "waiting": "Waiting for match result…",
+      "noWinner": "Match over — no winner",
+      "winner": "{name} wins!",
+      "matchOver": "Match over",
+      "you": "(you)",
+      "home": "Main menu",
+      "viewMatch": "View match details"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",

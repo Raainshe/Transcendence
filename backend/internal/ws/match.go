@@ -7,15 +7,24 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"backend/internal/model"
 )
 
 const playerStateMinInterval = 100 * time.Millisecond
 
 var (
-	ErrInvalidBoard       = errors.New("invalid board encoding")
-	ErrRateLimited        = errors.New("rate limited")
-	ErrInvalidPlayerState = errors.New("invalid player state")
+	ErrInvalidBoard         = errors.New("invalid board encoding")
+	ErrRateLimited          = errors.New("rate limited")
+	ErrInvalidPlayerState   = errors.New("invalid player state")
+	ErrInvalidElimination   = errors.New("invalid elimination")
 )
+
+var validEliminationReasons = map[string]struct{}{
+	"topOut":   {},
+	"lockOut":  {},
+	"blockOut": {},
+}
 
 // PlayerStateUpload is the client-sent payload for player.state messages.
 type PlayerStateUpload struct {
@@ -94,6 +103,17 @@ func (s *MatchStateStore) Set(gameID, userID uuid.UUID, state CachedPlayerState)
 	s.states[gameID][userID] = state
 }
 
+func (s *MatchStateStore) Get(gameID, userID uuid.UUID) (CachedPlayerState, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	players := s.states[gameID]
+	if players == nil {
+		return CachedPlayerState{}, false
+	}
+	st, ok := players[userID]
+	return st, ok
+}
+
 func (s *MatchStateStore) List(gameID uuid.UUID) []CachedPlayerState {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
@@ -142,6 +162,22 @@ func (r *RateLimiter) Allow(gameID, userID uuid.UUID) bool {
 	}
 	r.lastSeen[key] = now
 	return true
+}
+
+func ValidatePlayerEliminatedUpload(upload model.PlayerEliminatedUpload) error {
+	if _, ok := validEliminationReasons[upload.Reason]; !ok {
+		return ErrInvalidElimination
+	}
+	if upload.Score < 0 || upload.Score > MaxPlayerStateScore {
+		return ErrInvalidPlayerState
+	}
+	if upload.Lines < 0 || upload.Lines > MaxPlayerStateScore {
+		return ErrInvalidPlayerState
+	}
+	if upload.Level < 1 || upload.Level > 999 {
+		return ErrInvalidPlayerState
+	}
+	return nil
 }
 
 func (r *RateLimiter) EvictMatch(gameID uuid.UUID) {
