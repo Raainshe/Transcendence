@@ -2,6 +2,7 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
+import { useRoute } from 'vue-router'
 
 import { computeGhostPiece } from '@/game/engine/Ghost'
 import { getOccupiedCells } from '@/game/engine/Tetrimino'
@@ -23,6 +24,7 @@ const store = useGameSessionStore()
 const fxStore = useGameFxStore()
 const { engine } = storeToRefs(store)
 const { t } = useI18n()
+const route = useRoute()
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 const cellPx = ref(20)
@@ -200,7 +202,14 @@ function loop(ts: number): void {
 }
 
 onMounted(() => {
-  store.beginSession()
+  const matchId = typeof route.query.match === 'string' ? route.query.match : null
+  if (matchId) {
+    if (!store.beginSessionFromRouteMatch(matchId)) {
+      store.beginSession()
+    }
+  } else {
+    store.beginSession()
+  }
   const canvas = canvasRef.value
   const parent = canvas?.parentElement
   if (parent) {

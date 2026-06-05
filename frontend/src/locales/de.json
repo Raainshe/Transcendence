@@ -54,6 +54,8 @@
     "ariaLabel": "Hauptmenü",
     "title": "Hauptmenü",
     "newGame": "Neues Spiel",
+    "createLobby": "Lobby erstellen",
+    "joinLobby": "Mit Code beitreten",
     "variation": "Variante",
     "players": "Spieler",
     "playersCount": "{count} Spieler | {count} Spieler",
@@ -165,9 +167,49 @@
     },
     "multiplayer": {
       "label": "MEHRSPIELER",
-      "tooltip": "Lokaler Mehrspieler folgt bald; aktuell wie Marathon.",
-      "description": "Der Mehrspieler-Modus ist noch nicht vollständig umgesetzt. Derzeit spielt sich dieser Modus wie Marathon mit einem einzelnen Spielfeld.",
-      "howToWin": "Bis zum echten Mehrspieler gilt die gleiche Regel wie im Marathon."
+      "tooltip": "Erstelle oder tritt einer Online-Lobby bei und spielt auf parallelen Brettern.",
+      "description": "Melde dich an, erstelle eine Lobby oder tritt mit einem Einladungscode bei, macht euch bereit und startet ein gemeinsames Match.",
+      "howToWin": "Erziele auf deinem Brett mehr Punkte als deine Gegner. Live-Gegner-Ansichten folgen in einem späteren Update."
+    }
+  },
+  "lobby": {
+    "title": "Lobby",
+    "subtitle": "{count} / {max} Spieler",
+    "loading": "Lobby wird geladen…",
+    "inviteCode": "Einladungscode",
+    "copyCode": "Code kopieren",
+    "copied": "Kopiert!",
+    "inviteHint": "Teile diesen Code, damit Freunde über das Hauptmenü beitreten können.",
+    "codePlaceholder": "ABC123",
+    "joinSubmit": "Lobby beitreten",
+    "rosterAria": "Lobby-Teilnehmer",
+    "avatarAlt": "Avatar von {username}",
+    "you": "Du",
+    "host": "Host",
+    "ready": "Bereit",
+    "notReady": "Bereit abbrechen",
+    "readyLabel": "Bereit",
+    "notReadyLabel": "Nicht bereit",
+    "start": "Match starten",
+    "leave": "Lobby verlassen",
+    "startHint": "Mindestens 2 Spieler müssen bereit sein, bevor der Host starten kann.",
+    "statusWaiting": "Wartet",
+    "statusClosed": "Geschlossen",
+    "closedHostLeft": "Der Host hat die Lobby verlassen.",
+    "closedStarted": "Das Match hat begonnen.",
+    "errors": {
+      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+      "notFound": "Lobby nicht gefunden.",
+      "invalidMaxPlayers": "Spielerzahl muss zwischen 2 und 4 liegen.",
+      "notHost": "Nur der Host kann das Match starten.",
+      "notJoinable": "Diese Lobby ist nicht mehr beitretbar.",
+      "lobbyFull": "Diese Lobby ist voll.",
+      "alreadyInLobby": "Du bist bereits in dieser Lobby.",
+      "inAnotherLobby": "Du bist bereits in einer anderen wartenden Lobby.",
+      "notEnoughPlayers": "Mindestens 2 Spieler sind zum Start nötig.",
+      "notAllReady": "Alle Spieler müssen bereit sein.",
+      "notMember": "Du bist kein Mitglied dieser Lobby.",
+      "codeRequired": "Bitte Einladungscode eingeben."
     }
   },
   "legal": {
@@ -361,6 +403,7 @@
     "profile": "Transcendence - Profil",
     "leaderboard": "Transcendence - Bestenliste",
     "friends": "Transcendence - Freunde",
+    "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Spieler",
     "players": "Transcendence - Spieler"
   }

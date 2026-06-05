@@ -127,3 +127,51 @@ export interface CreateGameResponse {
     finished_at: string | null
   }
 }
+
+export interface LobbyMember {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  is_ready: boolean
+  joined_at: string
+}
+
+export interface LobbyDetail {
+  id: string
+  host_user_id: string
+  invite_code: string
+  max_players: number
+  status: 'waiting' | 'closed'
+  game_id: string | null
+  shared_seed: number | null
+  created_at: string
+  members: LobbyMember[]
+}
+
+export interface LobbyResponse {
+  lobby: LobbyDetail
+}
+
+export interface CreateLobbyPayload {
+  max_players: number
+}
+
+export interface JoinLobbyByCodePayload {
+  invite_code: string
+}
+
+export interface SetReadyPayload {
+  ready: boolean
+}
+
+export interface MatchStartPlayer {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
+export interface StartLobbyResult {
+  game_id: string
+  shared_seed: number
+  players: MatchStartPlayer[]
+}

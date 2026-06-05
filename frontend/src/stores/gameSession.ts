@@ -18,6 +18,7 @@ import {
 } from '@/game/types'
 import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
+import { readMultiplayerSeed } from '@/stores/lobby'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import type { GameVariation } from '@/types/game'
@@ -75,6 +76,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   const runId = ref('')
   const sessionSeed = ref(0)
+  const multiplayerGameId = ref<string | null>(null)
   const startedAt = ref('')
   const endedAt = ref<string | undefined>(undefined)
   const scoreLedger = ref<ScoreBreakdown[]>([])
@@ -149,6 +151,8 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   }
 
   function trySubmitMatch(): void {
+    if (multiplayerGameId.value) return
+
     const record = lastMatchRecord.value
     if (!record?.endedAt) return
     if (submittedRunIds.has(record.runId)) return
@@ -175,6 +179,21 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   function resume(): void {
     paused.value = false
+  }
+
+  function beginMultiplayerMatch(gameId: string, seed: number): void {
+    multiplayerGameId.value = gameId
+    const settings = useGameSettingsStore()
+    settings.variation = 'multiplayer'
+    beginSession(seed)
+  }
+
+  function beginSessionFromRouteMatch(gameId: string): boolean {
+    if (multiplayerGameId.value === gameId && active.value) return true
+    const seed = readMultiplayerSeed(gameId)
+    if (seed == null) return false
+    beginMultiplayerMatch(gameId, seed)
+    return true
   }
 
   function beginSession(seed?: number): void {
@@ -240,6 +259,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     backToBackCount.value = 0
     runId.value = ''
     sessionSeed.value = 0
+    multiplayerGameId.value = null
     startedAt.value = ''
     endedAt.value = undefined
     scoreLedger.value = []
@@ -288,7 +308,10 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     endedAt,
     scoreLedger,
     lastMatchRecord,
+    multiplayerGameId,
     beginSession,
+    beginMultiplayerMatch,
+    beginSessionFromRouteMatch,
     endSession,
     stepFrame,
     pause,

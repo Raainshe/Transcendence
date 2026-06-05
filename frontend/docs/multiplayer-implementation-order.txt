@@ -63,6 +63,7 @@ Frontend:
   10. Menu: selecting multiplayer + player count → create lobby → /lobby/:id.
   11. LobbyView: roster, ready toggle, Start button (host only), WS subscription.
   12. On match.start: router.push to /play?match={gameId} for all clients.
+  13. Vite dev proxy: `/api` rule includes `ws: true` for `/api/v1/ws`.
 
 Exit criteria:
   - Two browsers: host creates lobby, guest joins, host starts, both land on play URL.
