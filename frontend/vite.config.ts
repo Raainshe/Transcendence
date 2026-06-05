@@ -20,7 +20,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': { target: apiProxyTarget, changeOrigin: true },
+      '/api': { target: apiProxyTarget, changeOrigin: true, ws: true },
       '/uploads': { target: apiProxyTarget, changeOrigin: true },
     },
   },

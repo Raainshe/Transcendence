@@ -29,10 +29,12 @@ export class ApiError extends Error {
 export type ApiFetchOptions = RequestInit & {
   /** When false, omit Authorization even if a token is set. Default true. */
   auth?: boolean
+  /** HTTP statuses that resolve as null instead of throwing (expected failures). */
+  allowStatuses?: number[]
 }
 
 export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): Promise<T> {
-  const { auth = true, ...init } = options
+  const { auth = true, allowStatuses = [], ...init } = options
   const headers = new Headers(init.headers)
 
   const isFormData = typeof FormData !== 'undefined' && init.body instanceof FormData
@@ -62,6 +64,9 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const payload = isJson ? ((await response.json()) as T & ApiErrorBody) : null
 
   if (!response.ok) {
+    if (allowStatuses.includes(response.status)) {
+      return null as T
+    }
     let message =
       payload && typeof payload === 'object' && 'error' in payload && payload.error
         ? String(payload.error)

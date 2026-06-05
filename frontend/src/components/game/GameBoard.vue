@@ -1,25 +1,26 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 
 import { computeGhostPiece } from '@/game/engine/Ghost'
 import { getOccupiedCells } from '@/game/engine/Tetrimino'
+import { drawLockedMatrix } from '@/game/render/drawMatrix'
 import {
   MATRIX_VISIBLE_HEIGHT,
   MATRIX_WIDTH,
   MINO_COLORS,
-  MinoType,
-  type PieceType,
 } from '@/game/types'
 import { LINE_CLEAR_FX_MS } from '@/game/fx/types'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSessionStore } from '@/stores/gameSession'
+import { useMatchStore } from '@/stores/match'
 
 const MIN_CELL = 8
 const MAX_CELL = 30
 
 const store = useGameSessionStore()
+const matchStore = useMatchStore()
 const fxStore = useGameFxStore()
 const { engine } = storeToRefs(store)
 const { t } = useI18n()
@@ -29,11 +30,6 @@ const cellPx = ref(20)
 let rafId = 0
 let lastTs = 0
 let resizeObserver: ResizeObserver | null = null
-
-function colorForCell(value: number): string | null {
-  if (value === MinoType.Empty) return null
-  return MINO_COLORS[value as PieceType]
-}
 
 function rowFromTop(matrixY: number): number {
   return MATRIX_VISIBLE_HEIGHT - matrixY
@@ -122,43 +118,14 @@ function draw(): void {
   if (!ctx) return
 
   const cell = cellPx.value
-  const w = MATRIX_WIDTH * cell
-  const h = MATRIX_VISIBLE_HEIGHT * cell
-  ctx.clearRect(0, 0, w, h)
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.45)'
-  ctx.fillRect(0, 0, w, h)
-
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.06)'
-  ctx.lineWidth = 1
-  for (let gx = 0; gx <= MATRIX_WIDTH; gx++) {
-    ctx.beginPath()
-    ctx.moveTo(gx * cell, 0)
-    ctx.lineTo(gx * cell, h)
-    ctx.stroke()
-  }
-  for (let gy = 0; gy <= MATRIX_VISIBLE_HEIGHT; gy++) {
-    ctx.beginPath()
-    ctx.moveTo(0, gy * cell)
-    ctx.lineTo(w, gy * cell)
-    ctx.stroke()
-  }
-
-  const pad = 1
   const matrix = eng.matrixRef
-  for (let y = 1; y <= MATRIX_VISIBLE_HEIGHT; y++) {
-    for (let x = 1; x <= MATRIX_WIDTH; x++) {
-      const v = matrix.get(x, y)
-      const c = colorForCell(v)
-      if (!c) continue
-      ctx.fillStyle = c
-      ctx.fillRect((x - 1) * cell + pad, rowFromTop(y) * cell + pad, cell - pad * 2, cell - pad * 2)
-    }
-  }
+  drawLockedMatrix(ctx, matrix.snapshotBytes(), cell, true)
 
   drawFx(ctx, cell, performance.now())
 
   const piece = eng.state.currentPiece
   if (piece) {
+    const pad = 1
     const ghost = computeGhostPiece(matrix, piece)
     const sameCell =
       ghost.origin.x === piece.origin.x &&
@@ -195,12 +162,35 @@ function loop(ts: number): void {
     lastTs = ts
     store.stepFrame(dt)
   }
+  if (store.multiplayerGameId) {
+    matchStore.maybeSendLocalState()
+  }
   draw()
   rafId = requestAnimationFrame(loop)
 }
 
+function startLoop(): void {
+  if (rafId) return
+  lastTs = 0
+  rafId = requestAnimationFrame(loop)
+}
+
+function stopLoop(): void {
+  cancelAnimationFrame(rafId)
+  rafId = 0
+  lastTs = 0
+}
+
+watch(
+  () => store.active,
+  (isActive) => {
+    if (isActive) startLoop()
+    else stopLoop()
+  },
+  { immediate: true },
+)
+
 onMounted(() => {
-  store.beginSession()
   const canvas = canvasRef.value
   const parent = canvas?.parentElement
   if (parent) {
@@ -212,16 +202,13 @@ onMounted(() => {
   window.addEventListener('resize', resizeCanvas)
   resizeCanvas()
   canvasRef.value?.focus()
-  lastTs = 0
-  rafId = requestAnimationFrame(loop)
 })
 
 onBeforeUnmount(() => {
-  cancelAnimationFrame(rafId)
+  stopLoop()
   resizeObserver?.disconnect()
   resizeObserver = null
   window.removeEventListener('resize', resizeCanvas)
-  store.endSession()
 })
 </script>
 

@@ -54,6 +54,8 @@
     "ariaLabel": "Menu principal",
     "title": "Menu principal",
     "newGame": "Nouvelle partie",
+    "createLobby": "Créer un salon",
+    "joinLobby": "Rejoindre avec un code",
     "variation": "Variante",
     "players": "Joueurs",
     "playersCount": "{count} joueur | {count} joueurs",
@@ -131,6 +133,27 @@
       "howToWin": "Comment gagner",
       "backToGame": "Retour au jeu"
     },
+    "reconnecting": "Reconnexion…",
+    "opponents": {
+      "title": "Adversaires",
+      "score": "{score} · {lines}L · Niv{level}",
+      "out": "ÉLIMINÉ",
+      "waiting": "Sync",
+      "disconnected": "Déconnecté",
+      "unknown": "Adversaire",
+      "boardAria": "Plateau de {name}"
+    },
+    "matchResults": {
+      "youWon": "Tu as gagné !",
+      "youOut": "Tu es éliminé",
+      "waiting": "En attente du résultat…",
+      "noWinner": "Partie terminée — pas de gagnant",
+      "winner": "{name} gagne !",
+      "matchOver": "Partie terminée",
+      "you": "(toi)",
+      "home": "Menu principal",
+      "viewMatch": "Détails de la partie"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",
@@ -165,9 +188,49 @@
     },
     "multiplayer": {
       "label": "MULTIJOUEUR",
-      "tooltip": "Multijoueur local bientôt disponible ; joue comme Marathon pour l'instant.",
-      "description": "Le mode multijoueur n'est pas encore entièrement implémenté. Pour l'instant, cela se joue comme Marathon avec un seul plateau.",
-      "howToWin": "Comme Marathon jusqu'à l'arrivée du vrai multijoueur local."
+      "tooltip": "Créez ou rejoignez un salon en ligne, puis jouez sur des plateaux parallèles.",
+      "description": "Connectez-vous, créez un salon ou rejoignez avec un code d'invitation, préparez-vous avec vos amis et lancez une partie commune.",
+      "howToWin": "Jouez sur votre plateau en regardant les adversaires en direct. Survivez et marquez plus de points jusqu'à la fin du match."
+    }
+  },
+  "lobby": {
+    "title": "Salon",
+    "subtitle": "{count} / {max} joueurs",
+    "loading": "Chargement du salon…",
+    "inviteCode": "Code d'invitation",
+    "copyCode": "Copier le code",
+    "copied": "Copié !",
+    "inviteHint": "Partagez ce code pour que vos amis rejoignent depuis le menu principal.",
+    "codePlaceholder": "ABC123",
+    "joinSubmit": "Rejoindre le salon",
+    "rosterAria": "Liste du salon",
+    "avatarAlt": "Avatar de {username}",
+    "you": "Vous",
+    "host": "Hôte",
+    "ready": "Prêt",
+    "notReady": "Annuler prêt",
+    "readyLabel": "Prêt",
+    "notReadyLabel": "Pas prêt",
+    "start": "Lancer la partie",
+    "leave": "Quitter le salon",
+    "startHint": "Au moins 2 joueurs doivent être prêts avant que l'hôte puisse lancer.",
+    "statusWaiting": "En attente",
+    "statusClosed": "Fermé",
+    "closedHostLeft": "L'hôte a quitté le salon.",
+    "closedStarted": "La partie a commencé.",
+    "errors": {
+      "generic": "Une erreur s'est produite. Réessayez.",
+      "notFound": "Salon introuvable.",
+      "invalidMaxPlayers": "Le nombre de joueurs doit être entre 2 et 4.",
+      "notHost": "Seul l'hôte peut lancer la partie.",
+      "notJoinable": "Ce salon n'est plus accessible.",
+      "lobbyFull": "Ce salon est complet.",
+      "alreadyInLobby": "Vous êtes déjà dans ce salon.",
+      "inAnotherLobby": "Vous êtes déjà dans un autre salon en attente.",
+      "notEnoughPlayers": "Au moins 2 joueurs sont requis pour lancer.",
+      "notAllReady": "Tous les joueurs doivent être prêts.",
+      "notMember": "Vous n'êtes pas membre de ce salon.",
+      "codeRequired": "Entrez un code d'invitation."
     }
   },
   "legal": {
@@ -361,6 +424,7 @@
     "profile": "Transcendence - Profil",
     "leaderboard": "Transcendence - Classement",
     "friends": "Transcendence - Amis",
+    "lobby": "Transcendence - Salon",
     "userProfile": "Transcendence - Joueur",
     "players": "Transcendence - Joueurs"
   }

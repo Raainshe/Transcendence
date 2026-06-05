@@ -70,6 +70,8 @@ export const useGameSettingsStore = defineStore('gameSettings', () => {
   watch(variation, (v) => {
     if (v === 'sprint' || v === 'ultra') {
       playerCount.value = 1
+    } else if (v === 'multiplayer' && playerCount.value < 2) {
+      playerCount.value = 2
     }
   })
 

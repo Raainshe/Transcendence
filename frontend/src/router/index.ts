@@ -12,6 +12,12 @@ const router = createRouter({
       component: HomeView,
     },
     {
+      path: '/lobby/:id',
+      name: 'lobby',
+      component: () => import('@/views/LobbyView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/play',
       name: 'play',
       component: () => import('@/views/GamePlayView.vue'),

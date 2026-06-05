@@ -142,6 +142,11 @@ export class Matrix {
     }
   }
 
+  /** Returns a copy of the raw locked-cell grid (400 bytes, row-major). */
+  snapshotBytes(): Uint8Array {
+    return this.cells.slice()
+  }
+
   /** Deep copy. Useful for tests and any future rollback/replay logic. */
   clone(): Matrix {
     const copy = new Matrix()

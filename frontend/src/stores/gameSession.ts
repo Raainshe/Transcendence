@@ -18,8 +18,11 @@ import {
 } from '@/game/types'
 import { i18n } from '@/i18n'
 import { useAuthStore } from '@/stores/auth'
+import { readMultiplayerSeed } from '@/stores/lobby'
+import { useMatchStore } from '@/stores/match'
 import { useGameFxStore } from '@/stores/gameFx'
 import { useGameSettingsStore } from '@/stores/gameSettings'
+import type { MatchEndedPayload } from '@/types/api'
 import type { GameVariation } from '@/types/game'
 
 /** Max delta per frame to avoid huge jumps after tab backgrounding. */
@@ -75,6 +78,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   const runId = ref('')
   const sessionSeed = ref(0)
+  const multiplayerGameId = ref<string | null>(null)
   const startedAt = ref('')
   const endedAt = ref<string | undefined>(undefined)
   const scoreLedger = ref<ScoreBreakdown[]>([])
@@ -123,8 +127,32 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
     if (s.matchEnded && !endedAt.value) {
       endedAt.value = new Date().toISOString()
-      lastMatchRecord.value = buildMatchRecord()
-      trySubmitMatch()
+      if (multiplayerGameId.value) {
+        const reason = s.gameOverReason ?? 'blockOut'
+        useMatchStore().notifyLocalElimination(reason, {
+          score: score.value,
+          lines: lines.value,
+          level: level.value,
+        })
+      } else {
+        lastMatchRecord.value = buildMatchRecord()
+        trySubmitMatch()
+      }
+    }
+  }
+
+  function applyServerMatchEnd(payload: MatchEndedPayload): void {
+    const selfId = useAuthStore().user?.id
+    const winnerId = payload.winner_user_id
+    const won =
+      winnerId != null &&
+      selfId != null &&
+      winnerId.trim().toLowerCase() === selfId.trim().toLowerCase()
+    matchEndKind.value = won ? 'won' : 'lost'
+    active.value = false
+    paused.value = false
+    if (!endedAt.value) {
+      endedAt.value = new Date().toISOString()
     }
   }
 
@@ -149,6 +177,8 @@ export const useGameSessionStore = defineStore('gameSession', () => {
   }
 
   function trySubmitMatch(): void {
+    if (multiplayerGameId.value) return
+
     const record = lastMatchRecord.value
     if (!record?.endedAt) return
     if (submittedRunIds.has(record.runId)) return
@@ -160,9 +190,8 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     if (!payload) return
 
     submittedRunIds.add(record.runId)
-    void createGame(payload).catch((err: unknown) => {
+    void createGame(payload).catch(() => {
       submittedRunIds.delete(record.runId)
-      console.warn('Failed to submit match', err)
     })
   }
 
@@ -175,6 +204,21 @@ export const useGameSessionStore = defineStore('gameSession', () => {
 
   function resume(): void {
     paused.value = false
+  }
+
+  function beginMultiplayerMatch(gameId: string, seed: number): void {
+    const settings = useGameSettingsStore()
+    settings.variation = 'multiplayer'
+    beginSession(seed)
+    multiplayerGameId.value = gameId
+  }
+
+  function beginSessionFromRouteMatch(gameId: string): boolean {
+    if (multiplayerGameId.value === gameId && active.value) return true
+    const seed = readMultiplayerSeed(gameId)
+    if (seed == null) return false
+    beginMultiplayerMatch(gameId, seed)
+    return true
   }
 
   function beginSession(seed?: number): void {
@@ -240,6 +284,7 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     backToBackCount.value = 0
     runId.value = ''
     sessionSeed.value = 0
+    multiplayerGameId.value = null
     startedAt.value = ''
     endedAt.value = undefined
     scoreLedger.value = []
@@ -288,11 +333,15 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     endedAt,
     scoreLedger,
     lastMatchRecord,
+    multiplayerGameId,
     beginSession,
+    beginMultiplayerMatch,
+    beginSessionFromRouteMatch,
     endSession,
     stepFrame,
     pause,
     resume,
     buildMatchRecord,
+    applyServerMatchEnd,
   }
 })

@@ -1,0 +1,182 @@
+Multiplayer & WebSockets — Implementation Order
+==============================================
+
+This document outlines the recommended build order for lobby-based multiplayer
+Tetris (parallel boards, opponent mini-views, server-authoritative match lifecycle).
+
+Overview
+--------
+Flow: Menu (multiplayer) → Lobby → Host starts → All clients on /play → Live
+opponent mini-boards via WebSocket → Match ends when one player wins or everyone
+is eliminated → Persist one games row + N game_players rows.
+
+Architecture split
+------------------
+REST (durable, authoritative):
+  - Create / join / leave lobby
+  - Host start (validates permissions and headcount)
+  - Match metadata for reconnect
+  - Final score persistence
+
+WebSocket (live):
+  - Lobby roster and ready-state updates
+  - match.start / match.ended events
+  - player.state broadcasts (score, alive, compact board)
+  - Disconnect / reconnect signaling
+
+Gameplay model (recommended):
+  - Each client runs its own Engine locally (authoritative local sim).
+  - Server does NOT simulate Tetris; it coordinates rooms and relays state.
+  - Shared seed on match.start for fair piece generation (optional per-player seeds later).
+  - Clients send compact board snapshots every ~100–200 ms or on meaningful events.
+
+
+Phase 1 — Lobby foundation (REST + WS roster)
+---------------------------------------------
+Goal: Users can create a lobby, join, see who is in the room, and host can start.
+Play may still be solo-ish; focus is lobby UX and server truth.
+
+Backend:
+  1. Migration: lobbies + lobby_members tables (or document reuse of games.status).
+  2. Repository + service: create lobby, join, leave, get snapshot.
+  3. REST endpoints:
+       POST   /api/v1/lobbies
+       GET    /api/v1/lobbies/{id}
+       GET    /api/v1/lobbies/by-code/{code}
+       POST   /api/v1/lobbies/{id}/join
+       POST   /api/v1/lobbies/join          (body: { invite_code })
+       DELETE /api/v1/lobbies/{id}/leave
+       POST   /api/v1/lobbies/{id}/ready   (optional but recommended)
+       POST   /api/v1/lobbies/{id}/start   (host only)
+       GET    /api/v1/ws?token=<JWT>        (WebSocket upgrade)
+  4. Start validation: caller is host, min 2 players, max not exceeded, all ready.
+  5. On start: create games row (mode=multiplayer, status=in_progress),
+     create game_players for each member, link lobby.game_id.
+
+WebSocket (minimal):
+  6. WS hub skeleton: JWT auth on connect, room registry.
+  7. Room: lobby:{lobbyId}
+  8. Event: lobby.updated (member joined/left/ready).
+  9. Event: match.start { game_id, shared_seed, players[] }.
+
+Frontend:
+  10. Menu: selecting multiplayer + player count → create lobby → /lobby/:id.
+  11. LobbyView: roster, ready toggle, Start button (host only), WS subscription.
+  12. On match.start: router.push to /play?match={gameId} for all clients.
+  13. Vite dev proxy: `/api` rule includes `ws: true` for `/api/v1/ws`.
+
+Exit criteria:
+  - Two browsers: host creates lobby, guest joins, host starts, both land on play URL.
+  - Lobby state survives refresh via GET /lobbies/{id}.
+
+
+Phase 2 — Live opponent mini-boards
+-----------------------------------
+Goal: During play, each client sees smaller views of other players' boards.
+
+Backend:
+  1. Room: match:{gameId} — auto-join players when match starts.
+  2. Message: player.state { score, lines, level, alive, board (compact encoding) }.
+  3. Server validates sender is in game_players; rate-limit updates.
+  4. Server broadcasts player.state to other clients in match room.
+  5. In-memory cache of last state per player (for late join / reconnect prep).
+
+Frontend:
+  6. Match store: connect WS to match room on play mount.
+  7. Throttle outbound player.state from local Engine (matrix snapshot encoding).
+  8. OpponentBoard components: mini canvas per other user_id.
+  9. Layout: main board + sidebar/grid of opponent boards in GamePlayView.
+
+Exit criteria:
+  - Two clients in same match see each other's boards update in near real time.
+  - No REST polling for opponent state.
+
+
+Phase 3 — Elimination and match end
+-----------------------------------
+Goal: Server decides when the match is over; results persist correctly.
+
+Backend:
+  1. Message: player.eliminated { reason: topOut|lockOut|blockOut }.
+  2. Server tracks alive_count and placements per match.
+  3. End rules:
+       - Winner = last alive player when all others eliminated.
+       - If everyone eliminated: highest score wins; tied scores = no winner.
+  4. On match end: set games.finished_at, update game_players (score, lines,
+     level, placement, is_winner).
+  5. Event: match.ended { winner_user_id?, placements[], final_stats[] }.
+
+Frontend:
+  6. Local Engine game-over → send player.eliminated (or final player.state with alive=false).
+  7. On match.ended: stop engine, show results overlay, link to profiles/history.
+  8. Do not call solo POST /games per player; server persists from match end.
+
+Exit criteria:
+  - Full 2-player match from lobby → play → one winner → DB shows one game, two game_players.
+  - Stats and match history reflect multiplayer results.
+
+
+Phase 4 — Disconnect, reconnect, remote players polish
+--------------------------------------------------------
+Goal: Satisfy remote players module (latency, disconnect, reconnect).
+
+Backend:
+  1. On WS disconnect: mark player disconnected, start reconnect timer (e.g. 15s).
+  2. If timer expires: treat as eliminated or forfeit (document policy).
+  3. Reconnect: GET /matches/{gameId} + WS rejoin match:{gameId} + replay cached states.
+  4. Event: player.disconnected / player.reconnected for UI.
+
+Frontend:
+  5. Show opponent as "Disconnected" in mini-board slot.
+  6. On tab close / network blip: attempt reconnect with same game_id.
+  7. Handle match.ended arriving while reconnecting.
+
+Exit criteria:
+  - Guest refreshes mid-match and sees restored opponent state or clear forfeit.
+  - No orphaned lobbies when host leaves before start.
+
+
+Phase 5 — Optional enhancements
+-------------------------------
+Not required for MVP; defer until Phases 1–4 pass.
+
+  - Invite codes / friend invites into lobby
+  - Lobby chat (same WS hub, different message type)
+  - Garbage / attack lines between players
+  - 3–4 player layouts and scaling tests
+  - Spectator mode (read-only match room subscription)
+
+
+Module mapping (ft_transcendence)
+---------------------------------
+Phase 1–3: Web-based game (2 pts) — live PvP with win/loss.
+Phase 2–4: WebSockets (2 pts) — rooms, broadcast, connect/disconnect.
+Phase 4:   Remote players (2 pts) — two machines, reconnect.
+Phase 1–3: Multiplayer 3+ (2 pts) — when max_players supports 3–4.
+Lobby chat: contributes to User interaction / advanced chat later.
+
+
+Key pitfalls to avoid
+---------------------
+  - Do not start the match only on the client; host Start must hit the server.
+  - Do not trust win/elimination without verifying user_id in game_players.
+  - Do not poll for opponent boards; use WebSocket fan-out.
+  - Use separate rooms: lobby:{id} and match:{gameId}.
+  - Do not create one solo POST /games per player; one games row per match.
+
+Suggested REST + WS reference
+-----------------------------
+REST:
+  POST   /api/v1/lobbies
+  GET    /api/v1/lobbies/{id}
+  POST   /api/v1/lobbies/{id}/join
+  DELETE /api/v1/lobbies/{id}/leave
+  POST   /api/v1/lobbies/{id}/ready
+  POST   /api/v1/lobbies/{id}/start
+  GET    /api/v1/matches/{gameId}
+
+WebSocket:
+  GET /api/v1/ws?token=<JWT>
+  Rooms: lobby:{lobbyId}, match:{gameId}
+  Types: lobby.updated, match.start, player.state, player.eliminated,
+         player.disconnected, player.reconnected, match.ended, error

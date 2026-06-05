@@ -16,6 +16,7 @@ import (
 	"backend/internal/handler"
 	"backend/internal/repository"
 	"backend/internal/service"
+	"backend/internal/ws"
 	"backend/migrations"
 )
 
@@ -25,9 +26,12 @@ type Server struct {
 	jwtSecret   string
 	uploadDir   string
 	onSeen      func(uuid.UUID)
-	authHandler *handler.AuthHandler
-	userHandler *handler.UserHandler
-	gameHandler *handler.GameHandler
+	authHandler  *handler.AuthHandler
+	userHandler  *handler.UserHandler
+	gameHandler  *handler.GameHandler
+	lobbyHandler *handler.LobbyHandler
+	matchHandler *handler.MatchHandler
+	wsHandler    *ws.Handler
 }
 
 func NewServer() *http.Server {
@@ -62,10 +66,14 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	fileRepo := repository.NewFileRepository(dbService.DB())
 	gameRepo := repository.NewGameRepository(dbService.DB())
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
+	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
 
+	hub := ws.NewHub()
 	authSvc := service.NewAuthService(userRepo, jwtSecret)
 	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
+	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)
+	matchSvc := service.NewMatchService(gameRepo, lobbyRepo)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -78,9 +86,12 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		jwtSecret:   jwtSecret,
 		uploadDir:   uploadDir,
 		onSeen:      onSeen,
-		authHandler: handler.NewAuthHandler(authSvc),
-		userHandler: handler.NewUserHandler(userSvc),
-		gameHandler: handler.NewGameHandler(gameSvc),
+		authHandler:  handler.NewAuthHandler(authSvc),
+		userHandler:  handler.NewUserHandler(userSvc),
+		gameHandler:  handler.NewGameHandler(gameSvc),
+		lobbyHandler: handler.NewLobbyHandler(lobbySvc),
+		matchHandler: handler.NewMatchHandler(matchSvc),
+		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
 	}
 
 	return &http.Server{

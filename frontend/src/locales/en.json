@@ -54,6 +54,8 @@
     "ariaLabel": "Main Menu",
     "title": "Main Menu",
     "newGame": "New Game",
+    "createLobby": "Create lobby",
+    "joinLobby": "Join with code",
     "variation": "Variation",
     "players": "Players",
     "playersCount": "{count} player | {count} players",
@@ -131,6 +133,27 @@
       "howToWin": "How to win",
       "backToGame": "Back to game"
     },
+    "reconnecting": "Reconnecting…",
+    "opponents": {
+      "title": "Opponents",
+      "score": "{score} · {lines}L · Lv{level}",
+      "out": "OUT",
+      "waiting": "Syncing",
+      "disconnected": "Disconnected",
+      "unknown": "Opponent",
+      "boardAria": "{name}'s board"
+    },
+    "matchResults": {
+      "youWon": "You won!",
+      "youOut": "You're out",
+      "waiting": "Waiting for match result…",
+      "noWinner": "Match over — no winner",
+      "winner": "{name} wins!",
+      "matchOver": "Match over",
+      "you": "(you)",
+      "home": "Main menu",
+      "viewMatch": "View match details"
+    },
     "notifications": {
       "tetris": "TETRIS",
       "triple": "TRIPLE",
@@ -165,9 +188,49 @@
     },
     "multiplayer": {
       "label": "MULTIPLAYER",
-      "tooltip": "Local multiplayer coming soon; plays as Marathon for now.",
-      "description": "Multiplayer mode is not fully implemented yet. For now this plays like Marathon with a single board.",
-      "howToWin": "Same as Marathon until true local multiplayer arrives."
+      "tooltip": "Create or join an online lobby, then play on parallel boards.",
+      "description": "Sign in, create a lobby or join with an invite code, ready up with friends, and start a shared match.",
+      "howToWin": "Play on your own board while watching opponents live. Survive and outscore rivals until the match ends."
+    }
+  },
+  "lobby": {
+    "title": "Lobby",
+    "subtitle": "{count} / {max} players",
+    "loading": "Loading lobby…",
+    "inviteCode": "Invite code",
+    "copyCode": "Copy code",
+    "copied": "Copied!",
+    "inviteHint": "Share this code so friends can join from the main menu.",
+    "codePlaceholder": "ABC123",
+    "joinSubmit": "Join lobby",
+    "rosterAria": "Lobby roster",
+    "avatarAlt": "{username}'s avatar",
+    "you": "You",
+    "host": "Host",
+    "ready": "Ready up",
+    "notReady": "Cancel ready",
+    "readyLabel": "Ready",
+    "notReadyLabel": "Not ready",
+    "start": "Start match",
+    "leave": "Leave lobby",
+    "startHint": "At least 2 players must be ready before the host can start.",
+    "statusWaiting": "Waiting",
+    "statusClosed": "Closed",
+    "closedHostLeft": "The host left and the lobby was closed.",
+    "closedStarted": "The match has started.",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "notFound": "Lobby not found.",
+      "invalidMaxPlayers": "Player count must be between 2 and 4.",
+      "notHost": "Only the host can start the match.",
+      "notJoinable": "This lobby is no longer joinable.",
+      "lobbyFull": "This lobby is full.",
+      "alreadyInLobby": "You are already in this lobby.",
+      "inAnotherLobby": "You are already in another waiting lobby.",
+      "notEnoughPlayers": "At least 2 players are required to start.",
+      "notAllReady": "All players must be ready before starting.",
+      "notMember": "You are not a member of this lobby.",
+      "codeRequired": "Enter an invite code."
     }
   },
   "legal": {
@@ -361,6 +424,7 @@
     "profile": "Transcendence - Profile",
     "leaderboard": "Transcendence - Leaderboard",
     "friends": "Transcendence - Friends",
+    "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Player",
     "players": "Transcendence - Players"
   }

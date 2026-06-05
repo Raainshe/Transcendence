@@ -82,6 +82,28 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Post("/games", s.gameHandler.CreateGame)
 		})
+
+		// WebSocket — JWT via ?token= query param
+		r.Get("/ws", s.wsHandler.ServeHTTP)
+
+		// Matches — protected
+		r.Group(func(r chi.Router) {
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			r.Get("/matches/{id}", s.matchHandler.Get)
+		})
+
+		// Lobbies — protected
+		r.Group(func(r chi.Router) {
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			r.Post("/lobbies", s.lobbyHandler.Create)
+			r.Post("/lobbies/join", s.lobbyHandler.JoinByCode)
+			r.Get("/lobbies/by-code/{code}", s.lobbyHandler.GetByCode)
+			r.Get("/lobbies/{id}", s.lobbyHandler.Get)
+			r.Post("/lobbies/{id}/join", s.lobbyHandler.Join)
+			r.Delete("/lobbies/{id}/leave", s.lobbyHandler.Leave)
+			r.Post("/lobbies/{id}/ready", s.lobbyHandler.SetReady)
+			r.Post("/lobbies/{id}/start", s.lobbyHandler.Start)
+		})
 	})
 
 	return r

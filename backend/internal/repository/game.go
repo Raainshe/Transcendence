@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -12,12 +13,17 @@ import (
 
 type GameRepository interface {
 	RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error
+	CreateMultiplayerMatch(ctx context.Context, game *model.Game, players []model.GamePlayer) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
 	ListGames(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
 	CountGames(ctx context.Context, userID *uuid.UUID) (int, error)
 	FindGameDetail(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
 	ListLeaderboard(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
 	GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
+	ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	ListMatchResults(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error)
+	FinishMultiplayerMatch(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
 type gameRepository struct {
@@ -54,6 +60,87 @@ func (r *gameRepository) RecordMatch(ctx context.Context, game *model.Game, play
 		player.Score, player.LinesCleared, player.LevelReached, player.Placement, player.IsWinner,
 	); err != nil {
 		return err
+	}
+
+	return tx.Commit()
+}
+
+func (r *gameRepository) CreateMultiplayerMatch(ctx context.Context, game *model.Game, players []model.GamePlayer) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	const insertGame = `
+		INSERT INTO games (id, mode, status, created_at, finished_at)
+		VALUES ($1, $2, $3, $4, NULL)
+	`
+	if _, err := tx.ExecContext(ctx, insertGame,
+		game.ID.String(), game.Mode, game.Status, game.CreatedAt,
+	); err != nil {
+		return err
+	}
+
+	const insertPlayer = `
+		INSERT INTO game_players (id, game_id, user_id, score, lines_cleared, level_reached, placement, is_winner)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+	for i := range players {
+		p := &players[i]
+		if _, err := tx.ExecContext(ctx, insertPlayer,
+			p.ID.String(), p.GameID.String(), p.UserID.String(),
+			p.Score, p.LinesCleared, p.LevelReached, p.Placement, p.IsWinner,
+		); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
+func (r *gameRepository) FinishMultiplayerMatch(
+	ctx context.Context,
+	gameID uuid.UUID,
+	finishedAt time.Time,
+	players []model.GamePlayer,
+) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	const updateGame = `
+		UPDATE games
+		SET status = 'finished', finished_at = $1
+		WHERE id = $2 AND status = 'in_progress'
+	`
+	res, err := tx.ExecContext(ctx, updateGame, finishedAt, gameID.String())
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+
+	const updatePlayer = `
+		UPDATE game_players
+		SET score = $1, lines_cleared = $2, level_reached = $3, placement = $4, is_winner = $5
+		WHERE game_id = $6 AND user_id = $7
+	`
+	for i := range players {
+		p := &players[i]
+		if _, err := tx.ExecContext(ctx, updatePlayer,
+			p.Score, p.LinesCleared, p.LevelReached, p.Placement, p.IsWinner,
+			gameID.String(), p.UserID.String(),
+		); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()
@@ -212,6 +299,110 @@ func (r *gameRepository) ListLeaderboard(ctx context.Context, limit int) ([]mode
 		entries = append(entries, e)
 	}
 	return entries, rows.Err()
+}
+
+func (r *gameRepository) IsGamePlayer(ctx context.Context, gameID, userID uuid.UUID) (bool, error) {
+	const q = `SELECT 1 FROM game_players WHERE game_id = $1 AND user_id = $2 LIMIT 1`
+	var one int
+	err := r.db.QueryRowContext(ctx, q, gameID.String(), userID.String()).Scan(&one)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
+
+func (r *gameRepository) ListMatchPlayers(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error) {
+	const q = `
+		SELECT u.id, u.username, u.avatar_url
+		FROM game_players gp
+		JOIN users u ON u.id = gp.user_id
+		WHERE gp.game_id = $1
+		ORDER BY gp.id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, q, gameID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var players []model.MatchPlayerView
+	for rows.Next() {
+		var p model.MatchPlayerView
+		var userIDStr string
+		if err := rows.Scan(&userIDStr, &p.Username, &p.AvatarURL); err != nil {
+			return nil, err
+		}
+		p.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, err
+		}
+		players = append(players, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if players == nil {
+		players = []model.MatchPlayerView{}
+	}
+	return players, nil
+}
+
+func (r *gameRepository) ListMatchResults(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error) {
+	const q = `
+		SELECT u.id, u.username, gp.score, gp.lines_cleared, gp.level_reached,
+		       COALESCE(gp.placement, 0), gp.is_winner
+		FROM game_players gp
+		JOIN users u ON u.id = gp.user_id
+		WHERE gp.game_id = $1
+		ORDER BY COALESCE(gp.placement, 999), gp.id ASC
+	`
+	rows, err := r.db.QueryContext(ctx, q, gameID.String())
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var (
+		payload model.MatchEndedPayload
+		players []model.MatchEndedPlayer
+	)
+	for rows.Next() {
+		var (
+			p         model.MatchEndedPlayer
+			userIDStr string
+		)
+		if err := rows.Scan(
+			&userIDStr,
+			&p.Username,
+			&p.Score,
+			&p.Lines,
+			&p.Level,
+			&p.Placement,
+			&p.IsWinner,
+		); err != nil {
+			return nil, err
+		}
+		p.UserID, err = uuid.Parse(userIDStr)
+		if err != nil {
+			return nil, err
+		}
+		if p.IsWinner {
+			winnerID := p.UserID
+			payload.WinnerUserID = &winnerID
+		}
+		players = append(players, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if len(players) == 0 {
+		return nil, ErrNotFound
+	}
+	payload.Players = players
+	return &payload, nil
 }
 
 func (r *gameRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*model.UserStats, error) {

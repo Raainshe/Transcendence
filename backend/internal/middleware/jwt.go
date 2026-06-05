@@ -6,18 +6,14 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"backend/internal/auth"
 )
 
 type contextKey string
 
 const userIDKey contextKey = "userID"
-
-type claims struct {
-	UserID uuid.UUID `json:"user_id"`
-	jwt.RegisteredClaims
-}
 
 // JWTAuth validates Bearer tokens and (optionally) reports the authenticated
 // user id to the onSeen callback for last-seen tracking. The callback runs in
@@ -32,24 +28,17 @@ func JWTAuth(secret string, onSeen func(uuid.UUID)) func(http.Handler) http.Hand
 			}
 
 			tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-			var c claims
-			token, err := jwt.ParseWithClaims(tokenStr, &c, func(t *jwt.Token) (any, error) {
-				if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-					return nil, jwt.ErrSignatureInvalid
-				}
-				return []byte(secret), nil
-			})
-
-			if err != nil || !token.Valid {
+			userID, err := auth.ParseUserID(secret, tokenStr)
+			if err != nil {
 				writeJSONError(w, http.StatusUnauthorized, "invalid or expired token")
 				return
 			}
 
 			if onSeen != nil {
-				go onSeen(c.UserID)
+				go onSeen(userID)
 			}
 
-			ctx := context.WithValue(r.Context(), userIDKey, c.UserID)
+			ctx := context.WithValue(r.Context(), userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

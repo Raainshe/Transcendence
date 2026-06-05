@@ -3,14 +3,17 @@ import { computed, onBeforeUnmount, onMounted, ref, useTemplateRef, watch } from
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
+import * as lobbiesApi from '@/api/lobbies'
+import JoinLobbyModal from '@/components/menu/JoinLobbyModal.vue'
 import CycleSelector from '@/components/menu/CycleSelector.vue'
 import MenuItem from '@/components/menu/MenuItem.vue'
 import { gameAudio } from '@/game/audio/AudioManager'
+import { useAuthStore } from '@/stores/auth'
+import { useLobbyStore } from '@/stores/lobby'
 import { useGameSettingsStore } from '@/stores/gameSettings'
 import {
   GAME_VARIATIONS,
   GAME_VARIATION_LABELS,
-  PLAYER_COUNTS,
   type GameVariation,
   type PlayerCount,
 } from '@/types/game'
@@ -19,17 +22,34 @@ import '@/assets/styles/menu/main-menu.css'
 
 type CyclerHandle = { prev: () => void; next: () => void }
 
+const LOBBY_PLAYER_COUNTS = [2, 3, 4] as const
+type LobbyPlayerCount = (typeof LOBBY_PLAYER_COUNTS)[number]
+
 const settings = useGameSettingsStore()
+const auth = useAuthStore()
+const lobbyStore = useLobbyStore()
 const router = useRouter()
 const { t } = useI18n()
 
-const ITEM_COUNT = 4
 const focusedIndex = ref(0)
 const settingsReady = ref(false)
+const joinModalOpen = ref(false)
+const createBusy = ref(false)
+const createError = ref<string | null>(null)
 
 const menuRef = useTemplateRef<HTMLElement>('menu')
 const variationCyclerRef = useTemplateRef<CyclerHandle>('variationCycler')
 const playersCyclerRef = useTemplateRef<CyclerHandle>('playersCycler')
+
+const isMultiplayer = computed(() => settings.variation === 'multiplayer')
+
+const itemCount = computed(() => (isMultiplayer.value ? 5 : 3))
+
+const playerOptions = LOBBY_PLAYER_COUNTS
+
+const primaryActionLabel = computed(() =>
+  isMultiplayer.value ? t('menu.createLobby') : t('menu.newGame'),
+)
 
 function uiPrefs() {
   return { sfxEnabled: settings.sfxEnabled, sfxVolume: settings.sfxVolume }
@@ -71,6 +91,12 @@ function focusItem(index: number): void {
   focusedIndex.value = index
 }
 
+function requireAuth(): boolean {
+  if (auth.isAuthenticated) return true
+  void router.push({ name: 'home', query: { login: '1' } })
+  return false
+}
+
 onMounted(() => {
   menuRef.value?.focus()
   gameAudio.setEnabled(settings.sfxEnabled)
@@ -90,6 +116,9 @@ watch(
   () => {
     if (!settingsReady.value) return
     playSelected()
+    if (focusedIndex.value >= itemCount.value) {
+      focusedIndex.value = itemCount.value - 1
+    }
   },
 )
 
@@ -101,23 +130,48 @@ watch(
   },
 )
 
-function startNewGame() {
+async function startNewGame() {
   playSelected()
+  createError.value = null
+
+  if (isMultiplayer.value) {
+    if (!requireAuth()) return
+    createBusy.value = true
+    try {
+      const res = await lobbiesApi.createLobby({ max_players: settings.playerCount })
+      gameAudio.stopMenuMusic()
+      void router.push({ name: 'lobby', params: { id: res.lobby.id } })
+    } catch (err) {
+      createError.value = lobbyStore.mapError(err)
+    } finally {
+      createBusy.value = false
+    }
+    return
+  }
+
   gameAudio.stopMenuMusic()
   void router.push({ name: 'play' })
 }
 
+function openJoinModal(): void {
+  playSelected()
+  if (!requireAuth()) return
+  joinModalOpen.value = true
+}
+
 function move(delta: 1 | -1): void {
   ensureAudioUnlocked()
-  const next = (focusedIndex.value + delta + ITEM_COUNT) % ITEM_COUNT
+  const next = (focusedIndex.value + delta + itemCount.value) % itemCount.value
   focusItem(next)
 }
 
 function activate() {
   ensureAudioUnlocked()
   if (focusedIndex.value === 0) {
-    startNewGame()
-  } else if (focusedIndex.value === 3) {
+    void startNewGame()
+  } else if (focusedIndex.value === 3 && isMultiplayer.value) {
+    openJoinModal()
+  } else if (focusedIndex.value === itemCount.value - 1) {
     toggleAudio()
   }
 }
@@ -127,7 +181,7 @@ function cycle(delta: 1 | -1): void {
   if (focusedIndex.value === 1) {
     if (delta === 1) variationCyclerRef.value?.next()
     else variationCyclerRef.value?.prev()
-  } else if (focusedIndex.value === 2) {
+  } else if (focusedIndex.value === 2 && isMultiplayer.value) {
     if (delta === 1) playersCyclerRef.value?.next()
     else playersCyclerRef.value?.prev()
   }
@@ -169,7 +223,7 @@ function formatVariation(value: GameVariation): string {
   return GAME_VARIATION_LABELS[value]
 }
 
-function formatPlayers(count: PlayerCount): string {
+function formatPlayers(count: PlayerCount | LobbyPlayerCount): string {
   return t('menu.playersCount', { count })
 }
 </script>
@@ -185,15 +239,16 @@ function formatPlayers(count: PlayerCount): string {
     @click="ensureAudioUnlocked"
   >
     <h2 class="main-menu__title">{{ t('menu.title') }}</h2>
+    <p v-if="createError" class="main-menu__error" role="alert">{{ createError }}</p>
     <ul class="main-menu__list">
       <MenuItem
-        :label="t('menu.newGame')"
+        :label="primaryActionLabel"
         kind="action"
         :selected="focusedIndex === 0"
         @select="focusItem(0)"
-        @activate="startNewGame"
+        @activate="void startNewGame()"
       />
-     
+
       <MenuItem
         :label="t('menu.variation')"
         kind="cycler"
@@ -211,6 +266,7 @@ function formatPlayers(count: PlayerCount): string {
         />
       </MenuItem>
       <MenuItem
+        v-if="isMultiplayer"
         :label="t('menu.players')"
         kind="cycler"
         :selected="focusedIndex === 2"
@@ -219,7 +275,7 @@ function formatPlayers(count: PlayerCount): string {
         <CycleSelector
           ref="playersCycler"
           v-model="settings.playerCount"
-          :options="PLAYER_COUNTS"
+          :options="playerOptions"
           :format-label="formatPlayers"
           :aria-label="t('menu.playersAriaLabel')"
           :prev-aria-label="t('cycler.previous')"
@@ -227,12 +283,21 @@ function formatPlayers(count: PlayerCount): string {
         />
       </MenuItem>
       <MenuItem
-        :label="audioMenuLabel"
+        v-if="isMultiplayer"
+        :label="t('menu.joinLobby')"
         kind="action"
         :selected="focusedIndex === 3"
         @select="focusItem(3)"
+        @activate="openJoinModal()"
+      />
+      <MenuItem
+        :label="audioMenuLabel"
+        kind="action"
+        :selected="focusedIndex === itemCount - 1"
+        @select="focusItem(itemCount - 1)"
         @activate="toggleAudio()"
       />
     </ul>
+    <JoinLobbyModal :open="joinModalOpen" @close="joinModalOpen = false" />
   </section>
 </template>

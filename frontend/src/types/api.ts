@@ -127,3 +127,115 @@ export interface CreateGameResponse {
     finished_at: string | null
   }
 }
+
+export interface LobbyMember {
+  user_id: string
+  username: string
+  avatar_url: string | null
+  is_ready: boolean
+  joined_at: string
+}
+
+export interface LobbyDetail {
+  id: string
+  host_user_id: string
+  invite_code: string
+  max_players: number
+  status: 'waiting' | 'closed'
+  game_id: string | null
+  shared_seed: number | null
+  created_at: string
+  members: LobbyMember[]
+}
+
+export interface LobbyResponse {
+  lobby: LobbyDetail
+}
+
+export interface CreateLobbyPayload {
+  max_players: number
+}
+
+export interface JoinLobbyByCodePayload {
+  invite_code: string
+}
+
+export interface SetReadyPayload {
+  ready: boolean
+}
+
+export interface MatchStartPlayer {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
+export interface StartLobbyResult {
+  game_id: string
+  shared_seed: number
+  players: MatchStartPlayer[]
+}
+
+export interface MatchPlayerView {
+  user_id: string
+  username: string
+  avatar_url: string | null
+}
+
+export interface MatchDetail {
+  game_id: string
+  status: string
+  mode: string
+  shared_seed: number
+  players: MatchPlayerView[]
+  results?: MatchEndedPayload
+}
+
+export interface PlayerConnectionBroadcast {
+  user_id: string
+}
+
+export interface MatchResponse {
+  match: MatchDetail | null
+}
+
+export interface PlayerStateUpload {
+  score: number
+  lines: number
+  level: number
+  alive: boolean
+  board: string
+}
+
+export interface PlayerStateBroadcast extends PlayerStateUpload {
+  user_id: string
+}
+
+export interface PlayerEliminatedUpload {
+  reason: string
+  score: number
+  lines: number
+  level: number
+}
+
+export interface PlayerEliminatedBroadcast {
+  user_id: string
+  reason: string
+  placement: number
+}
+
+export interface MatchEndedPlayer {
+  user_id: string
+  username: string
+  score: number
+  lines: number
+  level: number
+  placement: number
+  is_winner: boolean
+  elimination_reason?: string | null
+}
+
+export interface MatchEndedPayload {
+  winner_user_id?: string | null
+  players: MatchEndedPlayer[]
+}
