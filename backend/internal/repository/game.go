@@ -12,6 +12,7 @@ import (
 
 type GameRepository interface {
 	RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error
+	CreateMultiplayerMatch(ctx context.Context, game *model.Game, players []model.GamePlayer) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.Game, error)
 	ListGames(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
 	CountGames(ctx context.Context, userID *uuid.UUID) (int, error)
@@ -54,6 +55,40 @@ func (r *gameRepository) RecordMatch(ctx context.Context, game *model.Game, play
 		player.Score, player.LinesCleared, player.LevelReached, player.Placement, player.IsWinner,
 	); err != nil {
 		return err
+	}
+
+	return tx.Commit()
+}
+
+func (r *gameRepository) CreateMultiplayerMatch(ctx context.Context, game *model.Game, players []model.GamePlayer) error {
+	tx, err := r.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	const insertGame = `
+		INSERT INTO games (id, mode, status, created_at, finished_at)
+		VALUES ($1, $2, $3, $4, NULL)
+	`
+	if _, err := tx.ExecContext(ctx, insertGame,
+		game.ID.String(), game.Mode, game.Status, game.CreatedAt,
+	); err != nil {
+		return err
+	}
+
+	const insertPlayer = `
+		INSERT INTO game_players (id, game_id, user_id, score, lines_cleared, level_reached, placement, is_winner)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+	`
+	for i := range players {
+		p := &players[i]
+		if _, err := tx.ExecContext(ctx, insertPlayer,
+			p.ID.String(), p.GameID.String(), p.UserID.String(),
+			p.Score, p.LinesCleared, p.LevelReached, p.Placement, p.IsWinner,
+		); err != nil {
+			return err
+		}
 	}
 
 	return tx.Commit()

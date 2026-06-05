@@ -25,7 +25,7 @@ var (
 // truncate wipes all test data between tests. Order doesn't matter — CASCADE handles FKs.
 func truncate(t *testing.T) {
 	t.Helper()
-	const q = `TRUNCATE files, game_players, games, relationships, oauth_providers, users RESTART IDENTITY CASCADE`
+	const q = `TRUNCATE lobby_members, lobbies, files, game_players, games, relationships, oauth_providers, users RESTART IDENTITY CASCADE`
 	if _, err := db.Exec(q); err != nil {
 		t.Fatalf("truncate: %v", err)
 	}

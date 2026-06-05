@@ -125,6 +125,81 @@ components:
           type: string
           example: "invalid request body"
 
+    LobbyMember:
+      type: object
+      properties:
+        user_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        avatar_url:
+          type: string
+          nullable: true
+        is_ready:
+          type: boolean
+        joined_at:
+          type: string
+          format: date-time
+
+    Lobby:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        host_user_id:
+          type: string
+          format: uuid
+        invite_code:
+          type: string
+          example: "ABC123"
+        max_players:
+          type: integer
+          minimum: 2
+          maximum: 4
+        status:
+          type: string
+          enum: [waiting, closed]
+        game_id:
+          type: string
+          format: uuid
+          nullable: true
+        shared_seed:
+          type: integer
+          format: int64
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        members:
+          type: array
+          items:
+            $ref: '#/components/schemas/LobbyMember'
+
+    StartLobbyResult:
+      type: object
+      properties:
+        game_id:
+          type: string
+          format: uuid
+        shared_seed:
+          type: integer
+          format: int64
+        players:
+          type: array
+          items:
+            type: object
+            properties:
+              user_id:
+                type: string
+                format: uuid
+              username:
+                type: string
+              avatar_url:
+                type: string
+                nullable: true
+
 paths:
 
   # ── Auth ──────────────────────────────────────────────────────────────────
@@ -558,6 +633,286 @@ paths:
                     items:
                       $ref: '#/components/schemas/LeaderboardEntry'
 
+  # ── Lobbies ─────────────────────────────────────────────────────────────────
+
+  /lobbies:
+    post:
+      summary: Create a multiplayer lobby
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [max_players]
+              properties:
+                max_players:
+                  type: integer
+                  minimum: 2
+                  maximum: 4
+                  example: 4
+      responses:
+        '201':
+          description: Lobby created; host is the first member
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+                  invite_code:
+                    type: string
+        '400':
+          description: Invalid max_players
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User already in another waiting lobby
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /lobbies/join:
+    post:
+      summary: Join a lobby by invite code
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [invite_code]
+              properties:
+                invite_code:
+                  type: string
+                  example: "ABC123"
+      responses:
+        '200':
+          description: Joined lobby
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+        '404':
+          description: Lobby not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Lobby full, closed, or user already in another lobby
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /lobbies/by-code/{code}:
+    get:
+      summary: Resolve an invite code to a lobby snapshot
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: code
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lobby snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+        '404':
+          description: Lobby not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /lobbies/{id}:
+    get:
+      summary: Get lobby snapshot by ID
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lobby snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+        '404':
+          description: Lobby not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /lobbies/{id}/join:
+    post:
+      summary: Join a lobby by UUID
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Joined lobby
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+
+  /lobbies/{id}/leave:
+    delete:
+      summary: Leave a lobby (host leaving closes the lobby for everyone)
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Left lobby
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: left
+
+  /lobbies/{id}/ready:
+    post:
+      summary: Set ready state in a waiting lobby
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ready]
+              properties:
+                ready:
+                  type: boolean
+      responses:
+        '200':
+          description: Updated lobby snapshot
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+
+  /lobbies/{id}/start:
+    post:
+      summary: Host starts the match (min 2 players, all must be ready)
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Match created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StartLobbyResult'
+        '400':
+          description: Not enough players or not all ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Only the host may start
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /ws:
+    get:
+      summary: WebSocket hub for lobby and match events
+      description: |
+        Upgrade to WebSocket. Authenticate with `?token=<JWT>` query parameter.
+
+        After connecting, send `{ "type": "subscribe", "room": "lobby:{lobbyId}" }`.
+        Server pushes `lobby.updated`, `lobby.closed`, and `match.start` envelopes.
+      tags: [Lobbies]
+      parameters:
+        - in: query
+          name: token
+          required: true
+          schema:
+            type: string
+      responses:
+        '101':
+          description: Switching Protocols
+
   # ── Utility ───────────────────────────────────────────────────────────────
 
   /health:
@@ -585,5 +940,7 @@ tags:
     description: User profiles and account management
   - name: Games
     description: Game recording and leaderboard
+  - name: Lobbies
+    description: Multiplayer lobby lifecycle and WebSocket events
   - name: Utility
     description: Health checks and diagnostics

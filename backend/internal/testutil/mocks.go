@@ -10,6 +10,7 @@ import (
 
 	"backend/internal/model"
 	"backend/internal/repository"
+	"backend/internal/ws"
 )
 
 // ── User repo mock ────────────────────────────────────────────────────────────
@@ -153,7 +154,8 @@ func (m *MockRelationshipRepo) ListBlocked(ctx context.Context, userID uuid.UUID
 // ── Game repo mock ────────────────────────────────────────────────────────────
 
 type MockGameRepo struct {
-	RecordMatchFn     func(ctx context.Context, game *model.Game, player *model.GamePlayer) error
+	RecordMatchFn            func(ctx context.Context, game *model.Game, player *model.GamePlayer) error
+	CreateMultiplayerMatchFn func(ctx context.Context, game *model.Game, players []model.GamePlayer) error
 	FindByIDFn        func(ctx context.Context, id uuid.UUID) (*model.Game, error)
 	ListGamesFn       func(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
 	CountGamesFn      func(ctx context.Context, userID *uuid.UUID) (int, error)
@@ -165,6 +167,12 @@ type MockGameRepo struct {
 func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error {
 	if m.RecordMatchFn != nil {
 		return m.RecordMatchFn(ctx, game, player)
+	}
+	return nil
+}
+func (m *MockGameRepo) CreateMultiplayerMatch(ctx context.Context, game *model.Game, players []model.GamePlayer) error {
+	if m.CreateMultiplayerMatchFn != nil {
+		return m.CreateMultiplayerMatchFn(ctx, game, players)
 	}
 	return nil
 }
@@ -282,3 +290,109 @@ func HashPassword(password string) string {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
 	return string(hash)
 }
+
+// ── Lobby repo mock ───────────────────────────────────────────────────────────
+
+type MockLobbyRepo struct {
+	CreateFn                  func(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error
+	FindByIDFn                func(ctx context.Context, id uuid.UUID) (*model.Lobby, error)
+	FindByInviteCodeFn        func(ctx context.Context, code string) (*model.Lobby, error)
+	FindDetailFn              func(ctx context.Context, id uuid.UUID) (*model.LobbyDetail, error)
+	FindWaitingLobbyByUserFn  func(ctx context.Context, userID uuid.UUID) (*model.Lobby, error)
+	AddMemberFn               func(ctx context.Context, lobbyID, userID uuid.UUID) error
+	RemoveMemberFn            func(ctx context.Context, lobbyID, userID uuid.UUID) error
+	SetReadyFn                func(ctx context.Context, lobbyID, userID uuid.UUID, ready bool) error
+	DeleteLobbyFn             func(ctx context.Context, id uuid.UUID) error
+	LinkGameFn                func(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error
+	MemberCountFn             func(ctx context.Context, lobbyID uuid.UUID) (int, error)
+	IsMemberFn                func(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
+}
+
+func (m *MockLobbyRepo) Create(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error {
+	if m.CreateFn != nil {
+		return m.CreateFn(ctx, lobby, hostUserID)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Lobby, error) {
+	if m.FindByIDFn != nil {
+		return m.FindByIDFn(ctx, id)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockLobbyRepo) FindByInviteCode(ctx context.Context, code string) (*model.Lobby, error) {
+	if m.FindByInviteCodeFn != nil {
+		return m.FindByInviteCodeFn(ctx, code)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockLobbyRepo) FindDetail(ctx context.Context, id uuid.UUID) (*model.LobbyDetail, error) {
+	if m.FindDetailFn != nil {
+		return m.FindDetailFn(ctx, id)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockLobbyRepo) FindWaitingLobbyByUser(ctx context.Context, userID uuid.UUID) (*model.Lobby, error) {
+	if m.FindWaitingLobbyByUserFn != nil {
+		return m.FindWaitingLobbyByUserFn(ctx, userID)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockLobbyRepo) AddMember(ctx context.Context, lobbyID, userID uuid.UUID) error {
+	if m.AddMemberFn != nil {
+		return m.AddMemberFn(ctx, lobbyID, userID)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) RemoveMember(ctx context.Context, lobbyID, userID uuid.UUID) error {
+	if m.RemoveMemberFn != nil {
+		return m.RemoveMemberFn(ctx, lobbyID, userID)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) SetReady(ctx context.Context, lobbyID, userID uuid.UUID, ready bool) error {
+	if m.SetReadyFn != nil {
+		return m.SetReadyFn(ctx, lobbyID, userID, ready)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) DeleteLobby(ctx context.Context, id uuid.UUID) error {
+	if m.DeleteLobbyFn != nil {
+		return m.DeleteLobbyFn(ctx, id)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) LinkGame(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error {
+	if m.LinkGameFn != nil {
+		return m.LinkGameFn(ctx, lobbyID, gameID, seed)
+	}
+	return nil
+}
+func (m *MockLobbyRepo) MemberCount(ctx context.Context, lobbyID uuid.UUID) (int, error) {
+	if m.MemberCountFn != nil {
+		return m.MemberCountFn(ctx, lobbyID)
+	}
+	return 0, nil
+}
+func (m *MockLobbyRepo) IsMember(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error) {
+	if m.IsMemberFn != nil {
+		return m.IsMemberFn(ctx, lobbyID, userID)
+	}
+	return false, nil
+}
+
+// ── Lobby broadcaster mock ────────────────────────────────────────────────────
+
+type MockBroadcaster struct {
+	BroadcastLobbyFn func(lobbyID uuid.UUID, env ws.Envelope)
+	Messages         []ws.Envelope
+}
+
+func (m *MockBroadcaster) BroadcastLobby(lobbyID uuid.UUID, env ws.Envelope) {
+	if m.BroadcastLobbyFn != nil {
+		m.BroadcastLobbyFn(lobbyID, env)
+		return
+	}
+	m.Messages = append(m.Messages, env)
+}
+
