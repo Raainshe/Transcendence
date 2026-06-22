@@ -23,10 +23,16 @@ type UserRepository interface {
 	ClearAvatar(ctx context.Context, id uuid.UUID) error
 	UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	Set2FAEnabled(ctx context.Context, id uuid.UUID, enabled bool) error
 }
 
 type userRepository struct {
 	db *sql.DB
+}
+
+func (r *userRepository) Set2FAEnabled(ctx context.Context, id uuid.UUID, enabled bool) error {
+	_, err := r.db.ExecContext(ctx, "UPDATE users SET is_2fa_enabled = $2, updated_at = now() WHERE id = $1", id.String(), enabled)
+	return err
 }
 
 func NewUserRepository(db *sql.DB) UserRepository {
