@@ -44,7 +44,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 		// Auth — protected
 		r.Group(func(r chi.Router) {
-			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			//r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Post("/auth/logout", s.authHandler.Logout)
 			r.Post("/auth/2fa/setup", s.authHandler.Setup2FA)
 			r.Post("/auth/2fa/verify", s.authHandler.Verify2FA)
