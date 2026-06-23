@@ -8,7 +8,8 @@ import '@/assets/styles/views/credits-view.css'
 type Developer = { name: string; handle: string; url: string }
 
 const DEVELOPERS: readonly Developer[] = [
-  { name: 'Anakin Pregitzer', handle: '4n4k1n', url: 'https://github.com/4n4k1n' },
+  { name: 'Nandhan Mannar', handle: 'bne7809', url: 'https://github.com/bne7809'},
+  { name: 'Joana Wardenga', handle: 'YunShenMiao', url: 'https://github.com/YunShenMiao'},
   { name: 'Kevin Sinn', handle: 'Fearcon14', url: 'https://github.com/Fearcon14' },
   { name: 'Ryan Makoni', handle: 'Raainshe', url: 'https://github.com/Raainshe' },
 ] as const
