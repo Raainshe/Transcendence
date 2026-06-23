@@ -74,6 +74,11 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model
 	hashStr := string(hash)
 
 	now := time.Now().UTC()
+	achievements:= model.Achievements{
+		AvatarChange: false,
+		HighestScore5: false,
+		Level2: false,
+	}
 	user := &model.User{
 		ID:           uuid.New(),
 		Username:     req.Username,
@@ -82,6 +87,7 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model
 		Role:         "user",
 		CreatedAt:    now,
 		UpdatedAt:    now,
+		AchievementList: achievements,
 	}
 
 	if err := s.users.Create(ctx, user); err != nil {

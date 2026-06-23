@@ -48,6 +48,10 @@ func NewUserService(users repository.UserRepository, files repository.FileReposi
 	return &UserService{users: users, files: files, relationships: rels, uploadDir: uploadDir}
 }
 
+func (s *UserService) GetAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error) {
+	return s.users.FindAchievementsByID(ctx, id)
+}
+
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	return s.users.FindByID(ctx, id)
 }

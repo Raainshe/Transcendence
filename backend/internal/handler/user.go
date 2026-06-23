@@ -41,6 +41,22 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"user": user})
 }
 
+func (h *UserHandler) GetAchievements(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+
+	a, err := h.users.GetAchievementsByID(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "user not found"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"achievements": a})
+}
+
 func (h *UserHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	if username := strings.TrimSpace(r.URL.Query().Get("username")); username != "" {
 		user, err := h.users.GetByUsername(r.Context(), username)

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"github.com/google/uuid"
@@ -15,6 +16,7 @@ var ErrNotFound = errors.New("record not found")
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.User, error)
+	FindAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error)
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	FindByUsername(ctx context.Context, username string) (*model.User, error)
 	List(ctx context.Context, limit, offset int) ([]model.User, error)
@@ -43,6 +45,14 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 		user.PasswordHash, user.Role, user.CreatedAt, user.UpdatedAt,
 	)
 	return err
+}
+
+func (r *userRepository) FindAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error) {
+	const q = `
+		SELECT achievements
+		From users WHERE id = $1
+		`
+	return r.scanAchievements(r.db.QueryRowContext(ctx, q, id.String()))
 }
 
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -144,6 +154,26 @@ func (r *userRepository) UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 		id.String(),
 	)
 	return err
+}
+
+func (r *userRepository) scanAchievements(row *sql.Row) (*model.Achievements, error) {
+	var ajson []byte
+
+	err := row.Scan(
+		&ajson,
+	)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrNotFound
+		}
+		return nil, err
+	}
+	var a model.Achievements
+	err = json.Unmarshal(ajson, &a)
+	if err != nil {
+		return nil, err
+	}
+	return &a, nil
 }
 
 func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
