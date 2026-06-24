@@ -35,21 +35,22 @@ var (
 )
 
 type UserService struct {
-	users         repository.UserRepository
-	files         repository.FileRepository
-	relationships repository.RelationshipRepository
-	uploadDir     string
+	users         	repository.UserRepository
+	files         	repository.FileRepository
+	relationships 	repository.RelationshipRepository
+	achievements	repository.AchievementsRepository
+	uploadDir     	string
 }
 
-func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, uploadDir string) *UserService {
+func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, achievements repository.AchievementsRepository,  uploadDir string) *UserService {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
-	return &UserService{users: users, files: files, relationships: rels, uploadDir: uploadDir}
+	return &UserService{users: users, files: files, relationships: rels, achievements: achievements, uploadDir: uploadDir}
 }
 
 func (s *UserService) GetAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error) {
-	return s.users.FindAchievementsByID(ctx, id)
+	return s.achievements.FindAchievementsByID(ctx, id)
 }
 
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {

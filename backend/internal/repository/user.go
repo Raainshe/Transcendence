@@ -16,7 +16,6 @@ var ErrNotFound = errors.New("record not found")
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	FindByID(ctx context.Context, id uuid.UUID) (*model.User, error)
-	FindAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error)
 	FindByEmail(ctx context.Context, email string) (*model.User, error)
 	FindByUsername(ctx context.Context, username string) (*model.User, error)
 	List(ctx context.Context, limit, offset int) ([]model.User, error)
@@ -47,18 +46,10 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 	return err
 }
 
-func (r *userRepository) FindAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error) {
-	const q = `
-		SELECT achievements
-		From users WHERE id = $1
-		`
-	return r.scanAchievements(r.db.QueryRowContext(ctx, q, id.String()))
-}
-
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, achievements
 		FROM users WHERE id = $1
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, id.String()))
@@ -67,7 +58,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Use
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, achievements
 		FROM users WHERE LOWER(email) = LOWER($1)
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, email))
@@ -76,7 +67,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, achievements
 		FROM users WHERE username = $1
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, username))
@@ -127,7 +118,7 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, req model.Upd
 			updated_at = now()
 		WHERE id = $1
 		RETURNING id, username, email, password_hash, avatar_url, role,
-		          is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		          is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, achievements
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, id.String(), req.Username, req.AvatarURL))
 }
@@ -156,33 +147,14 @@ func (r *userRepository) UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	return err
 }
 
-func (r *userRepository) scanAchievements(row *sql.Row) (*model.Achievements, error) {
-	var ajson []byte
-
-	err := row.Scan(
-		&ajson,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil, ErrNotFound
-		}
-		return nil, err
-	}
-	var a model.Achievements
-	err = json.Unmarshal(ajson, &a)
-	if err != nil {
-		return nil, err
-	}
-	return &a, nil
-}
-
 func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
 	var u model.User
 	var idStr string
+	var achievementsJSON []byte  
 	err := row.Scan(
 		&idStr, &u.Username, &u.Email, &u.PasswordHash, &u.AvatarURL,
 		&u.Role, &u.Is2FAEnabled, &u.TOTPSecret,
-		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
+		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt, &achievementsJSON,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -191,5 +163,13 @@ func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
 		return nil, err
 	}
 	u.ID, err = uuid.Parse(idStr)
-	return &u, err
+	if err != nil {
+		return nil, err
+	}
+	if len(achievementsJSON) > 0 {
+        if err := json.Unmarshal(achievementsJSON, &u.AchievementList); err != nil {
+            return nil, err
+        }
+    }
+	return &u, nil
 }

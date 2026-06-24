@@ -67,10 +67,11 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameRepo := repository.NewGameRepository(dbService.DB())
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
+	achieveRepo := repository.NewAchievementsRepository(dbService.DB())
 
 	hub := ws.NewHub()
 	authSvc := service.NewAuthService(userRepo, jwtSecret)
-	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
+	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, achieveRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)
 	matchSvc := service.NewMatchService(gameRepo, lobbyRepo)
