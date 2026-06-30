@@ -32,7 +32,6 @@ func (r *achievementsRepository) FindAchievementsByID(ctx context.Context, id uu
 	return r.scanAchievements(r.db.QueryRowContext(ctx, q, id.String()))
 }
 
-// call when sth new was unlocked&after boolsettotrue
 func (r *achievementsRepository) Update(ctx context.Context, userID uuid.UUID, a model.Achievements) error {
     data, err := json.Marshal(a)
     if err != nil {

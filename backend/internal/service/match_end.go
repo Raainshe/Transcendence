@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/google/uuid"
@@ -123,6 +124,13 @@ func (s *MatchService) EndMatch(ctx context.Context, in model.EndMatchInput) (*m
 			return nil, ErrMatchAlreadyFinished
 		}
 		return nil, err
+	}
+
+	for _, p := range dbPlayers {
+		err := s.achievements.OnGameEnd(ctx, p.UserID, p, *game)
+		if err != nil {
+			log.Printf("achievement check failed for user %s: %v", p.UserID, err)
+		}
 	}
 
 	return &model.MatchEndedPayload{

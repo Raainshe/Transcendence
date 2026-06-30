@@ -35,22 +35,18 @@ var (
 )
 
 type UserService struct {
-	users         	repository.UserRepository
-	files         	repository.FileRepository
-	relationships 	repository.RelationshipRepository
-	achievements	repository.AchievementsRepository
-	uploadDir     	string
+	users         repository.UserRepository
+	files         repository.FileRepository
+	relationships repository.RelationshipRepository
+	achievements  *AchievementService
+	uploadDir     string
 }
 
-func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, achievements repository.AchievementsRepository,  uploadDir string) *UserService {
+func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, achievements *AchievementService, uploadDir string) *UserService {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
 	return &UserService{users: users, files: files, relationships: rels, achievements: achievements, uploadDir: uploadDir}
-}
-
-func (s *UserService) GetAchievementsByID(ctx context.Context, id uuid.UUID) (*model.Achievements, error) {
-	return s.achievements.FindAchievementsByID(ctx, id)
 }
 
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -146,7 +142,17 @@ func (s *UserService) UploadAvatar(ctx context.Context, userID uuid.UUID, file m
 	}
 
 	// Update user's avatar_url
-	return s.users.Update(ctx, userID, model.UpdateUserRequest{AvatarURL: &avatarURL})
+	user, err := s.users.Update(ctx, userID, model.UpdateUserRequest{AvatarURL: &avatarURL})
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.achievements.OnAvatarUploaded(ctx, userID)
+	if err != nil {
+		log.Printf("achievement check failed for user %s: %v", userID, err)
+	}
+
+	return user, nil
 }
 
 func (s *UserService) DeleteAvatar(ctx context.Context, userID uuid.UUID) error {
@@ -213,7 +219,20 @@ func (s *UserService) AcceptFriendRequest(ctx context.Context, accepterID, reque
 	if rel.Status != model.RelationshipPending {
 		return repository.ErrNotFound
 	}
-	return s.relationships.UpdateStatus(ctx, rel.ID, model.RelationshipAccepted)
+	if err := s.relationships.UpdateStatus(ctx, rel.ID, model.RelationshipAccepted); err != nil {
+		return err
+	}
+
+	err = s.achievements.OnFriendAdded(ctx, accepterID)
+	if err != nil {
+		log.Printf("achievement check failed for user %s: %v", accepterID, err)
+	}
+	err = s.achievements.OnFriendAdded(ctx, requesterID)
+	if err != nil {
+		log.Printf("achievement check failed for user %s: %v", requesterID, err)
+	}
+
+	return nil
 }
 
 func (s *UserService) RemoveFriend(ctx context.Context, userID, otherID uuid.UUID) error {

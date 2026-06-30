@@ -62,7 +62,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Get("/users/me", s.userHandler.GetMe)
 			r.Patch("/users/me", s.userHandler.UpdateMe)
 			r.Delete("/users/me", s.userHandler.DeleteMe)
-			r.Get("/users/me/achievements", s.userHandler.GetAchievements)
+			r.Get("/users/me/achievements", s.achievementHandler.GetAchievements)
 			r.Post("/users/me/avatar", s.userHandler.UploadAvatar)
 			r.Delete("/users/me/avatar", s.userHandler.DeleteAvatar)
 			r.Get("/users/me/friends", s.userHandler.GetFriends)

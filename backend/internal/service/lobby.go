@@ -16,15 +16,15 @@ import (
 )
 
 var (
-	ErrInvalidMaxPlayers   = errors.New("max_players must be between 2 and 4")
-	ErrNotLobbyHost        = errors.New("only the lobby host can start the match")
-	ErrLobbyNotJoinable    = errors.New("lobby is not joinable")
-	ErrLobbyFull           = errors.New("lobby is full")
-	ErrAlreadyInLobby      = errors.New("user is already in this lobby")
-	ErrInAnotherLobby      = errors.New("user is already in another waiting lobby")
-	ErrNotEnoughPlayers    = errors.New("at least 2 players are required to start")
-	ErrNotAllReady         = errors.New("all players must be ready before starting")
-	ErrNotLobbyMember      = errors.New("user is not a lobby member")
+	ErrInvalidMaxPlayers = errors.New("max_players must be between 2 and 4")
+	ErrNotLobbyHost      = errors.New("only the lobby host can start the match")
+	ErrLobbyNotJoinable  = errors.New("lobby is not joinable")
+	ErrLobbyFull         = errors.New("lobby is full")
+	ErrAlreadyInLobby    = errors.New("user is already in this lobby")
+	ErrInAnotherLobby    = errors.New("user is already in another waiting lobby")
+	ErrNotEnoughPlayers  = errors.New("at least 2 players are required to start")
+	ErrNotAllReady       = errors.New("all players must be ready before starting")
+	ErrNotLobbyMember    = errors.New("user is not a lobby member")
 )
 
 const inviteCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -35,13 +35,14 @@ type LobbyBroadcaster interface {
 }
 
 type LobbyService struct {
-	lobbies repository.LobbyRepository
-	games   repository.GameRepository
-	bus     LobbyBroadcaster
+	lobbies      repository.LobbyRepository
+	games        repository.GameRepository
+	bus          LobbyBroadcaster
+	achievements *AchievementService
 }
 
-func NewLobbyService(lobbies repository.LobbyRepository, games repository.GameRepository, bus LobbyBroadcaster) *LobbyService {
-	return &LobbyService{lobbies: lobbies, games: games, bus: bus}
+func NewLobbyService(lobbies repository.LobbyRepository, games repository.GameRepository, bus LobbyBroadcaster, achievements *AchievementService) *LobbyService {
+	return &LobbyService{lobbies: lobbies, games: games, bus: bus, achievements: achievements}
 }
 
 func (s *LobbyService) CreateLobby(ctx context.Context, userID uuid.UUID, maxPlayers int) (*model.LobbyDetail, error) {
