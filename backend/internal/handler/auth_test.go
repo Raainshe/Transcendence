@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"backend/internal/handler"
+	"backend/internal/mailer"
 	"backend/internal/model"
 	"backend/internal/service"
 	"backend/internal/testutil"
@@ -75,7 +76,7 @@ func TestAuthHandler_Register(t *testing.T) {
 				FindByEmailFn:    tt.findByEmailFn,
 				FindByUsernameFn: tt.findByUsernameFn,
 			}
-			svc := service.NewAuthService(repo, "test-secret")
+			svc := service.NewAuthService(repo, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, "test-secret")
 			h := handler.NewAuthHandler(svc)
 
 			req := httptest.NewRequest(http.MethodPost, "/auth/register", strings.NewReader(tt.body))
@@ -130,7 +131,7 @@ func TestAuthHandler_Login(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &testutil.MockUserRepo{FindByEmailFn: tt.findByEmailFn}
-			svc := service.NewAuthService(repo, "test-secret")
+			svc := service.NewAuthService(repo, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, "test-secret")
 			h := handler.NewAuthHandler(svc)
 
 			req := httptest.NewRequest(http.MethodPost, "/auth/login", strings.NewReader(tt.body))
@@ -176,7 +177,7 @@ func TestAuthHandler_Refresh(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := service.NewAuthService(&testutil.MockUserRepo{}, secret)
+			svc := service.NewAuthService(&testutil.MockUserRepo{}, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, secret)
 			h := handler.NewAuthHandler(svc)
 
 			req := httptest.NewRequest(http.MethodPost, "/auth/refresh", nil)
@@ -195,7 +196,7 @@ func TestAuthHandler_Refresh(t *testing.T) {
 }
 
 func TestAuthHandler_Logout(t *testing.T) {
-	svc := service.NewAuthService(&testutil.MockUserRepo{}, "test-secret")
+	svc := service.NewAuthService(&testutil.MockUserRepo{}, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, "test-secret")
 	h := handler.NewAuthHandler(svc)
 
 	req := httptest.NewRequest(http.MethodPost, "/auth/logout", nil)

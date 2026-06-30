@@ -26,8 +26,46 @@ type MockUserRepo struct {
 	ClearAvatarFn    func(ctx context.Context, id uuid.UUID) error
 	UpdateLastSeenFn func(ctx context.Context, id uuid.UUID) error
 	DeleteFn         func(ctx context.Context, id uuid.UUID) error
+	Set2FAEnabledFn  func(ctx context.Context, id uuid.UUID, enabled bool) error
 }
 
+type MockTwoFactorRepo struct {
+	CreateFn	    func(ctx context.Context, c *model.TwoFactorCode) error
+	GetActiveFn     func(ctx context.Context, userID uuid.UUID, purpose string) (*model.TwoFactorCode, error)
+	MarkConsumedFn  func(ctx context.Context, id uuid.UUID) error
+	DeleteForUserFn func(ctx context.Context, userID uuid.UUID, purpose string) error
+}
+
+func (m *MockTwoFactorRepo) Create(ctx context.Context, c *model.TwoFactorCode) error {
+	if m.CreateFn != nil {
+		return m.CreateFn(ctx, c)
+	}
+	return nil
+}
+func (m *MockTwoFactorRepo) GetActive(ctx context.Context, userID uuid.UUID, purpose string) (*model.TwoFactorCode, error) {
+	if m.GetActiveFn != nil {
+		return m.GetActiveFn(ctx, userID, purpose)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockTwoFactorRepo) MarkConsumed(ctx context.Context, id uuid.UUID) error {
+	if m.MarkConsumedFn != nil {
+		return m.MarkConsumedFn(ctx, id)
+	}
+	return nil
+}
+func (m *MockTwoFactorRepo) DeleteForUser(ctx context.Context, userID uuid.UUID, purpose string) error {
+	if m.DeleteForUserFn != nil {
+		return m.DeleteForUserFn(ctx, userID, purpose)
+	}
+	return nil
+}
+func (m *MockUserRepo) Set2FAEnabled(ctx context.Context, id uuid.UUID, enabled bool) error {
+	if m.Set2FAEnabledFn != nil {
+		return m.Set2FAEnabledFn(ctx, id, enabled)
+	}
+	return nil
+}
 func (m *MockUserRepo) Create(ctx context.Context, user *model.User) error {
 	if m.CreateFn != nil {
 		return m.CreateFn(ctx, user)
