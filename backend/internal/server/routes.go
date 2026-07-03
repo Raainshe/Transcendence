@@ -39,12 +39,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Post("/auth/register", s.authHandler.Register)
 		r.Post("/auth/login", s.authHandler.Login)
 		r.Post("/auth/refresh", s.authHandler.Refresh)
+		r.Post("/auth/2fa/verify-login", s.authHandler.VerifyLogin)
 		r.Get("/auth/oauth/{provider}", s.authHandler.OAuthRedirect)
 		r.Get("/auth/oauth/{provider}/callback", s.authHandler.OAuthCallback)
 
 		// Auth — protected
 		r.Group(func(r chi.Router) {
-			//r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
 			r.Post("/auth/logout", s.authHandler.Logout)
 			r.Post("/auth/2fa/setup", s.authHandler.Setup2FA)
 			r.Post("/auth/2fa/verify", s.authHandler.Verify2FA)

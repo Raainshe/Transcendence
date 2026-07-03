@@ -135,6 +135,8 @@ func (s *AuthService) Login(ctx context.Context, req LoginRequest) (*model.User,
 	return user, token, err
 }
 
+const scopePending = "2fa_pending"
+
 func (s *AuthService) RefreshToken(tokenString string) (string, error) {
 	var c Claims
 	token, err := jwt.ParseWithClaims(tokenString, &c, func(t *jwt.Token) (any, error) {
@@ -143,7 +145,7 @@ func (s *AuthService) RefreshToken(tokenString string) (string, error) {
 		}
 		return []byte(s.jwtSecret), nil
 	})
-	if err != nil || !token.Valid {
+	if err != nil || !token.Valid || c.Scope == scopePending {
 		return "", ErrInvalidCreds
 	}
 	return s.issueToken(c.UserID)
@@ -160,8 +162,6 @@ func (s *AuthService) issueToken(userID uuid.UUID) (string, error) {
 	}
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, claims).SignedString([]byte(s.jwtSecret))
 }
-
-const scopePending = "2fa_pending"
 
 func (s *AuthService) VerifyLogin(ctx context.Context, pendingToken, code string) (string, error) {
 	userID, err := s.parsePending(pendingToken)
@@ -198,7 +198,7 @@ func generateCode() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%0d", n.Int64()), nil
+	return fmt.Sprintf("%06d", n.Int64()), nil
 }
 
 func (s *AuthService) sendCode(ctx context.Context, user *model.User, purpose string) error {
