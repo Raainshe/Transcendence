@@ -39,6 +39,10 @@
     "submitLogin": "Se connecter",
     "submitRegister": "Créer le compte",
     "close": "Fermer",
+	"verifyHint": "Nous avons envoyé un code à 6 chiffres à votre adresse. Saisissez-le pour continuer.",
+	"code": "Code de vérification",
+	"submitVerify": "Vérifier",
+	"cancel": "Annuler",
     "errors": {
       "required": "Veuillez remplir tous les champs.",
       "passwordMismatch": "Les mots de passe ne correspondent pas.",
@@ -47,7 +51,8 @@
       "invalidCredentials": "E-mail ou mot de passe invalide.",
       "emailTaken": "Cet e-mail est déjà utilisé.",
       "usernameTaken": "Ce nom d'utilisateur est déjà pris.",
-      "generic": "Une erreur s'est produite. Veuillez réessayer."
+      "generic": "Une erreur s'est produite. Veuillez réessayer.",
+	  "invalidCode": "Ce code est invalide ou a expiré."
     }
   },
   "menu": {
@@ -310,6 +315,18 @@
     "deleteConfirm": "Supprimer mon compte",
     "deleteCancel": "Annuler",
     "deleting": "Suppression…",
+	"twoFactor": {
+		"title": "Authentification à deux facteurs",
+		"statusOn": "L'authentification à deux facteurs est activée.",
+		"statusOff": "L'authentification à deux facteurs est désactivée.",
+		"enable": "Activer la 2FA",
+		"disable": "Désactiver la 2FA",
+		"confirm": "Confirmer",
+		"codeLabel": "Code de vérification",
+		"codeSent": "Nous vous avons envoyé un code de vérification.",
+		"enabled": "L'authentification à deux facteurs est maintenant activée.",
+		"disabled": "L'authentification à deux facteurs a été désactivée."
+	},
     "errors": {
       "usernameRequired": "Le nom d'utilisateur est requis.",
       "usernameTooLong": "Le nom d'utilisateur doit contenir 32 caractères ou moins.",
