@@ -55,6 +55,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Get("/users", s.userHandler.ListUsers)
 		r.Get("/users/{id}/stats", s.gameHandler.GetUserStats)
 		r.Get("/users/{id}", s.userHandler.GetUser)
+		r.Get("/users/{id}/achievements", s.achievementHandler.GetUserAchievements)
 
 		// Users — protected
 		r.Group(func(r chi.Router) {
@@ -62,7 +63,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Get("/users/me", s.userHandler.GetMe)
 			r.Patch("/users/me", s.userHandler.UpdateMe)
 			r.Delete("/users/me", s.userHandler.DeleteMe)
-			r.Get("/users/me/achievements", s.achievementHandler.GetAchievements)
+			r.Get("/users/me/achievements", s.achievementHandler.GetMyAchievements)
 			r.Post("/users/me/avatar", s.userHandler.UploadAvatar)
 			r.Delete("/users/me/avatar", s.userHandler.DeleteAvatar)
 			r.Get("/users/me/friends", s.userHandler.GetFriends)

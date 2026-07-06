@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"errors"
+	"log"
 	"math/big"
 	"strings"
 	"time"
@@ -267,6 +268,12 @@ func (s *LobbyService) StartLobby(ctx context.Context, hostID, lobbyID uuid.UUID
 		GameID:     gameID,
 		SharedSeed: seed,
 		Players:    matchPlayers,
+	}
+	for _, p := range players {
+		err := s.achievements.OnMPGame(ctx, p.UserID)
+		if err != nil {
+			log.Printf("achievement check failed for user %s: %v", p.UserID, err)
+		}
 	}
 
 	s.broadcastMatchStart(lobbyID, result)

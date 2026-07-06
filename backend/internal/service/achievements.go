@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -27,6 +28,9 @@ func (s *AchievementService) OnGameEnd(ctx context.Context, userID uuid.UUID, pl
 		return err
 	}
 
+	//log.Printf("OnGameEnd: userID=%s score=%d lines=%d level=%d isWinner=%v mode=%s",
+	//	userID, player.Score, player.LinesCleared, player.LevelReached, player.IsWinner, game.Mode)
+
 	changed := false
 
 	if !a.FirstClear && player.LinesCleared >= 1 {
@@ -44,6 +48,7 @@ func (s *AchievementService) OnGameEnd(ctx context.Context, userID uuid.UUID, pl
 	if !a.HighestScore10K && player.Score >= 10000 {
 		a.HighestScore10K = true
 		changed = true
+		log.Printf("unlocked HighestScore10K for user %s", userID)
 	}
 	if !a.HighestScore50K && player.Score >= 50000 {
 		a.HighestScore50K = true
@@ -108,7 +113,17 @@ func (s *AchievementService) OnGameEnd(ctx context.Context, userID uuid.UUID, pl
 }
 
 // LobbyService.StartLobby
-//func (s *AchievementService) OnMultiplayerGameStart(ctx context.Context, userID uuid.UUID) error
+func (s *AchievementService) OnMPGame(ctx context.Context, userID uuid.UUID) error {
+	a, err := s.achievements.FindAchievementsByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if !a.FirstMpGame {
+		a.FirstMpGame = true
+		return s.achievements.Update(ctx, userID, *a)
+	}
+	return nil
+}
 
 func (s *AchievementService) OnFriendAdded(ctx context.Context, userID uuid.UUID) error {
 	a, err := s.achievements.FindAchievementsByID(ctx, userID)
