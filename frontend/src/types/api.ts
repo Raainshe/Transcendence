@@ -18,6 +18,21 @@ export interface AuthResponse {
   token: string
 }
 
+export interface TwoFactorRequiredResponse {
+  two_factor_required: true
+  pending_token: string
+}
+
+export type LoginResult = AuthResponse | TwoFactorRequiredResponse
+
+export interface VerifyLoginResponse {
+  token: string
+}
+
+export interface MessageResponse {
+  message: string
+}
+
 export interface RefreshResponse {
   token: string
 }

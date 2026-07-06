@@ -39,6 +39,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Post("/auth/register", s.authHandler.Register)
 		r.Post("/auth/login", s.authHandler.Login)
 		r.Post("/auth/refresh", s.authHandler.Refresh)
+		r.Post("/auth/2fa/verify-login", s.authHandler.VerifyLogin)
 		r.Get("/auth/oauth/{provider}", s.authHandler.OAuthRedirect)
 		r.Get("/auth/oauth/{provider}/callback", s.authHandler.OAuthCallback)
 

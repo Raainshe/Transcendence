@@ -22,6 +22,14 @@ const formError = ref<string | null>(null)
 const formSuccess = ref(false)
 const isSaving = ref(false)
 
+const twoFactorCode = ref('')
+const twoFactorError = ref<string | null>(null)
+const twoFactorMessage = ref<string | null>(null)
+const twoFactorPending = ref(false)
+const isTwoFactorBusy = ref(false)
+
+const is2faEnabled = computed(() => user.value?.is_2fa_enabled ?? false)
+
 const avatarError = ref<string | null>(null)
 const isUploading = ref(false)
 const isRemovingAvatar = ref(false)
@@ -58,6 +66,54 @@ watch(
 onMounted(() => {
   void loadStats()
 })
+
+async function onStartEnable2FA(): Promise<void> {
+  twoFactorError.value = null
+  twoFactorMessage.value = null
+  isTwoFactorBusy.value = true
+  try {
+    await auth.startEnable2FA()
+    twoFactorPending.value = true
+    twoFactorMessage.value = t('profile.twoFactor.codeSent')
+  } catch (error) {
+    twoFactorError.value = mapError(error)
+  } finally {
+    isTwoFactorBusy.value = false
+  }
+}
+
+async function onConfirmEnable2FA(): Promise<void> {
+  twoFactorError.value = null
+  if (!twoFactorCode.value.trim()) {
+    twoFactorError.value = t('auth.errors.required')
+    return
+  }
+  isTwoFactorBusy.value = true
+  try {
+    await auth.confirmEnable2FA(twoFactorCode.value.trim())
+    twoFactorPending.value = false
+    twoFactorCode.value = ''
+    twoFactorMessage.value = t('profile.twoFactor.enabled')
+  } catch (error) {
+    twoFactorError.value = mapError(error)
+  } finally {
+    isTwoFactorBusy.value = false
+  }
+}
+
+async function onDisable2FA(): Promise<void> {
+  twoFactorError.value = null
+  twoFactorMessage.value = null
+  isTwoFactorBusy.value = true
+  try {
+    await auth.disableTwoFactor()
+    twoFactorMessage.value = t('profile.twoFactor.disabled')
+  } catch (error) {
+    twoFactorError.value = mapError(error)
+  } finally {
+    isTwoFactorBusy.value = false
+  }
+}
 
 async function loadStats(): Promise<void> {
   if (!user.value?.id) return
@@ -288,6 +344,60 @@ async function onDeleteAccount(): Promise<void> {
         {{ t('matchHistory.title') }}
       </h2>
       <MatchHistoryList v-if="user" :user-id="user.id" @select="openGameDetail" />
+    </section>
+
+    <section class="profile-view__panel" aria-labelledby="profile-2fa-heading">
+      <h2 id="profile-2fa-heading" class="profile-view__section-title">
+        {{ t('profile.twoFactor.title') }}
+      </h2>
+      <p class="profile-view__hint">
+        {{ is2faEnabled ? t('profile.twoFactor.statusOn') : t('profile.twoFactor.statusOff') }}
+      </p>
+      <template v-if="is2faEnabled">
+        <button
+          type="button"
+          class="profile-view__button profile-view__button--secondary"
+          :disabled="isTwoFactorBusy"
+          @click="onDisable2FA"
+        >
+          {{ t('profile.twoFactor.disable') }}
+        </button>
+      </template>
+      <template v-else>
+        <button
+          v-if="!twoFactorPending"
+          type="button"
+          class="profile-view__button"
+          :disabled="isTwoFactorBusy"
+          @click="onStartEnable2FA"
+        >
+          {{ isTwoFactorBusy ? t('profile.saving') : t('profile.twoFactor.enable') }}
+        </button>
+        <form v-else class="profile-view__field" @submit.prevent="onConfirmEnable2FA">
+          <label class="profile-view__label" for="profile-2fa-code">
+            {{ t('profile.twoFactor.codeLabel') }}
+          </label>
+          <input
+            id="profile-2fa-code"
+            v-model="twoFactorCode"
+            type="text"
+            inputMode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="profile-view__input"
+            :disabled="isTwoFactorBusy"
+          />
+          <button type="submit" class="profile-view__button" :disabled="isTwoFactorBusy">
+            {{ isTwoFactorBusy ? t('profile.saving') : t('profile.twoFactor.confirm') }}
+          </button>
+        </form>
+      </template>
+      <p v-if="twoFactorMessage" class="profile-view__message" role="status">
+        {{ twoFactorMessage }}
+      </p>
+      <p v-if="twoFactorError" class="profile-view__error" role="alert">
+        {{ twoFactorError }}
+      </p>
     </section>
 
     <section class="profile-view__panel profile-view__danger" aria-labelledby="profile-danger-heading">

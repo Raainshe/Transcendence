@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"backend/internal/mailer"
 	"backend/internal/model"
 	"backend/internal/service"
 	"backend/internal/testutil"
@@ -67,7 +68,7 @@ func TestAuthService_Register(t *testing.T) {
 				FindByUsernameFn: tt.findByUsernameFn,
 				CreateFn:         tt.createFn,
 			}
-			svc := service.NewAuthService(repo, "test-secret")
+			svc := service.NewAuthService(repo, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, "test-secret")
 
 			user, token, err := svc.Register(context.Background(), tt.req)
 
@@ -146,7 +147,7 @@ func TestAuthService_Login(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &testutil.MockUserRepo{FindByEmailFn: tt.findByEmailFn}
-			svc := service.NewAuthService(repo, "test-secret")
+			svc := service.NewAuthService(repo, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, "test-secret")
 
 			user, token, err := svc.Login(context.Background(), tt.req)
 
@@ -204,7 +205,7 @@ func TestAuthService_RefreshToken(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			svc := service.NewAuthService(&testutil.MockUserRepo{}, secret)
+			svc := service.NewAuthService(&testutil.MockUserRepo{}, &testutil.MockTwoFactorRepo{}, mailer.LogMailer{}, secret)
 
 			newToken, err := svc.RefreshToken(tt.token)
 

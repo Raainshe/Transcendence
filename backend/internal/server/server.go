@@ -17,6 +17,7 @@ import (
 	"backend/internal/repository"
 	"backend/internal/service"
 	"backend/internal/ws"
+	"backend/internal/mailer"
 	"backend/migrations"
 )
 
@@ -67,9 +68,21 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameRepo := repository.NewGameRepository(dbService.DB())
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
+	twoFactorRepo := repository.NewTwoFactorRepository(dbService.DB())
+
+	var mail mailer.Mailer
+	if host := os.Getenv("SMTP_HOST"); host != "" {
+		mail = mailer.NewSMTPMailer(
+			host, os.Getenv("SMTP_PORT"),
+			os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"),
+			os.Getenv("SMTP_FROM"),
+		)
+	} else {
+		mail = mailer.LogMailer{}
+	}
 
 	hub := ws.NewHub()
-	authSvc := service.NewAuthService(userRepo, jwtSecret)
+	authSvc := service.NewAuthService(userRepo, twoFactorRepo, mail, jwtSecret)
 	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
 	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)

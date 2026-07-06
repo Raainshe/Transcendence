@@ -7,6 +7,7 @@ import (
 
 type Claims struct {
 	UserID uuid.UUID `json:"user_id"`
+	Scope string `json:"scope,omitempty"`
 	jwt.RegisteredClaims
 }
 
@@ -20,6 +21,9 @@ func ParseUserID(secret, tokenStr string) (uuid.UUID, error) {
 		return []byte(secret), nil
 	})
 	if err != nil || !token.Valid {
+		return uuid.Nil, jwt.ErrSignatureInvalid
+	}
+	if c.Scope == "2fa_pending" {
 		return uuid.Nil, jwt.ErrSignatureInvalid
 	}
 	return c.UserID, nil
