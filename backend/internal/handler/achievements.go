@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 
-	"backend/internal/middleware"
+	//"backend/internal/middleware"
 	"backend/internal/repository"
 	"backend/internal/service"
 )
@@ -20,10 +20,11 @@ func NewAchievementHandler(achievements *service.AchievementService) *Achievemen
 	return &AchievementHandler{achievements: achievements}
 }
 
-func (h *AchievementHandler) GetMyAchievements(w http.ResponseWriter, r *http.Request) {
+//only if we want it to be protected
+/* func (h *AchievementHandler) GetMyAchievements(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromContext(r.Context())
 	h.writeAchievements(w, r, userID)
-}
+} */
 
 func (h *AchievementHandler) GetUserAchievements(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(chi.URLParam(r, "id"))

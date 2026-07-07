@@ -9,6 +9,8 @@ import { ApiError, resolveAssetUrl } from '@/api/client'
 import * as usersApi from '@/api/users'
 import { useAuthStore } from '@/stores/auth'
 import type { User, UserStats } from '@/types/api'
+import { badgeDefinitions } from '@/types/badges'
+import AchievementBadge from '@/components/profile/AchievementBadge.vue'
 
 import '@/assets/styles/views/user-profile-view.css'
 
@@ -32,6 +34,19 @@ const initials = computed(() => profileUser.value?.username.slice(0, 2).toUpperC
 const onlineLabel = computed(() =>
   profileUser.value?.is_online ? t('userProfile.online') : t('userProfile.offline'),
 )
+
+const unlockedBadges = computed(() => {
+  if (!profileUser.value?.achievement_list) return []
+  const a = profileUser.value.achievement_list
+  return badgeDefinitions
+    .filter((def) => a[def.key] as boolean)
+    .map((def) => ({
+      key: def.key,
+      badgeName: def.badgeName,
+      tier: def.tier,
+      catImage: def.catImage,
+    }))
+})
 
 watch(
   userId,
@@ -165,6 +180,28 @@ function closeGameDetail(): void {
             <span class="user-profile-view__stat-label">{{ t('profile.statsAvg') }}</span>
           </div>
         </div>
+      </section>
+
+      <section class="user-profile-view__panel" aria-labelledby="user-profile-badges-heading">
+        <h2 id="user-profile-badges-heading" class="user-profile-view__section-title">
+          {{ t('profile.badgesTitle') }}
+        </h2>
+        <div class="user-profile-view__badges">
+          <div class="user-profile-view__badge-item" v-for="badge in unlockedBadges" :key="badge.key">
+            <AchievementBadge
+              :tier="badge.tier"
+              :catImage="badge.catImage"
+              :badgeName="badge.badgeName"
+            />
+            <span class="user-profile-view__badge-name">{{ badge.badgeName }}</span>
+          </div>
+        </div>
+        <RouterLink
+          :to="{ name: 'achievements', params: { id: profileUser.id } }"
+          class="user-profile-view__link"
+        >
+          {{ t('profile.seeAllAchievements') }}
+        </RouterLink>
       </section>
 
       <section class="user-profile-view__panel" aria-labelledby="user-profile-history-heading">

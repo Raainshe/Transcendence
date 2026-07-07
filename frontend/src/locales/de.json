@@ -310,6 +310,8 @@
     "deleteConfirm": "Konto löschen",
     "deleteCancel": "Abbrechen",
     "deleting": "Wird gelöscht…",
+    "badgesTitle": "Abzeichen",
+    "seeAllAchievements": "Alle Erfolge anzeigen",
     "errors": {
       "usernameRequired": "Benutzername ist erforderlich.",
       "usernameTooLong": "Der Benutzername darf höchstens 32 Zeichen lang sein.",
@@ -415,6 +417,37 @@
     "colDate": "Datum",
     "avatarAlt": "Avatar von {username}"
   },
+  "achievements": {
+    "title": "Erfolge",
+    "loading": "Lädt...",
+    "loadError": "Fehler beim Laden der Erfolge.",
+    "empty": "Keine Erfolge gefunden.",
+    "colAchievements": "Erfolg",
+    "colDescription": "Beschreibung",
+    "colStatus": "Status",
+    "unlocked": "Entsperrt",
+    "locked": "Gesperrt",
+    "descriptions": {
+      "avatar_change":       "Lade ein Profilbild hoch",
+      "first_clear":         "Lösche deine erste Reihe",
+      "first_mp_game":       "Spiele dein erstes Mehrspielerspiel",
+      "first_win":           "Gewinne dein erstes Spiel",
+      "hundreth_win":        "Gewinne 100 Spiele",
+      "first_friend":        "Füge deinen ersten Freund hinzu",
+      "highest_score_2_k":   "Erreiche 2.000 Punkte in einem Spiel",
+      "highest_score_10_k":  "Erreiche 10.000 Punkte in einem Spiel",
+      "highest_score_50_k":  "Erreiche 50.000 Punkte in einem Spiel",
+      "total_points_30_k":   "Sammle insgesamt 30.000 Punkte",
+      "total_points_100_k":  "Sammle insgesamt 100.000 Punkte",
+      "total_points_250_k":  "Sammle insgesamt 250.000 Punkte",
+      "level_2":             "Erreiche Level 2",
+      "level_10":            "Erreiche Level 10",
+      "level_50":            "Erreiche Level 50",
+      "played_10":           "Spiele 10 Spiele",
+      "played_50":           "Spiele 50 Spiele",
+      "played_100":          "Spiele 100 Spiele"
+}
+  },
   "routes": {
     "home": "Transcendence - Hauptmenü",
     "play": "Transcendence - Spielen",
@@ -426,6 +459,7 @@
     "friends": "Transcendence - Freunde",
     "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Spieler",
-    "players": "Transcendence - Spieler"
+    "players": "Transcendence - Spieler",
+    "achievements": "Transcendence - Erfolge"
   }
 }

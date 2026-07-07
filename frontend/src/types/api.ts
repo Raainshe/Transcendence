@@ -1,10 +1,40 @@
 export type UserRole = 'user' | 'admin'
 
+export interface Achievements {
+  avatar_change: boolean
+  highest_score_2_k: boolean
+  highest_score_10_k: boolean
+  highest_score_50_k: boolean
+  total_points_30_k: boolean
+  total_points_100_k: boolean
+  total_points_250_k: boolean
+  level_2: boolean
+  level_10: boolean
+  level_50: boolean
+  //streak_2: boolean
+  //streak_5: boolean
+  first_mp_game: boolean
+  first_win: boolean
+  hundreth_win: boolean
+  played_10: boolean
+  played_50: boolean
+  played_100: boolean
+  first_friend: boolean
+  //first_year: boolean
+  first_clear: boolean
+  //first_tetris: boolean
+}
+
+export interface AchievementsResponse {
+  achievements: Achievements
+}
+
 export interface User {
   id: string
   username: string
   email: string
   avatar_url: string | null
+  achievement_list?: Achievements
   role: UserRole
   is_2fa_enabled: boolean
   created_at: string
@@ -94,6 +124,7 @@ export interface UserStats {
   best_score: number
   total_lines: number
   avg_score: number
+  total_score: number
 }
 
 export interface CreateGamePayload {

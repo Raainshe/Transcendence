@@ -60,6 +60,11 @@ const router = createRouter({
       component: () => import('@/views/UserProfileView.vue'),
     },
     {
+      path: '/users/:id/achievements',
+      name: 'achievements',
+      component: () => import('@/views/AchievementsView.vue'),
+    },
+    {
       path: '/players',
       name: 'players',
       component: () => import('@/views/PlayersView.vue'),

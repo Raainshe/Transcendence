@@ -310,6 +310,8 @@
     "deleteConfirm": "Supprimer mon compte",
     "deleteCancel": "Annuler",
     "deleting": "Suppression…",
+    "badgesTitle": "Badges",
+    "seeAllAchievements": "Voir tous les succès",
     "errors": {
       "usernameRequired": "Le nom d'utilisateur est requis.",
       "usernameTooLong": "Le nom d'utilisateur doit contenir 32 caractères ou moins.",
@@ -415,6 +417,37 @@
     "colDate": "Date",
     "avatarAlt": "Avatar de {username}"
   },
+    "achievements": {
+    "title": "Succès",
+    "loading": "Chargement...",
+    "loadError": "Échec du chargement des succès.",
+    "empty": "Aucun succès trouvé.",
+    "colAchievements": "Succès",
+    "colDescription": "Description",
+    "colStatus": "Statut",
+    "unlocked": "Débloqué",
+    "locked": "Verrouillé",
+    "descriptions": {
+      "avatar_change":       "Télécharge une photo de profil",
+      "first_clear":         "Efface ta première ligne",
+      "first_mp_game":       "Joue ta première partie multijoueur",
+      "first_win":           "Remporte ta première victoire",
+      "hundreth_win":        "Remporte 100 victoires",
+      "first_friend":        "Ajoute ton premier ami",
+      "highest_score_2_k":   "Marque 2 000 points en une partie",
+      "highest_score_10_k":  "Marque 10 000 points en une partie",
+      "highest_score_50_k":  "Marque 50 000 points en une partie",
+      "total_points_30_k":   "Cumule 30 000 points au total",
+      "total_points_100_k":  "Cumule 100 000 points au total",
+      "total_points_250_k":  "Cumule 250 000 points au total",
+      "level_2":             "Atteins le niveau 2",
+      "level_10":            "Atteins le niveau 10",
+      "level_50":            "Atteins le niveau 50",
+      "played_10":           "Joue 10 parties",
+      "played_50":           "Joue 50 parties",
+      "played_100":          "Joue 100 parties"
+    }
+  },
   "routes": {
     "home": "Transcendence - Menu principal",
     "play": "Transcendence - Jouer",
@@ -426,6 +459,7 @@
     "friends": "Transcendence - Amis",
     "lobby": "Transcendence - Salon",
     "userProfile": "Transcendence - Joueur",
-    "players": "Transcendence - Joueurs"
+    "players": "Transcendence - Joueurs",
+    "achievements": "Transcendence - Succès"
   }
 }

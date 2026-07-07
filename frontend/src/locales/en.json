@@ -310,6 +310,8 @@
     "deleteConfirm": "Delete my account",
     "deleteCancel": "Cancel",
     "deleting": "Deleting…",
+    "badgesTitle": "Badges",
+    "seeAllAchievements": "See all achievements",
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameTooLong": "Username must be 32 characters or fewer.",
@@ -415,6 +417,37 @@
     "colDate": "Date",
     "avatarAlt": "{username}'s avatar"
   },
+  "achievements": {
+  "title": "Achievements",
+  "loading": "Loading...",
+  "loadError": "Failed to load achievements.",
+  "empty": "No achievements found.",
+  "colAchievements": "Achievement",
+  "colDescription": "Description",
+  "colStatus": "Status",
+  "unlocked": "Unlocked",
+  "locked": "Locked",
+  "descriptions": {
+    "avatar_change":       "Upload a profile picture",
+    "first_clear":         "Clear your first line",
+    "first_mp_game":       "Play your first multiplayer game",
+    "first_win":           "Win your first game",
+    "hundreth_win":        "Win 100 games",
+    "first_friend":        "Add your first friend",
+    "highest_score_2_k":   "Score 2,000 points in a single game",
+    "highest_score_10_k":  "Score 10,000 points in a single game",
+    "highest_score_50_k":  "Score 50,000 points in a single game",
+    "total_points_30_k":   "Earn 30,000 total points",
+    "total_points_100_k":  "Earn 100,000 total points",
+    "total_points_250_k":  "Earn 250,000 total points",
+    "level_2":             "Reach level 2",
+    "level_10":            "Reach level 10",
+    "level_50":            "Reach level 50",
+    "played_10":           "Play 10 games",
+    "played_50":           "Play 50 games",
+    "played_100":          "Play 100 games"
+    }
+  },
   "routes": {
     "home": "Transcendence - Main Menu",
     "play": "Transcendence - Play",
@@ -426,6 +459,7 @@
     "friends": "Transcendence - Friends",
     "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Player",
-    "players": "Transcendence - Players"
+    "players": "Transcendence - Players",
+    "achievements": "Transcendence - Achievements"
   }
 }
