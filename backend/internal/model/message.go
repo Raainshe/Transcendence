@@ -13,3 +13,8 @@ type Message struct {
 	CreatedAt time.Time `json:"created_at"`
 	ReadAt *time.Time `json:"read_at"`
 }
+
+type UnreadCount struct {
+	SenderID uuid.UUID `json:"sender_id"`
+	Count int `json:"count"`
+}
