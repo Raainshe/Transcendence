@@ -21,18 +21,18 @@ import (
 )
 
 type Server struct {
-	port               int
-	db                 database.Service
-	jwtSecret          string
-	uploadDir          string
-	onSeen             func(uuid.UUID)
-	authHandler        *handler.AuthHandler
-	userHandler        *handler.UserHandler
-	gameHandler        *handler.GameHandler
-	lobbyHandler       *handler.LobbyHandler
-	matchHandler       *handler.MatchHandler
-	wsHandler          *ws.Handler
-	achievementHandler *handler.AchievementHandler
+	port                int
+	db                  database.Service
+	jwtSecret           string
+	uploadDir           string
+	onSeen              func(uuid.UUID)
+	authHandler         *handler.AuthHandler
+	userHandler         *handler.UserHandler
+	gameHandler         *handler.GameHandler
+	lobbyHandler        *handler.LobbyHandler
+	matchHandler        *handler.MatchHandler
+	wsHandler           *ws.Handler
+	achievementsHandler *handler.AchievementsHandler
 }
 
 func NewServer() *http.Server {
@@ -68,15 +68,15 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameRepo := repository.NewGameRepository(dbService.DB())
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
-	achieveRepo := repository.NewAchievementsRepository(dbService.DB())
+	achievementsRepo := repository.NewAchievementsRepository(dbService.DB())
 
 	hub := ws.NewHub()
-	achievementSvc := service.NewAchievementService(achieveRepo, gameRepo)
+	gamificationSvc := service.NewGamificationService(achievementsRepo, gameRepo, userRepo)
 	authSvc := service.NewAuthService(userRepo, jwtSecret)
-	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, achievementSvc, uploadDir)
-	gameSvc := service.NewGameService(gameRepo, achievementSvc)
-	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub, achievementSvc)
-	matchSvc := service.NewMatchService(gameRepo, lobbyRepo, achievementSvc)
+	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, gamificationSvc, uploadDir)
+	gameSvc := service.NewGameService(gameRepo, gamificationSvc)
+	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub, gamificationSvc)
+	matchSvc := service.NewMatchService(gameRepo, lobbyRepo, gamificationSvc)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -84,18 +84,18 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	}
 
 	srv := &Server{
-		port:               port,
-		db:                 dbService,
-		jwtSecret:          jwtSecret,
-		uploadDir:          uploadDir,
-		onSeen:             onSeen,
-		authHandler:        handler.NewAuthHandler(authSvc),
-		userHandler:        handler.NewUserHandler(userSvc),
-		gameHandler:        handler.NewGameHandler(gameSvc),
-		lobbyHandler:       handler.NewLobbyHandler(lobbySvc),
-		matchHandler:       handler.NewMatchHandler(matchSvc),
-		wsHandler:          ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
-		achievementHandler: handler.NewAchievementHandler(achievementSvc),
+		port:                port,
+		db:                  dbService,
+		jwtSecret:           jwtSecret,
+		uploadDir:           uploadDir,
+		onSeen:              onSeen,
+		authHandler:         handler.NewAuthHandler(authSvc),
+		userHandler:         handler.NewUserHandler(userSvc),
+		gameHandler:         handler.NewGameHandler(gameSvc),
+		lobbyHandler:        handler.NewLobbyHandler(lobbySvc),
+		matchHandler:        handler.NewMatchHandler(matchSvc),
+		wsHandler:           ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
+		achievementsHandler: handler.NewAchievementsHandler(gamificationSvc),
 	}
 
 	return &http.Server{

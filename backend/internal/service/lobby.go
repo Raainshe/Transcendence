@@ -39,11 +39,11 @@ type LobbyService struct {
 	lobbies      repository.LobbyRepository
 	games        repository.GameRepository
 	bus          LobbyBroadcaster
-	achievements *AchievementService
+	gamification *GamificationService
 }
 
-func NewLobbyService(lobbies repository.LobbyRepository, games repository.GameRepository, bus LobbyBroadcaster, achievements *AchievementService) *LobbyService {
-	return &LobbyService{lobbies: lobbies, games: games, bus: bus, achievements: achievements}
+func NewLobbyService(lobbies repository.LobbyRepository, games repository.GameRepository, bus LobbyBroadcaster, gamification *GamificationService) *LobbyService {
+	return &LobbyService{lobbies: lobbies, games: games, bus: bus, gamification: gamification}
 }
 
 func (s *LobbyService) CreateLobby(ctx context.Context, userID uuid.UUID, maxPlayers int) (*model.LobbyDetail, error) {
@@ -270,7 +270,7 @@ func (s *LobbyService) StartLobby(ctx context.Context, hostID, lobbyID uuid.UUID
 		Players:    matchPlayers,
 	}
 	for _, p := range players {
-		err := s.achievements.OnMPGame(ctx, p.UserID)
+		err := s.gamification.OnMPGame(ctx, p.UserID)
 		if err != nil {
 			log.Printf("achievement check failed for user %s: %v", p.UserID, err)
 		}

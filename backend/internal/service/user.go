@@ -38,15 +38,15 @@ type UserService struct {
 	users         repository.UserRepository
 	files         repository.FileRepository
 	relationships repository.RelationshipRepository
-	achievements  *AchievementService
+	gamification  *GamificationService
 	uploadDir     string
 }
 
-func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, achievements *AchievementService, uploadDir string) *UserService {
+func NewUserService(users repository.UserRepository, files repository.FileRepository, rels repository.RelationshipRepository, gamification *GamificationService, uploadDir string) *UserService {
 	if uploadDir == "" {
 		uploadDir = "./uploads"
 	}
-	return &UserService{users: users, files: files, relationships: rels, achievements: achievements, uploadDir: uploadDir}
+	return &UserService{users: users, files: files, relationships: rels, gamification: gamification, uploadDir: uploadDir}
 }
 
 func (s *UserService) GetByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
@@ -147,7 +147,7 @@ func (s *UserService) UploadAvatar(ctx context.Context, userID uuid.UUID, file m
 		return nil, err
 	}
 
-	err = s.achievements.OnAvatarUploaded(ctx, userID)
+	err = s.gamification.OnAvatarUploaded(ctx, userID)
 	if err != nil {
 		log.Printf("achievement check failed for user %s: %v", userID, err)
 	}
@@ -223,11 +223,11 @@ func (s *UserService) AcceptFriendRequest(ctx context.Context, accepterID, reque
 		return err
 	}
 
-	err = s.achievements.OnFriendAdded(ctx, accepterID)
+	err = s.gamification.OnFriendAdded(ctx, accepterID)
 	if err != nil {
 		log.Printf("achievement check failed for user %s: %v", accepterID, err)
 	}
-	err = s.achievements.OnFriendAdded(ctx, requesterID)
+	err = s.gamification.OnFriendAdded(ctx, requesterID)
 	if err != nil {
 		log.Printf("achievement check failed for user %s: %v", requesterID, err)
 	}

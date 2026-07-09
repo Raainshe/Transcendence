@@ -127,7 +127,7 @@ func (s *MatchService) EndMatch(ctx context.Context, in model.EndMatchInput) (*m
 	}
 
 	for _, p := range dbPlayers {
-		err := s.achievements.OnGameEnd(ctx, p.UserID, p, *game)
+		err := s.gamification.OnGameEnd(ctx, p.UserID, p, *game)
 		if err != nil {
 			log.Printf("achievement check failed for user %s: %v", p.UserID, err)
 		}

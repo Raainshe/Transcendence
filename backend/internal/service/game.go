@@ -12,11 +12,11 @@ import (
 
 type GameService struct {
 	games        repository.GameRepository
-	achievements *AchievementService
+	gamification *GamificationService
 }
 
-func NewGameService(games repository.GameRepository, achievements *AchievementService) *GameService {
-	return &GameService{games: games, achievements: achievements}
+func NewGameService(games repository.GameRepository, gamification *GamificationService) *GameService {
+	return &GameService{games: games, gamification: gamification}
 }
 
 func (s *GameService) RecordMatch(ctx context.Context, userID uuid.UUID, req model.CreateGameRequest) (*model.Game, error) {
@@ -47,7 +47,7 @@ func (s *GameService) RecordMatch(ctx context.Context, userID uuid.UUID, req mod
 	if err := s.games.RecordMatch(ctx, game, player); err != nil {
 		return nil, err
 	}
-	err := s.achievements.OnGameEnd(ctx, userID, *player, *game)
+	err := s.gamification.OnGameEnd(ctx, userID, *player, *game)
 	if err != nil {
 		log.Printf("achievement check failed for user %s: %v", userID, err)
 	}
