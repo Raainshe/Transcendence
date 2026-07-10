@@ -15,7 +15,6 @@ const color = tierColors[props.tier]
   <div
     class="achievement-badge"
     :style="{
-      '--badge-size': `80px`,
       '--tier-color': color,
     }"
     :title="badgeName"
@@ -49,6 +48,8 @@ const color = tierColors[props.tier]
   position: relative;
   width: 70px;
   height: 70px;
+  min-width: 70px;
+  min-height: 70px;
   border-radius: 50%;
   background-color: var(--tier-color);
   box-shadow:
@@ -58,6 +59,7 @@ const color = tierColors[props.tier]
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .achievement-badge__piece {
@@ -66,6 +68,8 @@ const color = tierColors[props.tier]
   left: 20%;
   width: 70%;
   height: 70%;
+  max-width: 70%;
+  max-height: 70%;
   box-sizing: border-box;
   opacity: 0.6;
 }

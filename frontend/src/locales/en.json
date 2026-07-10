@@ -312,6 +312,7 @@
     "deleting": "Deleting…",
     "badgesTitle": "Badges",
     "seeAllAchievements": "See all achievements",
+    "xpTitle": "Progression",
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameTooLong": "Username must be 32 characters or fewer.",

@@ -312,6 +312,7 @@
     "deleting": "Suppression…",
     "badgesTitle": "Badges",
     "seeAllAchievements": "Voir tous les succès",
+    "xpTitle": "Progression",
     "errors": {
       "usernameRequired": "Le nom d'utilisateur est requis.",
       "usernameTooLong": "Le nom d'utilisateur doit contenir 32 caractères ou moins.",

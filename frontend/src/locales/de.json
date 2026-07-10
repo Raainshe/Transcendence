@@ -312,6 +312,7 @@
     "deleting": "Wird gelöscht…",
     "badgesTitle": "Abzeichen",
     "seeAllAchievements": "Alle Erfolge anzeigen",
+    "xpTitle": "Fortschritt",
     "errors": {
       "usernameRequired": "Benutzername ist erforderlich.",
       "usernameTooLong": "Der Benutzername darf höchstens 32 Zeichen lang sein.",

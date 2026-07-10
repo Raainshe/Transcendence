@@ -11,6 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { User, UserStats } from '@/types/api'
 import { badgeDefinitions } from '@/types/badges'
 import AchievementBadge from '@/components/profile/AchievementBadge.vue'
+import XPBar from '@/components/profile/XPBar.vue'
 
 import '@/assets/styles/views/user-profile-view.css'
 
@@ -149,6 +150,13 @@ function closeGameDetail(): void {
             </span>
           </div>
         </div>
+      </section>
+
+      <section class="user-profile-view__panel" aria-labelledby="user-profile-xp-heading">
+        <h2 id="user-profile-xp-heading" class="user-profile-view__section-title">
+          {{ t('profile.xpTitle') }}
+        </h2>
+        <XPBar :xp="profileUser.xp ?? 0" />
       </section>
 
       <section class="user-profile-view__panel" aria-labelledby="user-profile-stats-heading">

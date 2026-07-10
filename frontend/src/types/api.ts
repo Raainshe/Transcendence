@@ -41,6 +41,7 @@ export interface User {
   updated_at: string
   last_seen_at: string | null
   is_online?: boolean
+  xp: number
 }
 
 export interface AuthResponse {

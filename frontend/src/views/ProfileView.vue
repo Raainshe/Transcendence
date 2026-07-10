@@ -12,6 +12,7 @@ import { useAuthStore } from '@/stores/auth'
 import type { UserStats } from '@/types/api'
 import { badgeDefinitions } from '@/types/badges'
 import AchievementBadge from '@/components/profile/AchievementBadge.vue'
+import XPBar from '@/components/profile/XPBar.vue'
 
 import '@/assets/styles/views/profile-view.css'
 
@@ -265,6 +266,13 @@ async function onDeleteAccount(): Promise<void> {
           {{ isSaving ? t('profile.saving') : t('profile.save') }}
         </button>
       </form>
+    </section>
+
+    <section class="profile-view__panel" aria-labelledby="profile-xp-heading">
+      <h2 id="profile-xp-heading" class="profile-view__section-title">
+        {{ t('profile.xpTitle') }}
+      </h2>
+      <XPBar :xp="user.xp ?? 0" />
     </section>
 
     <section class="profile-view__panel" aria-labelledby="profile-stats-heading">
