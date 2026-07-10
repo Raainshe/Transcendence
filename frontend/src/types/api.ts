@@ -13,6 +13,20 @@ export interface User {
   is_online?: boolean
 }
 
+export interface ChatMessage {
+  id: string
+  sender_id: string
+  recipient_id: string
+  body: string
+  created_at: string
+  read_at: string | null
+}
+
+export interface UnreadCount {
+  sender_id: string
+  count: number
+}
+
 export interface AuthResponse {
   user: User
   token: string
@@ -43,6 +57,14 @@ export interface MeResponse {
 
 export interface UserResponse {
   user: User
+}
+
+export interface ConversationResponse {
+  messages: ChatMessage[]
+}
+
+export interface UnreadResponse {
+  unread: UnreadCount[]
 }
 
 export interface GameSummary {
