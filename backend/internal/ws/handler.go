@@ -38,6 +38,11 @@ type incomingMessage struct {
 	Payload json.RawMessage `json:"payload,omitempty"`
 }
 
+type chatSendPayload struct {
+	To string `json:"to"`
+	Body string `json:"body"`
+}
+
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
@@ -77,6 +82,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	client := NewClient(h.hub, conn, userID)
 	h.hub.Register(client)
+	h.hub.Subscribe(client, UserRoomID(userID.String()))
 
 	go client.WritePump()
 	client.ReadPump(func(c *Client, msg []byte) {
@@ -98,9 +104,35 @@ func (h *Handler) handleMessage(c *Client, msg []byte) {
 		h.handlePlayerState(c, strings.TrimSpace(incoming.Room), incoming.Payload)
 	case TypePlayerEliminated:
 		h.handlePlayerEliminated(c, strings.TrimSpace(incoming.Room), incoming.Payload)
+	case TypeChatSend:
+		h.handleChatSend(c, incoming.Payload)
 	default:
 		h.sendError(c, "unsupported message type")
 	}
+}
+
+func (h *Handler) handleChatSend(c *Client, rawPayload json.RawMessage) {
+	var p chatSendPayload
+	if err := json.Unmarshal(rawPayload, &p); err != nil {
+		h.sendError(c, "invalid message")
+		return
+	}
+	recipientID, err := uuid.Parse(strings.TrimSpace(p.To))
+	if err != nil {
+		h.sendError(c, "invalid recipient")
+		return
+	}
+	msg, err := h.chat.SendMessage(context.Background(), c.userID, recipientID, p.Body)
+	if err != nil {
+		h.sendError(c, err.Error())
+		return
+	}
+	env, err := NewEnvelope(TypeChatMessage, msg)
+	if err != nil {
+		return
+	}
+	h.hub.Broadcast(UserRoomID(recipientID.String()), env)
+	h.hub.Broadcast(UserRoomID(c.UserID().String()), env)
 }
 
 func (h *Handler) handleSubscribe(c *Client, room string) {
