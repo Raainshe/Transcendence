@@ -28,6 +28,10 @@ type MatchEnder interface {
 	EndMatch(ctx context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error)
 }
 
+type ChatSender interface {
+	SendMessage(ctx context.Context, senderID, recipientID uuid.UUID, body string) (*model.Message, error)
+}
+
 type incomingMessage struct {
 	Type    string          `json:"type"`
 	Room    string          `json:"room"`
@@ -44,10 +48,11 @@ type Handler struct {
 	lobbies   MemberChecker
 	games     GamePlayerChecker
 	matches   MatchEnder
+	chat ChatSender
 }
 
-func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder) *Handler {
-	h := &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches}
+func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder, chat ChatSender) *Handler {
+	h := &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches, chat: chat}
 	hub.SetDisconnectTimeoutHandler(h.forfeitOnDisconnect)
 	return h
 }

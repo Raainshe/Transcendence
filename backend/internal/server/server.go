@@ -33,6 +33,7 @@ type Server struct {
 	lobbyHandler *handler.LobbyHandler
 	matchHandler *handler.MatchHandler
 	wsHandler    *ws.Handler
+	chatHandler *handler.ChatHandler
 }
 
 func NewServer() *http.Server {
@@ -69,6 +70,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
 	twoFactorRepo := repository.NewTwoFactorRepository(dbService.DB())
+	messageRepo := repository.NewMessageRepository(dbService.DB())
 
 	var mail mailer.Mailer
 	if host := os.Getenv("SMTP_HOST"); host != "" {
@@ -82,6 +84,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	}
 
 	hub := ws.NewHub()
+	chatSvc := service.NewChatService(messageRepo, relRepo)
 	authSvc := service.NewAuthService(userRepo, twoFactorRepo, mail, jwtSecret)
 	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
 	gameSvc := service.NewGameService(gameRepo)
@@ -104,7 +107,8 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		gameHandler:  handler.NewGameHandler(gameSvc),
 		lobbyHandler: handler.NewLobbyHandler(lobbySvc),
 		matchHandler: handler.NewMatchHandler(matchSvc),
-		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
+		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc, chatSvc),
+		chatHandler: handler.NewChatHandler(chatSvc),
 	}
 
 	return &http.Server{
