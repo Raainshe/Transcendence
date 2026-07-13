@@ -42,7 +42,7 @@ func (r *messageRepository) ListConversation(ctx context.Context, user1, user2 u
 		return nil, err
 	}
 	defer rows.Close()
-	var ret []model.Message
+	ret := []model.Message{}
 	for rows.Next() {
 		var m model.Message
 		var id, s, r string
@@ -76,7 +76,7 @@ func (r *messageRepository) UnreadCounts(ctx context.Context, userID uuid.UUID) 
 		return nil, err
 	}
 	defer rows.Close()
-	var ret []model.UnreadCount
+	ret := []model.UnreadCount{}
 	for rows.Next() {
 		var u model.UnreadCount
 		var s string

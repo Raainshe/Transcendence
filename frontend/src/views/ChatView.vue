@@ -28,7 +28,7 @@ onMounted(async () => {
 
   const [f, u] = await Promise.all([friendsApi.getFriends(), chatApi.getUnread()])
   friends.value = f.friends
-  unread.value = Object.fromEntries(u.unread.map((c) => [c.sender_id, c.count]))
+  unread.value = Object.fromEntries((u.unread ?? []).map((c) => [c.sender_id, c.count]))
   chat.connect(onEnvelope)
 })
 
@@ -50,7 +50,7 @@ async function openConversation(friend: User): Promise<void> {
   activeFriend.value = friend
 
   const res = await chatApi.getConversation(friend.id)
-  messages.value = res.messages.slice().reverse() // API returns newest-first
+  messages.value = (res.messages ?? []).slice().reverse()
   unread.value[friend.id] = 0
   await chatApi.markConversationRead(friend.id)
   scrollToBottom()

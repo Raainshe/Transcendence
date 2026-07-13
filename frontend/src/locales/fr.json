@@ -444,6 +444,7 @@
   },
   "routes": {
     "home": "Transcendence - Menu principal",
+	"chat": "Transcendence - Messages",
     "play": "Transcendence - Jouer",
     "credits": "Transcendence - Crédits",
     "privacy": "Transcendence - Confidentialité",
