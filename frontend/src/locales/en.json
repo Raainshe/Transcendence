@@ -20,6 +20,7 @@
       "de": "DE",
       "fr": "FR"
     },
+	"chat": "Messages",
     "homeAria": "Transcendence home",
     "login": "Log in",
     "signUp": "Sign up",
@@ -27,6 +28,15 @@
     "signedInAs": "Signed in as {username}",
     "friends": "Friends",
     "friendsPending": "{count} pending friend requests"
+  },
+  "chat": {
+	"title": "Messages",
+	"noFriends": "Add friends to start chatting.",
+	"selectFriend": "Select a friend to start chatting.",
+	"sayHi": "No messages yet. Say hi!",
+	"placeholder": "Type a message…",
+	"send": "Send",
+	"online": "Online"
   },
   "auth": {
     "dialogLabel": "Account",
