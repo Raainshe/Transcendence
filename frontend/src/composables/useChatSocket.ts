@@ -2,6 +2,8 @@ import { onUnmounted, ref } from 'vue'
 
 import { useAuthStore } from '@/stores/auth'
 
+export const WS_TYPE_CHAT_MESSAGE = 'chat.message'
+
 export type WsEnvelope = {
   type: string
   payload?: unknown
