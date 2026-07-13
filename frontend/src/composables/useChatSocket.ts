@@ -30,4 +30,39 @@ export function useChatSocket() {
     connected.value = false
     onEnvelope = null
   }
+
+  function connect(handler: (env: WsEnvelope) => void): void {
+    disconnect()
+    onEnvelope = handler
+    const token = auth.token
+    if (!token) return
+    socket = new WebSocket(`${wsBaseUrl()}?token=${encodeURIComponent(token)}`)
+    socket.onopen = () => {
+      connected.value = true
+    }
+    socket.onmessage = (event) => {
+      try {
+        onEnvelope?.(JSON.parse(String(event.data)) as WsEnvelope)
+      } catch {
+      }
+    }
+    socket.onclose = () => {
+      connected.value = false
+    }
+    socket.onerror = () => {
+      connected.value = false
+    }
+  }
+
+  function send(to: string, body: string): boolean {
+    if (!socket || socket.readyState !== WebSocket.OPEN) return false
+    socket.send(JSON.stringify({ type: 'chat.send', payload: { to, body } }))
+    return true
+  }
+
+  onUnmounted(() => {
+    disconnect()
+  })
+
+  return { connected, connect, disconnect, send }
 }
