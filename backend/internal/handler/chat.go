@@ -56,7 +56,7 @@ func (h *ChatHandler) GetUnread(w http.ResponseWriter, r *http.Request) {
 	userID := middleware.UserIDFromContext(r.Context())
 	counts, err := h.chat.UnreadCounts(r.Context(), userID)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "could not load unread counts"})
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not load unread counts"})
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"unread": counts})
