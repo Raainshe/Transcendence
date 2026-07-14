@@ -200,6 +200,7 @@ function closeGameDetail(): void {
               :tier="badge.tier"
               :catImage="badge.catImage"
               :badgeName="badge.badgeName"
+              :title="t(`achievements.descriptions.${badge.key}`)"
             />
             <span class="user-profile-view__badge-name">{{ badge.badgeName }}</span>
           </div>

@@ -57,10 +57,10 @@ export const badgeDefinitions: BadgeDefinition[] = [
     key: 'level_2', badgeName: 'Rising Planner', tier: 'bronze', catImage: 'cat5.png',
   },
   {
-    key: 'level_10', badgeName: 'Tower Architect', tier: 'silver', catImage: 'cat5.png',
+    key: 'level_8', badgeName: 'Tower Architect', tier: 'silver', catImage: 'cat5.png',
   },
   {
-    key: 'level_50', badgeName: 'Skyline Master', tier: 'gold', catImage: 'cat5.png',
+    key: 'level_15', badgeName: 'Skyline Master', tier: 'gold', catImage: 'cat5.png',
   },
   {
     key: 'played_10', badgeName: 'Regular', tier: 'bronze', catImage: 'cat6.png',

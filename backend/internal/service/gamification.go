@@ -13,8 +13,6 @@ const (
 	XPGame        = 20
 	XPWin         = 50
 	XPAchievement = 100
-
-// XPImproveScore = 20 would have to call stats every time....
 )
 
 type GamificationService struct {
@@ -45,10 +43,6 @@ func (s *GamificationService) OnGameEnd(ctx context.Context, userID uuid.UUID, p
 		a.FirstClear = true
 		changed++
 	}
-	/* 	if !a.FirstTetris && player.LinesCleared >= 4 {
-		a.FirstTetris = true
-		changed = true
-	} */ //dont have data for this
 	if !a.HighestScore2K && player.Score >= 2000 {
 		a.HighestScore2K = true
 		changed++
@@ -65,12 +59,12 @@ func (s *GamificationService) OnGameEnd(ctx context.Context, userID uuid.UUID, p
 		a.Level2 = true
 		changed++
 	}
-	if !a.Level10 && player.LevelReached >= 10 {
-		a.Level10 = true
+	if !a.Level8 && player.LevelReached >= 8 {
+		a.Level8 = true
 		changed++
 	}
-	if !a.Level50 && player.LevelReached >= 50 {
-		a.Level50 = true
+	if !a.Level15 && player.LevelReached >= 15 {
+		a.Level15 = true
 		changed++
 	}
 	if !a.FirstWin && player.IsWinner {
@@ -78,7 +72,7 @@ func (s *GamificationService) OnGameEnd(ctx context.Context, userID uuid.UUID, p
 		changed++
 	}
 
-	if !a.Played10 || !a.Played50 || !a.Played100 || !a.TotalPoints30K || !a.TotalPoints100K {
+	if !a.Played10 || !a.Played50 || !a.Played100 || !a.TotalPoints30K || !a.TotalPoints100K || !a.TotalPoints250K {
 		stats, err := s.games.GetUserStats(ctx, userID)
 		if err != nil {
 			return err

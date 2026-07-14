@@ -30,8 +30,8 @@ const progress = computed(() => (xpIntoLevel.value / xpNeeded.value) * 100)
 </script>
 
 <template>
-  <div class="xp-bar" :title="`Level ${level} — ${xp} XP total`">
-   <p class="xp-bar__level">{{ level }}</p>
+  <div class="xp-bar" :title="`Level ${userLevel} — ${xp} XP total`">
+   <p class="xp-bar__level">{{ userLevel }}</p>
     <div
       class="xp-bar__track"
       role="progressbar"

@@ -9,10 +9,8 @@ export interface Achievements {
   total_points_100_k: boolean
   total_points_250_k: boolean
   level_2: boolean
-  level_10: boolean
-  level_50: boolean
-  //streak_2: boolean
-  //streak_5: boolean
+  level_8: boolean
+  level_15: boolean
   first_mp_game: boolean
   first_win: boolean
   hundreth_win: boolean
@@ -20,9 +18,7 @@ export interface Achievements {
   played_50: boolean
   played_100: boolean
   first_friend: boolean
-  //first_year: boolean
   first_clear: boolean
-  //first_tetris: boolean
 }
 
 export interface AchievementsResponse {
