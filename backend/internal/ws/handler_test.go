@@ -38,7 +38,7 @@ func (m *mockMatchEnder) EndMatch(ctx context.Context, in model.EndMatchInput) (
 func startWSTestServer(t *testing.T, lobbies ws.MemberChecker, games ws.GamePlayerChecker, matches ws.MatchEnder) (string, *ws.Hub) {
 	t.Helper()
 	hub := ws.NewHub()
-	handler := ws.NewHandler(hub, testJWTSecret, lobbies, games, matches)
+	handler := ws.NewHandler(hub, testJWTSecret, lobbies, games, matches, nil)
 	srv := httptest.NewServer(http.HandlerFunc(handler.ServeHTTP))
 	t.Cleanup(srv.Close)
 	return strings.Replace(srv.URL, "http://", "ws://", 1), hub

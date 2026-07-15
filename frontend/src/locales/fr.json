@@ -20,6 +20,7 @@
       "de": "DE",
       "fr": "FR"
     },
+	"chat": "Messages",
     "homeAria": "Accueil Transcendence",
     "login": "Connexion",
     "signUp": "Créer un compte",
@@ -27,6 +28,15 @@
     "signedInAs": "Connecté en tant que {username}",
     "friends": "Amis",
     "friendsPending": "{count} demande d'ami en attente | {count} demandes d'ami en attente"
+  },
+  "chat": {
+    "title": "Messages",
+    "noFriends": "Ajoutez des amis pour commencer à discuter.",
+    "selectFriend": "Sélectionnez un ami pour commencer à discuter.",
+    "sayHi": "Aucun message pour l'instant. Dites bonjour !",
+    "placeholder": "Écrivez un message…",
+    "send": "Envoyer",
+    "online": "En ligne"
   },
   "auth": {
     "dialogLabel": "Compte",
@@ -434,6 +444,7 @@
   },
   "routes": {
     "home": "Transcendence - Menu principal",
+	"chat": "Transcendence - Messages",
     "play": "Transcendence - Jouer",
     "credits": "Transcendence - Crédits",
     "privacy": "Transcendence - Confidentialité",

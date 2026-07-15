@@ -43,6 +43,13 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Get("/auth/oauth/{provider}", s.authHandler.OAuthRedirect)
 		r.Get("/auth/oauth/{provider}/callback", s.authHandler.OAuthCallback)
 
+		r.Group(func(r chi.Router) {
+			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))
+			r.Get("/chat/messages/{friendID}", s.chatHandler.GetConversation)
+			r.Post("/chat/messages/{friendID}/read", s.chatHandler.MarkRead)
+			r.Get("/chat/unread", s.chatHandler.GetUnread)
+		})
+
 		// Auth — protected
 		r.Group(func(r chi.Router) {
 			r.Use(mw.JWTAuth(s.jwtSecret, s.onSeen))

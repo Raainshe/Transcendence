@@ -20,6 +20,7 @@
       "de": "DE",
       "fr": "FR"
     },
+	"chat": "Nachrichten",
     "homeAria": "Transcendence Startseite",
     "login": "Anmelden",
     "signUp": "Registrieren",
@@ -27,6 +28,15 @@
     "signedInAs": "Angemeldet als {username}",
     "friends": "Freunde",
     "friendsPending": "{count} offene Freundschaftsanfragen"
+  },
+  "chat": {
+    "title": "Nachrichten",
+    "noFriends": "Füge Freunde hinzu, um zu chatten.",
+    "selectFriend": "Wähle einen Freund aus, um zu chatten.",
+    "sayHi": "Noch keine Nachrichten. Sag Hallo!",
+    "placeholder": "Nachricht schreiben…",
+    "send": "Senden",
+    "online": "Online"
   },
   "auth": {
     "dialogLabel": "Konto",
@@ -434,6 +444,7 @@
   },
   "routes": {
     "home": "Transcendence - Hauptmenü",
+	"chat": "Transcendence - Nachrichten",
     "play": "Transcendence - Spielen",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Datenschutz",
