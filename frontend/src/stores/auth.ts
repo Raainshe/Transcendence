@@ -52,6 +52,7 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref<string | null>(null)
   const user = ref<User | null>(null)
   const status = ref<AuthStatus>('idle')
+  const pendingToken = ref<string | null>(null)
 
   let refreshInFlight: Promise<void> | null = null
   let sessionRestore: Promise<void> | null = null
@@ -126,15 +127,56 @@ export const useAuthStore = defineStore('auth', () => {
     applyUser(freshUser)
   }
 
-  async function login(email: string, password: string): Promise<void> {
+  async function login(email: string, password: string): Promise<boolean> {
     status.value = 'loading'
     try {
-      const { user: nextUser, token: nextToken } = await authApi.login({ email, password })
-      setSession(nextToken, nextUser)
+      const result = await authApi.login({ email, password })
+      if ('two_factor_required' in result) {
+        pendingToken.value = result.pending_token
+        status.value = 'idle'
+        return true
+      }
+      setSession(result.token, result.user)
+      return false
     } catch (error) {
       status.value = token.value ? 'authenticated' : 'idle'
       throw error
     }
+  }
+
+  async function verifyTwoFactorLogin(code: string): Promise<void> {
+    if (!pendingToken.value) throw new Error('no pending two-factor challenge')
+    status.value = 'loading'
+    try {
+      const { token: nextToken } = await authApi.verifyLogin(pendingToken.value, code)
+      setBearerToken(nextToken)
+      const { user: freshUser } = await authApi.getMe()
+      setSession(nextToken, freshUser)
+      pendingToken.value = null
+    } catch (error) {
+      status.value = 'idle'
+      throw error
+    }
+  }
+
+  function cancelTwoFactorLogin(): void {
+    pendingToken.value = null
+    setBearerToken(null)
+    status.value = 'idle'
+  }
+
+  async function startEnable2FA(): Promise<void> {
+    await authApi.setup2FA()
+  }
+
+  async function confirmEnable2FA(code: string): Promise<void> {
+    await authApi.verify2FA(code)
+    await refreshMe()
+  }
+
+  async function disableTwoFactor(): Promise<void> {
+    await authApi.disable2FA()
+    await refreshMe()
   }
 
   async function register(username: string, email: string, password: string): Promise<void> {
@@ -238,6 +280,11 @@ export const useAuthStore = defineStore('auth', () => {
     status,
     isAuthenticated,
     login,
+    verifyTwoFactorLogin,
+    cancelTwoFactorLogin,
+    startEnable2FA,
+    confirmEnable2FA,
+    disableTwoFactor,
     register,
     logout,
     hydrate,

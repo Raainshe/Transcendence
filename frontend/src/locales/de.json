@@ -20,6 +20,7 @@
       "de": "DE",
       "fr": "FR"
     },
+	"chat": "Nachrichten",
     "homeAria": "Transcendence Startseite",
     "login": "Anmelden",
     "signUp": "Registrieren",
@@ -27,6 +28,15 @@
     "signedInAs": "Angemeldet als {username}",
     "friends": "Freunde",
     "friendsPending": "{count} offene Freundschaftsanfragen"
+  },
+  "chat": {
+    "title": "Nachrichten",
+    "noFriends": "Füge Freunde hinzu, um zu chatten.",
+    "selectFriend": "Wähle einen Freund aus, um zu chatten.",
+    "sayHi": "Noch keine Nachrichten. Sag Hallo!",
+    "placeholder": "Nachricht schreiben…",
+    "send": "Senden",
+    "online": "Online"
   },
   "auth": {
     "dialogLabel": "Konto",
@@ -39,6 +49,10 @@
     "submitLogin": "Anmelden",
     "submitRegister": "Konto erstellen",
     "close": "Schließen",
+	"verifyHint": "Wir haben einen 6-stelligen Code an deine Adresse gesendet. Gib ihn ein, um fortzufahren.",
+  	"code": "Bestätigungscode",
+  	"submitVerify": "Bestätigen",
+  	"cancel": "Abbrechen",
     "errors": {
       "required": "Bitte alle Felder ausfüllen.",
       "passwordMismatch": "Die Passwörter stimmen nicht überein.",
@@ -47,7 +61,8 @@
       "invalidCredentials": "Ungültige E-Mail oder ungültiges Passwort.",
       "emailTaken": "Diese E-Mail wird bereits verwendet.",
       "usernameTaken": "Dieser Benutzername ist bereits vergeben.",
-      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
+	  "invalidCode": "Dieser Code ist ungültig oder abgelaufen."
     }
   },
   "menu": {
@@ -313,6 +328,18 @@
     "badgesTitle": "Abzeichen",
     "seeAllAchievements": "Alle Erfolge anzeigen",
     "xpTitle": "Fortschritt",
+	"twoFactor": {
+		"title": "Zwei-Faktor-Authentifizierung",
+		"statusOn": "Die Zwei-Faktor-Authentifizierung ist aktiviert.",
+		"statusOff": "Die Zwei-Faktor-Authentifizierung ist deaktiviert.",
+		"enable": "2FA aktivieren",
+		"disable": "2FA deaktivieren",
+		"confirm": "Bestätigen",
+		"codeLabel": "Bestätigungscode",
+		"codeSent": "Wir haben dir einen Bestätigungscode gesendet.",
+		"enabled": "Die Zwei-Faktor-Authentifizierung ist jetzt aktiviert.",
+		"disabled": "Die Zwei-Faktor-Authentifizierung wurde deaktiviert."
+  	},
     "errors": {
       "usernameRequired": "Benutzername ist erforderlich.",
       "usernameTooLong": "Der Benutzername darf höchstens 32 Zeichen lang sein.",
@@ -451,6 +478,7 @@
   },
   "routes": {
     "home": "Transcendence - Hauptmenü",
+	"chat": "Transcendence - Nachrichten",
     "play": "Transcendence - Spielen",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Datenschutz",

@@ -40,9 +40,38 @@ export interface User {
   xp: number
 }
 
+export interface ChatMessage {
+  id: string
+  sender_id: string
+  recipient_id: string
+  body: string
+  created_at: string
+  read_at: string | null
+}
+
+export interface UnreadCount {
+  sender_id: string
+  count: number
+}
+
 export interface AuthResponse {
   user: User
   token: string
+}
+
+export interface TwoFactorRequiredResponse {
+  two_factor_required: true
+  pending_token: string
+}
+
+export type LoginResult = AuthResponse | TwoFactorRequiredResponse
+
+export interface VerifyLoginResponse {
+  token: string
+}
+
+export interface MessageResponse {
+  message: string
 }
 
 export interface RefreshResponse {
@@ -55,6 +84,14 @@ export interface MeResponse {
 
 export interface UserResponse {
   user: User
+}
+
+export interface ConversationResponse {
+  messages: ChatMessage[]
+}
+
+export interface UnreadResponse {
+  unread: UnreadCount[]
 }
 
 export interface GameSummary {

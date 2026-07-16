@@ -12,6 +12,8 @@ const (
 	TypePlayerDisconnected = "player.disconnected"
 	TypePlayerReconnected  = "player.reconnected"
 	TypeError              = "error"
+	TypeChatSend = "chat.send"
+	TypeChatMessage = "chat.message"
 
 	MatrixWidth        = 10
 	MatrixTotalHeight  = 40
@@ -38,4 +40,8 @@ func LobbyRoomID(lobbyID string) string {
 
 func MatchRoomID(gameID string) string {
 	return "match:" + gameID
+}
+
+func UserRoomID(userID string) string {
+	return "user:" + userID
 }

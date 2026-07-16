@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"backend/internal/service"
+	"backend/internal/middleware"
 )
 
 type AuthHandler struct {
@@ -69,6 +70,13 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Password: req.Password,
 	})
 	if err != nil {
+		if errors.Is(err, service.ErrTwoFARequired) {
+			writeJSON(w, http.StatusAccepted, map[string]any{
+				"two_factor_required": true,
+				"pending_token": token,
+			})
+			return
+		}
 		if errors.Is(err, service.ErrInvalidCreds) {
 			writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid credentials"})
 			return
@@ -78,6 +86,23 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"user": user, "token": token})
+}
+
+func (h *AuthHandler) VerifyLogin(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		PendingToken string `json:"pending_token"`
+		Code         string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+	token, err := h.auth.VerifyLogin(r.Context(), req.PendingToken, req.Code)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid code or session"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"token": token})
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
@@ -108,13 +133,39 @@ func (h *AuthHandler) OAuthCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Setup2FA(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.auth.RequestEnable2FA(r.Context(), userID); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not start 2FA setup"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "verification code sent"})
 }
 
 func (h *AuthHandler) Verify2FA(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
+	userID := middleware.UserIDFromContext(r.Context())
+	var req struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+	if err := h.auth.ConfirmEnable2FA(r.Context(), userID, req.Code); err != nil {
+		if errors.Is(err, service.ErrInvalidCode) {
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid or expired code"})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not enable 2FA"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "two-factor authentication enabled"})
 }
 
 func (h *AuthHandler) Disable2FA(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, http.StatusNotImplemented, map[string]string{"error": "not implemented"})
+	userID := middleware.UserIDFromContext(r.Context())
+	if err := h.auth.Disable2FA(r.Context(), userID); err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "could not disable 2FA"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"message": "two-factor authentication disabled"})
 }

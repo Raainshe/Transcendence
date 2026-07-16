@@ -129,6 +129,12 @@ watch(
             </span>
           </RouterLink>
           <RouterLink
+            :to="{ name: 'chat' }"
+            class="site-header__nav-link"
+          >
+            {{ t('header.chat') }}
+          </RouterLink>
+          <RouterLink
             :to="{ name: 'profile' }"
             class="site-header__user"
             :title="t('header.signedInAs', { username: user.username })"

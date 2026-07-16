@@ -31,6 +31,9 @@ const email = ref('')
 const password = ref('')
 const username = ref('')
 const confirmPassword = ref('')
+const code = ref('')
+const twoFactorStep = ref(false)
+const codeFieldRef = useTemplateRef<HTMLInputElement>('codeField')
 const errorMessage = ref<string | null>(null)
 const isSubmitting = ref(false)
 
@@ -45,6 +48,8 @@ watch(
     password.value = ''
     username.value = ''
     confirmPassword.value = ''
+    code.value = ''
+    twoFactorStep.value = false
     errorMessage.value = null
     isSubmitting.value = false
     void nextTick(() => {
@@ -85,6 +90,7 @@ function mapApiError(error: unknown): string {
       'username already in use': 'auth.errors.usernameTaken',
       'password must be at least 8 characters': 'auth.errors.passwordTooShort',
       'username, email and password are required': 'auth.errors.required',
+      'invalid code or session': 'auth.errors.invalidCode',
     }
     const mapped = known[error.message.toLowerCase()]
     if (mapped) {
@@ -131,7 +137,12 @@ async function onSubmit(): Promise<void> {
   isSubmitting.value = true
   try {
     if (isLogin.value) {
-      await auth.login(email.value.trim(), password.value)
+      const needsCode = await auth.login(email.value.trim(), password.value)
+      if (needsCode) {
+        twoFactorStep.value = true
+        void nextTick(() => codeFieldRef.value?.focus())
+        return
+      }
     } else {
       await auth.register(username.value.trim(), email.value.trim(), password.value)
     }
@@ -141,6 +152,31 @@ async function onSubmit(): Promise<void> {
   } finally {
     isSubmitting.value = false
   }
+}
+
+async function onSubmitCode(): Promise<void> {
+  errorMessage.value = null
+  if (!code.value.trim()) {
+    errorMessage.value = t('auth.errors.required')
+    return
+  }
+  isSubmitting.value = true
+  try {
+    await auth.verifyTwoFactorLogin(code.value.trim())
+    emit('close')
+  } catch (error) {
+    errorMessage.value = mapApiError(error)
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+function onCancelTwoFactor(): void {
+  auth.cancelTwoFactorLogin()
+  twoFactorStep.value = false
+  code.value = ''
+  password.value = ''
+  errorMessage.value = null
 }
 
 function setTab(tab: AuthModalTab): void {
@@ -166,7 +202,7 @@ function setTab(tab: AuthModalTab): void {
     >
       <h2 :id="titleId" class="auth-modal-panel__sr-title">{{ t('auth.dialogLabel') }}</h2>
 
-      <div class="auth-modal-panel__tabs" role="tablist" :aria-label="t('auth.dialogLabel')">
+      <div v-if="!twoFactorStep" class="auth-modal-panel__tabs" role="tablist" :aria-label="t('auth.dialogLabel')">
         <button
           type="button"
           role="tab"
@@ -189,7 +225,7 @@ function setTab(tab: AuthModalTab): void {
         </button>
       </div>
 
-      <form class="auth-modal-panel__form" @submit.prevent="onSubmit">
+      <form v-if="!twoFactorStep" class="auth-modal-panel__form" @submit.prevent="onSubmit">
         <div v-if="!isLogin" class="auth-modal-panel__field">
           <label class="auth-modal-panel__label" for="auth-username">{{ t('auth.username') }}</label>
           <input
@@ -253,6 +289,35 @@ function setTab(tab: AuthModalTab): void {
           </button>
           <button type="button" class="auth-modal-panel__close" :disabled="isSubmitting" @click="emit('close')">
             {{ t('auth.close') }}
+          </button>
+        </div>
+      </form>
+      <form v-if="twoFactorStep" class="auth-modal-panel__form" @submit.prevent="onSubmitCode">
+        <p class="auth-modal-panel__hint">{{ t('auth.verifyHint') }}</p>
+        <div class="auth-modal-panel__field">
+          <label class="auth-modal-panel__label" for="auth-code">{{ t('auth.code') }}</label>
+          <input
+            id="auth-code"
+            ref="codeField"
+            v-model="code"
+            type="text"
+            inputMode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            class="auth-modal-panel__input"
+            :disabled="isSubmitting"
+          />
+        </div>
+        <p v-if="errorMessage" :id="errorId" class="auth-modal-panel__error" role="alert">{{ errorMessage }}</p>
+        <div class="auth-modal-panel__actions">
+          <button type="submit" class="auth-modal-panel__submit" :disabled="isSubmitting">{{ t('auth.submitVerify') }}</button>
+          <button
+            type="button"
+            class="auth-modal-panel__close"
+            :disabled="isSubmitting"
+            @click="onCancelTwoFactor"
+          >
+            {{ t('auth.cancel') }}
           </button>
         </div>
       </form>

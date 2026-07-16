@@ -17,6 +17,7 @@ import (
 	"backend/internal/repository"
 	"backend/internal/service"
 	"backend/internal/ws"
+	"backend/internal/mailer"
 	"backend/migrations"
 )
 
@@ -33,6 +34,7 @@ type Server struct {
 	matchHandler        *handler.MatchHandler
 	wsHandler           *ws.Handler
 	achievementsHandler *handler.AchievementsHandler
+  chatHandler         *handler.ChatHandler
 }
 
 func NewServer() *http.Server {
@@ -68,15 +70,29 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameRepo := repository.NewGameRepository(dbService.DB())
 	relRepo := repository.NewRelationshipRepository(dbService.DB())
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
-	achievementsRepo := repository.NewAchievementsRepository(dbService.DB())
+	twoFactorRepo := repository.NewTwoFactorRepository(dbService.DB())
+	messageRepo := repository.NewMessageRepository(dbService.DB())
+  achievementsRepo := repository.NewAchievementsRepository(dbService.DB())
+
+	var mail mailer.Mailer
+	if host := os.Getenv("SMTP_HOST"); host != "" {
+		mail = mailer.NewSMTPMailer(
+			host, os.Getenv("SMTP_PORT"),
+			os.Getenv("SMTP_USERNAME"), os.Getenv("SMTP_PASSWORD"),
+			os.Getenv("SMTP_FROM"),
+		)
+	} else {
+		mail = mailer.LogMailer{}
+	}
 
 	hub := ws.NewHub()
-	gamificationSvc := service.NewGamificationService(achievementsRepo, gameRepo, userRepo)
-	authSvc := service.NewAuthService(userRepo, jwtSecret)
-	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, gamificationSvc, uploadDir)
-	gameSvc := service.NewGameService(gameRepo, gamificationSvc)
-	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub, gamificationSvc)
-	matchSvc := service.NewMatchService(gameRepo, lobbyRepo, gamificationSvc)
+	chatSvc := service.NewChatService(messageRepo, relRepo)
+	authSvc := service.NewAuthService(userRepo, twoFactorRepo, mail, jwtSecret)
+	userSvc := service.NewUserService(userRepo, fileRepo, relRepo, uploadDir)
+	gameSvc := service.NewGameService(gameRepo)
+	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)
+	matchSvc := service.NewMatchService(gameRepo, lobbyRepo)
+  gamificationSvc := service.NewGamificationService(achievementsRepo, gameRepo, userRepo)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -96,6 +112,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		matchHandler:        handler.NewMatchHandler(matchSvc),
 		wsHandler:           ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
 		achievementsHandler: handler.NewAchievementsHandler(gamificationSvc),
+    chatHandler: handler.NewChatHandler(chatSvc),
 	}
 
 	return &http.Server{

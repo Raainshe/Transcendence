@@ -28,10 +28,19 @@ type MatchEnder interface {
 	EndMatch(ctx context.Context, in model.EndMatchInput) (*model.MatchEndedPayload, error)
 }
 
+type ChatSender interface {
+	SendMessage(ctx context.Context, senderID, recipientID uuid.UUID, body string) (*model.Message, error)
+}
+
 type incomingMessage struct {
 	Type    string          `json:"type"`
 	Room    string          `json:"room"`
 	Payload json.RawMessage `json:"payload,omitempty"`
+}
+
+type chatSendPayload struct {
+	To string `json:"to"`
+	Body string `json:"body"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -44,10 +53,11 @@ type Handler struct {
 	lobbies   MemberChecker
 	games     GamePlayerChecker
 	matches   MatchEnder
+	chat ChatSender
 }
 
-func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder) *Handler {
-	h := &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches}
+func NewHandler(hub *Hub, jwtSecret string, lobbies MemberChecker, games GamePlayerChecker, matches MatchEnder, chat ChatSender) *Handler {
+	h := &Handler{hub: hub, jwtSecret: jwtSecret, lobbies: lobbies, games: games, matches: matches, chat: chat}
 	hub.SetDisconnectTimeoutHandler(h.forfeitOnDisconnect)
 	return h
 }
@@ -72,6 +82,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	client := NewClient(h.hub, conn, userID)
 	h.hub.Register(client)
+	h.hub.Subscribe(client, UserRoomID(userID.String()))
 
 	go client.WritePump()
 	client.ReadPump(func(c *Client, msg []byte) {
@@ -93,9 +104,35 @@ func (h *Handler) handleMessage(c *Client, msg []byte) {
 		h.handlePlayerState(c, strings.TrimSpace(incoming.Room), incoming.Payload)
 	case TypePlayerEliminated:
 		h.handlePlayerEliminated(c, strings.TrimSpace(incoming.Room), incoming.Payload)
+	case TypeChatSend:
+		h.handleChatSend(c, incoming.Payload)
 	default:
 		h.sendError(c, "unsupported message type")
 	}
+}
+
+func (h *Handler) handleChatSend(c *Client, rawPayload json.RawMessage) {
+	var p chatSendPayload
+	if err := json.Unmarshal(rawPayload, &p); err != nil {
+		h.sendError(c, "invalid message")
+		return
+	}
+	recipientID, err := uuid.Parse(strings.TrimSpace(p.To))
+	if err != nil {
+		h.sendError(c, "invalid recipient")
+		return
+	}
+	msg, err := h.chat.SendMessage(context.Background(), c.userID, recipientID, p.Body)
+	if err != nil {
+		h.sendError(c, err.Error())
+		return
+	}
+	env, err := NewEnvelope(TypeChatMessage, msg)
+	if err != nil {
+		return
+	}
+	h.hub.Broadcast(UserRoomID(recipientID.String()), env)
+	h.hub.Broadcast(UserRoomID(c.UserID().String()), env)
 }
 
 func (h *Handler) handleSubscribe(c *Client, room string) {

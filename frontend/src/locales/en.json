@@ -20,6 +20,7 @@
       "de": "DE",
       "fr": "FR"
     },
+	"chat": "Messages",
     "homeAria": "Transcendence home",
     "login": "Log in",
     "signUp": "Sign up",
@@ -27,6 +28,15 @@
     "signedInAs": "Signed in as {username}",
     "friends": "Friends",
     "friendsPending": "{count} pending friend requests"
+  },
+  "chat": {
+	"title": "Messages",
+	"noFriends": "Add friends to start chatting.",
+	"selectFriend": "Select a friend to start chatting.",
+	"sayHi": "No messages yet. Say hi!",
+	"placeholder": "Type a message…",
+	"send": "Send",
+	"online": "Online"
   },
   "auth": {
     "dialogLabel": "Account",
@@ -39,6 +49,10 @@
     "submitLogin": "Log in",
     "submitRegister": "Create account",
     "close": "Close",
+	"verifyHint": "We emailed a 6-digit code to your address. Enter it to continue.",
+	"code": "Verification code",
+	"submitVerify": "Verify",
+	"cancel": "Cancel",
     "errors": {
       "required": "Please fill in all fields.",
       "passwordMismatch": "Passwords do not match.",
@@ -47,7 +61,8 @@
       "invalidCredentials": "Invalid email or password.",
       "emailTaken": "That email is already in use.",
       "usernameTaken": "That username is already taken.",
-      "generic": "Something went wrong. Please try again."
+      "generic": "Something went wrong. Please try again.",
+	  "invalidCode": "That code is invalid or has expired."
     }
   },
   "menu": {
@@ -313,6 +328,18 @@
     "badgesTitle": "Badges",
     "seeAllAchievements": "See all achievements",
     "xpTitle": "Progression",
+	"twoFactor": {
+		"title": "Two-factor authentication",
+		"statusOn": "Two-factor authentication is enabled.",
+		"statusOff": "Two-factor authentication is disabled.",
+		"enable": "Enable 2FA",
+		"disable": "Disable 2FA",
+		"confirm": "Confirm",
+		"codeLabel": "Verification code",
+		"codeSent": "We emailed you a verification code.",
+		"enabled": "Two-factor authentication is now enabled.",
+		"disabled": "Two-factor authentication has been disabled."
+	},
     "errors": {
       "usernameRequired": "Username is required.",
       "usernameTooLong": "Username must be 32 characters or fewer.",
@@ -451,6 +478,7 @@
   },
   "routes": {
     "home": "Transcendence - Main Menu",
+	"chat": "Transcendence - Messages",
     "play": "Transcendence - Play",
     "credits": "Transcendence - Credits",
     "privacy": "Transcendence - Privacy",
