@@ -84,6 +84,7 @@ func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*model
 	hashStr := string(hash)
 
 	now := time.Now().UTC()
+
 	user := &model.User{
 		ID:           uuid.New(),
 		Username:     req.Username,

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"github.com/google/uuid"
@@ -23,6 +24,7 @@ type UserRepository interface {
 	ClearAvatar(ctx context.Context, id uuid.UUID) error
 	UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
+	AddXP(ctx context.Context, id uuid.UUID, xp int) error
 	Set2FAEnabled(ctx context.Context, id uuid.UUID, enabled bool) error
 }
 
@@ -41,12 +43,12 @@ func NewUserRepository(db *sql.DB) UserRepository {
 
 func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 	const q = `
-		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO users (id, username, email, password_hash, role, created_at, updated_at, xp)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 	`
 	_, err := r.db.ExecContext(ctx, q,
 		user.ID.String(), user.Username, user.Email,
-		user.PasswordHash, user.Role, user.CreatedAt, user.UpdatedAt,
+		user.PasswordHash, user.Role, user.CreatedAt, user.UpdatedAt, user.XP,
 	)
 	return err
 }
@@ -54,7 +56,7 @@ func (r *userRepository) Create(ctx context.Context, user *model.User) error {
 func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, xp, achievements
 		FROM users WHERE id = $1
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, id.String()))
@@ -63,7 +65,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Use
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, xp, achievements
 		FROM users WHERE LOWER(email) = LOWER($1)
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, email))
@@ -72,7 +74,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*model.
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*model.User, error) {
 	const q = `
 		SELECT id, username, email, password_hash, avatar_url, role,
-		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		       is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, xp, achievements
 		FROM users WHERE username = $1
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, username))
@@ -123,7 +125,7 @@ func (r *userRepository) Update(ctx context.Context, id uuid.UUID, req model.Upd
 			updated_at = now()
 		WHERE id = $1
 		RETURNING id, username, email, password_hash, avatar_url, role,
-		          is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at
+		          is_2fa_enabled, totp_secret, created_at, updated_at, last_seen_at, xp, achievements
 	`
 	return r.scanUser(r.db.QueryRowContext(ctx, q, id.String(), req.Username, req.AvatarURL))
 }
@@ -152,13 +154,22 @@ func (r *userRepository) UpdateLastSeen(ctx context.Context, id uuid.UUID) error
 	return err
 }
 
+func (r *userRepository) AddXP(ctx context.Context, id uuid.UUID, xp int) error {
+	_, err := r.db.ExecContext(ctx,
+		`UPDATE users SET xp = xp + $2 WHERE id = $1`,
+		id.String(), xp,
+	)
+	return err
+}
+
 func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
 	var u model.User
 	var idStr string
+	var achievementsJSON []byte
 	err := row.Scan(
 		&idStr, &u.Username, &u.Email, &u.PasswordHash, &u.AvatarURL,
 		&u.Role, &u.Is2FAEnabled, &u.TOTPSecret,
-		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt,
+		&u.CreatedAt, &u.UpdatedAt, &u.LastSeenAt, &u.XP, &achievementsJSON,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -167,5 +178,13 @@ func (r *userRepository) scanUser(row *sql.Row) (*model.User, error) {
 		return nil, err
 	}
 	u.ID, err = uuid.Parse(idStr)
-	return &u, err
+	if err != nil {
+		return nil, err
+	}
+	if len(achievementsJSON) > 0 {
+		if err := json.Unmarshal(achievementsJSON, &u.AchievementList); err != nil {
+			return nil, err
+		}
+	}
+	return &u, nil
 }

@@ -412,13 +412,14 @@ func (r *gameRepository) GetUserStats(ctx context.Context, userID uuid.UUID) (*m
 			COALESCE(SUM(CASE WHEN is_winner THEN 1 ELSE 0 END), 0) AS wins,
 			COALESCE(MAX(score), 0)                AS best_score,
 			COALESCE(SUM(lines_cleared), 0)        AS total_lines,
-			COALESCE(AVG(score)::int, 0)           AS avg_score
+			COALESCE(AVG(score)::int, 0)           AS avg_score,
+			COALESCE(SUM(score), 0)                AS total_score
 		FROM game_players
 		WHERE user_id = $1
 	`
 	var s model.UserStats
 	err := r.db.QueryRowContext(ctx, q, userID.String()).Scan(
-		&s.GamesPlayed, &s.Wins, &s.BestScore, &s.TotalLines, &s.AvgScore,
+		&s.GamesPlayed, &s.Wins, &s.BestScore, &s.TotalLines, &s.AvgScore, &s.TotalScore,
 	)
 	if err != nil {
 		return nil, err

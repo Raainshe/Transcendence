@@ -1,0 +1,109 @@
+.achievements-view {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--sp-6) var(--sp-4);
+    gap: var(--sp-5);
+}
+
+.achievements-view__header {
+    width: min(680px, 100%);
+    text-align: center;
+}
+
+.achievements-view__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(var(--fs-lg), 4vw, var(--fs-xl));
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    text-shadow:
+    0 0 8px rgba(0, 159, 220, 0.7),
+    0 0 18px rgba(0, 159, 220, 0.45);
+}
+
+.achievements-view__panel {
+    box-sizing: border-box;
+    width: min(680px, 100%);
+    padding: var(--sp-4);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-panel);
+}
+
+.achievements-view__status {
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+    color: var(--color-text-dim);
+}
+
+.achievements-view__status--error {
+  color: var(--color-danger, #f87171);
+}
+
+.achievements-view__table-wrap {
+    overflow-x: auto; /* scrollbar if content overflows */
+}
+
+.achievements-view__table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: var(--fs-xs);
+}
+
+.achievements-view__row--locked {
+    opacity: 0.35;
+}
+
+.achievements-view__status-cell {
+    white-space: nowrap;
+    font-family: var(--font-display);
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--t-green);
+}
+
+.achievements-view__row--locked .achievements-view__status-cell {
+    color: var(--color-text-dim);
+}
+
+/* table header */
+.achievements-view__table th {
+    padding: var(--sp-2) var(--sp-2);
+    text-align: left;
+    font-family: var(--font-display);
+    font-size: 0.5rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--color-text-dim);
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* table data */
+.achievements-view__table td {
+    padding: var(--sp-2);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    vertical-align: middle;
+}
+
+/* table row */ /* border, border-bottom, border-left, ... */
+.achievements-view__table tr:last-child td {
+    border-bottom: none;
+}
+
+.achievements-view__achievements {
+    text-transform: uppercase;
+    font-family: var(--font-display);
+    color: var(--accent);
+}
+
+.achievements-view__description {
+    color: var(--color-text-dim);
+    white-space: nowrap;
+}

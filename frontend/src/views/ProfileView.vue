@@ -10,6 +10,9 @@ import { ApiError, resolveAssetUrl } from '@/api/client'
 import * as usersApi from '@/api/users'
 import { useAuthStore } from '@/stores/auth'
 import type { UserStats } from '@/types/api'
+import { badgeDefinitions } from '@/types/badges'
+import AchievementBadge from '@/components/profile/AchievementBadge.vue'
+import XPBar from '@/components/profile/XPBar.vue'
 
 import '@/assets/styles/views/profile-view.css'
 
@@ -55,6 +58,19 @@ const usernameDirty = computed(
   () => user.value && username.value.trim() !== user.value.username,
 )
 
+const unlockedBadges = computed(() => {
+  if (!user.value?.achievement_list) return []
+  const a = user.value.achievement_list
+  return badgeDefinitions
+    .filter((def) => a[def.key] as boolean)
+    .map((def) => ({
+      key: def.key,
+      badgeName: def.badgeName,
+      tier: def.tier,
+      catImage: def.catImage,
+    }))
+})
+
 watch(
   user,
   (next) => {
@@ -64,6 +80,7 @@ watch(
 )
 
 onMounted(() => {
+  void auth.refreshMe()
   void loadStats()
 })
 
@@ -178,6 +195,7 @@ async function onAvatarSelected(event: Event): Promise<void> {
   isUploading.value = true
   try {
     await auth.uploadAvatar(file)
+    void auth.refreshMe()
   } catch (error) {
     avatarError.value = mapError(error)
   } finally {
@@ -306,6 +324,13 @@ async function onDeleteAccount(): Promise<void> {
       </form>
     </section>
 
+    <section class="profile-view__panel" aria-labelledby="profile-xp-heading">
+      <h2 id="profile-xp-heading" class="profile-view__section-title">
+        {{ t('profile.xpTitle') }}
+      </h2>
+      <XPBar :xp="user.xp ?? 0" />
+    </section>
+
     <section class="profile-view__panel" aria-labelledby="profile-stats-heading">
       <h2 id="profile-stats-heading" class="profile-view__section-title">
         {{ t('profile.statsTitle') }}
@@ -337,6 +362,29 @@ async function onDeleteAccount(): Promise<void> {
           <span class="profile-view__stat-label">{{ t('profile.statsAvg') }}</span>
         </div>
       </div>
+    </section>
+
+    <section class="profile-view__panel" aria-labelledby="profile-badges-heading">
+      <h2 id="profile-badges-heading" class="profile-view__section-title">
+        {{ t('profile.badgesTitle') }}
+      </h2>
+      <div class="profile-view__badges">
+        <div class="profile-view__badge-item" v-for="badge in unlockedBadges" :key="badge.key">
+          <AchievementBadge
+            :tier="badge.tier"
+            :catImage="badge.catImage"
+            :badgeName="badge.badgeName"
+            :title="t(`achievements.descriptions.${badge.key}`)"
+          />
+          <span class="profile-view__badge-name">{{ badge.badgeName }}</span>
+        </div>
+      </div>
+      <RouterLink
+        :to="{ name: 'achievements', params: { id: auth.user?.id } }"
+        class="profile-view__link"
+      >
+        {{ t('profile.seeAllAchievements') }}
+      </RouterLink>
     </section>
 
     <section class="profile-view__panel" aria-labelledby="profile-history-heading">

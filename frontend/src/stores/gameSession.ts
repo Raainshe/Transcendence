@@ -190,9 +190,9 @@ export const useGameSessionStore = defineStore('gameSession', () => {
     if (!payload) return
 
     submittedRunIds.add(record.runId)
-    void createGame(payload).catch(() => {
-      submittedRunIds.delete(record.runId)
-    })
+    void createGame(payload)
+    .then(() => {void auth.refreshMe()})
+    .catch(() => {submittedRunIds.delete(record.runId)})
   }
 
   function pause(): void {

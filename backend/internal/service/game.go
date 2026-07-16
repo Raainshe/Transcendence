@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/google/uuid"
 
@@ -10,11 +11,12 @@ import (
 )
 
 type GameService struct {
-	games repository.GameRepository
+	games        repository.GameRepository
+	gamification *GamificationService
 }
 
-func NewGameService(games repository.GameRepository) *GameService {
-	return &GameService{games: games}
+func NewGameService(games repository.GameRepository, gamification *GamificationService) *GameService {
+	return &GameService{games: games, gamification: gamification}
 }
 
 func (s *GameService) RecordMatch(ctx context.Context, userID uuid.UUID, req model.CreateGameRequest) (*model.Game, error) {
@@ -26,6 +28,12 @@ func (s *GameService) RecordMatch(ctx context.Context, userID uuid.UUID, req mod
 		CreatedAt:  req.StartedAt,
 		FinishedAt: &req.FinishedAt,
 	}
+
+	isWinner := req.IsWinner
+	if req.Mode != "multiplayer" {
+		isWinner = false
+	} //doIneed?
+
 	player := &model.GamePlayer{
 		ID:           uuid.New(),
 		GameID:       game.ID,
@@ -34,10 +42,14 @@ func (s *GameService) RecordMatch(ctx context.Context, userID uuid.UUID, req mod
 		LinesCleared: req.LinesCleared,
 		LevelReached: req.LevelReached,
 		Placement:    &placement,
-		IsWinner:     req.IsWinner,
+		IsWinner:     isWinner,
 	}
 	if err := s.games.RecordMatch(ctx, game, player); err != nil {
 		return nil, err
+	}
+	err := s.gamification.OnGameEnd(ctx, userID, *player, *game)
+	if err != nil {
+		log.Printf("achievement check failed for user %s: %v", userID, err)
 	}
 	return game, nil
 }

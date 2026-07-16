@@ -16,12 +16,13 @@ var (
 )
 
 type MatchService struct {
-	games   repository.GameRepository
-	lobbies repository.LobbyRepository
+	games        repository.GameRepository
+	lobbies      repository.LobbyRepository
+	gamification *GamificationService
 }
 
-func NewMatchService(games repository.GameRepository, lobbies repository.LobbyRepository) *MatchService {
-	return &MatchService{games: games, lobbies: lobbies}
+func NewMatchService(games repository.GameRepository, lobbies repository.LobbyRepository, gamification *GamificationService) *MatchService {
+	return &MatchService{games: games, lobbies: lobbies, gamification: gamification}
 }
 
 func (s *MatchService) GetMatch(ctx context.Context, callerID, gameID uuid.UUID) (*model.MatchDetail, error) {

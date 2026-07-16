@@ -59,4 +59,5 @@ type UserStats struct {
 	BestScore   int `json:"best_score"`
 	TotalLines  int `json:"total_lines"`
 	AvgScore    int `json:"avg_score"`
+	TotalScore	int `json:"total_score"`
 }

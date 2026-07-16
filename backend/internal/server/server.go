@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	_ "github.com/joho/godotenv/autoload"
 	"github.com/google/uuid"
+	_ "github.com/joho/godotenv/autoload"
 
 	"backend/internal/database"
 	"backend/internal/handler"
@@ -22,18 +22,19 @@ import (
 )
 
 type Server struct {
-	port        int
-	db          database.Service
-	jwtSecret   string
-	uploadDir   string
-	onSeen      func(uuid.UUID)
-	authHandler  *handler.AuthHandler
-	userHandler  *handler.UserHandler
-	gameHandler  *handler.GameHandler
-	lobbyHandler *handler.LobbyHandler
-	matchHandler *handler.MatchHandler
-	wsHandler    *ws.Handler
-	chatHandler *handler.ChatHandler
+	port                int
+	db                  database.Service
+	jwtSecret           string
+	uploadDir           string
+	onSeen              func(uuid.UUID)
+	authHandler         *handler.AuthHandler
+	userHandler         *handler.UserHandler
+	gameHandler         *handler.GameHandler
+	lobbyHandler        *handler.LobbyHandler
+	matchHandler        *handler.MatchHandler
+	wsHandler           *ws.Handler
+	achievementsHandler *handler.AchievementsHandler
+  chatHandler         *handler.ChatHandler
 }
 
 func NewServer() *http.Server {
@@ -71,6 +72,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	lobbyRepo := repository.NewLobbyRepository(dbService.DB())
 	twoFactorRepo := repository.NewTwoFactorRepository(dbService.DB())
 	messageRepo := repository.NewMessageRepository(dbService.DB())
+  achievementsRepo := repository.NewAchievementsRepository(dbService.DB())
 
 	var mail mailer.Mailer
 	if host := os.Getenv("SMTP_HOST"); host != "" {
@@ -90,6 +92,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameSvc := service.NewGameService(gameRepo)
 	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub)
 	matchSvc := service.NewMatchService(gameRepo, lobbyRepo)
+  gamificationSvc := service.NewGamificationService(achievementsRepo, gameRepo, userRepo)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -97,18 +100,19 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	}
 
 	srv := &Server{
-		port:        port,
-		db:          dbService,
-		jwtSecret:   jwtSecret,
-		uploadDir:   uploadDir,
-		onSeen:      onSeen,
-		authHandler:  handler.NewAuthHandler(authSvc),
-		userHandler:  handler.NewUserHandler(userSvc),
-		gameHandler:  handler.NewGameHandler(gameSvc),
-		lobbyHandler: handler.NewLobbyHandler(lobbySvc),
-		matchHandler: handler.NewMatchHandler(matchSvc),
-		wsHandler:    ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc, chatSvc),
-		chatHandler: handler.NewChatHandler(chatSvc),
+		port:                port,
+		db:                  dbService,
+		jwtSecret:           jwtSecret,
+		uploadDir:           uploadDir,
+		onSeen:              onSeen,
+		authHandler:         handler.NewAuthHandler(authSvc),
+		userHandler:         handler.NewUserHandler(userSvc),
+		gameHandler:         handler.NewGameHandler(gameSvc),
+		lobbyHandler:        handler.NewLobbyHandler(lobbySvc),
+		matchHandler:        handler.NewMatchHandler(matchSvc),
+		wsHandler:           ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc),
+		achievementsHandler: handler.NewAchievementsHandler(gamificationSvc),
+    chatHandler: handler.NewChatHandler(chatSvc),
 	}
 
 	return &http.Server{

@@ -304,6 +304,7 @@ export const useMatchStore = defineStore('match', () => {
   function applyMatchEnded(payload: MatchEndedPayload): void {
     matchEnded.value = true
     matchResults.value = payload
+    void auth.refreshMe()
     useGameSessionStore().applyServerMatchEnd(payload)
     socket.disconnect()
   }

@@ -145,3 +145,45 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
+
+.user-profile-view__badges {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--sp-3);
+  align-items: flex-start;
+}
+
+.user-profile-view__badge-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-2);
+  width: 80px;
+}
+
+.user-profile-view__badge-name {
+  font-family: var(--font-display);
+  font-size: 0.45rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+  text-align: center;
+  max-width: 80px;
+  line-height: 1.4;
+}
+
+.user-profile-view__link {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent-selected);
+  align-self: flex-start;
+}
+
+.user-profile-view__link:hover,
+.user-profile-view__link:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  outline: none;
+}
