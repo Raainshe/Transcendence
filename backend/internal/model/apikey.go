@@ -16,7 +16,7 @@ type APIKey struct {
 	RevokedAt  *time.Time
 }
 
-type APIKeyView struct {
+type APIKeyList struct {
 	ID         uuid.UUID  `json:"id"`
 	Name       string     `json:"name"`
 	CreatedAt  time.Time  `json:"created_at"`
