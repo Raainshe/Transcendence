@@ -19,6 +19,8 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       # Vite dev proxy: use host-published port (works even if service DNS differs).
+      #On native linux machines we change this to http://app:8080
+      #On wsl we need to use http://host.docker.internal:8080
       API_PROXY_TARGET: http://host.docker.internal:8080
     extra_hosts:
       - host.docker.internal:host-gateway
