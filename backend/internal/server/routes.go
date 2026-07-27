@@ -82,6 +82,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Get("/users/me/blocks", s.userHandler.GetBlockedUsers)
 			r.Post("/users/me/block/{id}", s.userHandler.BlockUser)
 			r.Delete("/users/me/block/{id}", s.userHandler.UnblockUser)
+			r.Get("/users/me/api-keys", s.apiHandler.List)
+			r.Post("/users/me/api-keys", s.apiHandler.Create)
+			r.Delete("/users/me/api-keys/{id}", s.apiHandler.Revoke)
 		})
 
 		// Games

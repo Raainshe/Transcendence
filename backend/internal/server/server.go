@@ -35,6 +35,7 @@ type Server struct {
 	wsHandler           *ws.Handler
 	achievementsHandler *handler.AchievementsHandler
 	chatHandler         *handler.ChatHandler
+	apiHandler          *handler.APIKeyHandler
 }
 
 func NewServer() *http.Server {
@@ -73,6 +74,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	twoFactorRepo := repository.NewTwoFactorRepository(dbService.DB())
 	messageRepo := repository.NewMessageRepository(dbService.DB())
 	achievementsRepo := repository.NewAchievementsRepository(dbService.DB())
+	apiRepo := repository.NewAPIKeyRepository(dbService.DB())
 
 	var mail mailer.Mailer
 	if host := os.Getenv("SMTP_HOST"); host != "" {
@@ -93,6 +95,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 	gameSvc := service.NewGameService(gameRepo, gamificationSvc)
 	lobbySvc := service.NewLobbyService(lobbyRepo, gameRepo, hub, gamificationSvc)
 	matchSvc := service.NewMatchService(gameRepo, lobbyRepo, gamificationSvc)
+	apiSvc := service.NewAPIKeyService(apiRepo)
 
 	onSeen := func(id uuid.UUID) {
 		// Best-effort; errors don't surface to the request handler.
@@ -113,6 +116,7 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		wsHandler:           ws.NewHandler(hub, jwtSecret, lobbySvc, gameRepo, matchSvc, chatSvc),
 		achievementsHandler: handler.NewAchievementsHandler(gamificationSvc),
 		chatHandler:         handler.NewChatHandler(chatSvc),
+		apiHandler:          handler.NewAPIKeyHandler(apiSvc),
 	}
 
 	return &http.Server{
