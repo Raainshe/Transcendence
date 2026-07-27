@@ -14,6 +14,8 @@ type APIKeyRepository interface {
 	Create(ctx context.Context, apimod *model.APIKey) error
 	FindByHash(ctx context.Context, keyHash string) (*model.APIKey, error)
 	ListForUser(ctx context.Context, userID uuid.UUID) ([]model.APIKeyList, error)
+	Revoke(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	TouchLastUsed(ctx context.Context, id uuid.UUID) error
 }
 
 type apiKeyRepository struct {
@@ -85,10 +87,33 @@ func (r *apiKeyRepository) ListForUser(ctx context.Context, userID uuid.UUID) ([
 	return alist, rows.Err()
 }
 
-func Revoke(ctx context.Context, id uuid.UUID) error {
-
+func (r *apiKeyRepository) Revoke(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	const q = `
+		UPDATE api_keys SET
+		revoked_at = now()
+		WHERE id = $1 AND user_id = $2
+	`
+	res, err := r.db.ExecContext(ctx, q, id.String(), userID.String())
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
 
-func TouchLastUsed(ctx context.Context, id uuid.UUID) error {
+func (r *apiKeyRepository) TouchLastUsed(ctx context.Context, id uuid.UUID) error {
+	const q = `
+		UPDATE api_keys SET
+		last_used_at = now()
+		WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, q, id.String())
 
+	return err
 }
