@@ -36,6 +36,8 @@ type Server struct {
 	achievementsHandler *handler.AchievementsHandler
 	chatHandler         *handler.ChatHandler
 	apiHandler          *handler.APIKeyHandler
+	publicHandler       *handler.PublicHandler
+	apiSvc              *service.APIKeyService
 }
 
 func NewServer() *http.Server {
@@ -117,6 +119,8 @@ func NewServerWithDB(port int, dbService database.Service, jwtSecret, uploadDir 
 		achievementsHandler: handler.NewAchievementsHandler(gamificationSvc),
 		chatHandler:         handler.NewChatHandler(chatSvc),
 		apiHandler:          handler.NewAPIKeyHandler(apiSvc),
+		publicHandler:       handler.NewPublicHandler(gameSvc, lobbySvc, userSvc),
+		apiSvc:              apiSvc,
 	}
 
 	return &http.Server{

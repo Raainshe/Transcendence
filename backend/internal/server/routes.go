@@ -32,6 +32,18 @@ func (s *Server) RegisterRoutes() http.Handler {
 	// Serve uploaded files (avatars, etc.) — no directory listings.
 	r.Handle("/uploads/*", http.StripPrefix("/uploads/", noDirListing(s.uploadDir, http.FileServer(http.Dir(s.uploadDir)))))
 
+	r.Route("/api/public/v1", func(r chi.Router) {
+		r.Use(mw.MaxBodyBytes(1 << 20))
+		r.Use(mw.APIKeyAuth(s.apiSvc))
+		r.Use(mw.RateLimit(2, 10))
+
+		r.Get("/leaderboard", s.publicHandler.GetLeaderboard)
+		r.Get("/users/{id}/stats", s.publicHandler.GetUserStats)
+		//r.Post("/lobbies", s.lobbyHandler.Create)
+		//r.Put("/lobbies/{id}", s.lobbyHandler.UpdateLobby)
+		//r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobb)
+	})
+
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(mw.MaxBodyBytes(1 << 20)) // 1 MB cap for JSON bodies
 
