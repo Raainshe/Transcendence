@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"backend/internal/middleware"
 	"backend/internal/model"
 	"backend/internal/repository"
 	"backend/internal/service"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -33,6 +36,23 @@ type publicUserStats struct {
 	BestScore   int `json:"best_score"`
 	TotalLines  int `json:"total_lines"`
 	AvgScore    int `json:"avg_score"`
+}
+
+type publicLobbyMember struct {
+	UserID    uuid.UUID `json:"user_id"`
+	Username  string    `json:"username"`
+	AvatarURL *string   `json:"avatar_url"`
+	IsReady   bool      `json:"is_ready"`
+}
+
+type publicLobby struct {
+	ID         uuid.UUID           `json:"id"`
+	HostUserID uuid.UUID           `json:"host_user_id"`
+	InviteCode string              `json:"invite_code"`
+	MaxPlayers int                 `json:"max_players"`
+	Status     string              `json:"status"`
+	CreatedAt  time.Time           `json:"created_at"`
+	Members    []publicLobbyMember `json:"members"`
 }
 
 func NewPublicHandler(games *service.GameService, lobby *service.LobbyService, user *service.UserService) *PublicHandler {
@@ -103,3 +123,45 @@ func toPublicUserStats(stats *model.UserStats) publicUserStats {
 	}
 	return ps
 }
+
+func (h *PublicHandler) CreateLobby(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+
+	var req struct {
+		MaxPlayers int `json:"max_players"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	lobby, err := h.lobby.CreateLobby(r.Context(), userID, req.MaxPlayers)
+	if err != nil {
+		writeLobbyError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, map[string]any{"lobby": toPublicLobby(lobby)})
+}
+
+func toPublicLobby(d *model.LobbyDetail) publicLobby {
+	members := make([]publicLobbyMember, 0, len(d.Members))
+	for _, m := range d.Members {
+		members = append(members, publicLobbyMember{
+			UserID:    m.UserID,
+			Username:  m.Username,
+			AvatarURL: m.AvatarURL,
+			IsReady:   m.IsReady,
+		})
+	}
+	return publicLobby{
+		ID:         d.ID,
+		HostUserID: d.HostUserID,
+		InviteCode: d.InviteCode,
+		MaxPlayers: d.MaxPlayers,
+		Status:     d.Status,
+		CreatedAt:  d.CreatedAt,
+		Members:    members,
+	}
+}
+

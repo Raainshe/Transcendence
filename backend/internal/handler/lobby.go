@@ -34,7 +34,7 @@ func (h *LobbyHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.CreateLobby(r.Context(), userID, req.MaxPlayers)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (h *LobbyHandler) Join(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.JoinLobby(r.Context(), userID, id)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -117,7 +117,7 @@ func (h *LobbyHandler) JoinByCode(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.JoinLobbyByCode(r.Context(), userID, code)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -133,7 +133,7 @@ func (h *LobbyHandler) Leave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.lobbies.LeaveLobby(r.Context(), userID, id); err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -156,7 +156,7 @@ func (h *LobbyHandler) SetReady(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.SetReady(r.Context(), userID, id, req.Ready)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -173,14 +173,14 @@ func (h *LobbyHandler) Start(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.lobbies.StartLobby(r.Context(), userID, id)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, result)
 }
 
-func (h *LobbyHandler) writeLobbyError(w http.ResponseWriter, err error) {
+func writeLobbyError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, repository.ErrNotFound):
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lobby not found"})
