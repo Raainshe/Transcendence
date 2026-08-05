@@ -19,11 +19,11 @@ func TestRateLimit(t *testing.T) {
 		userA := uuid.New()
 		userB := uuid.New()
 
-		plain := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		})
 
-		limited := middleware.RateLimit(1, 2)(plain)
+		limited := middleware.RateLimit(1, 2)(next)
 
 		s := func(uid uuid.UUID) *service.APIKeyService {
 			repo := &testutil.MockAPIKeyRepo{
