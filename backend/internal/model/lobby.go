@@ -12,14 +12,15 @@ const (
 )
 
 type Lobby struct {
-	ID          uuid.UUID  `json:"id"`
-	HostUserID  uuid.UUID  `json:"host_user_id"`
-	InviteCode  string     `json:"invite_code"`
-	MaxPlayers  int        `json:"max_players"`
-	Status      string     `json:"status"`
-	GameID      *uuid.UUID `json:"game_id,omitempty"`
-	SharedSeed  *int64     `json:"shared_seed,omitempty"`
-	CreatedAt   time.Time  `json:"created_at"`
+	ID         uuid.UUID  `json:"id"`
+	HostUserID uuid.UUID  `json:"host_user_id"`
+	InviteCode string     `json:"invite_code"`
+	MaxPlayers int        `json:"max_players"`
+	Status     string     `json:"status"`
+	GameID     *uuid.UUID `json:"game_id,omitempty"`
+	SharedSeed *int64     `json:"shared_seed,omitempty"`
+	CreatedAt  time.Time  `json:"created_at"`
+	Name       string     `json:"name"`
 }
 
 type LobbyMemberView struct {
