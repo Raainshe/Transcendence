@@ -373,6 +373,7 @@ type MockLobbyRepo struct {
 	MemberCountFn            func(ctx context.Context, lobbyID uuid.UUID) (int, error)
 	IsMemberFn               func(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
 	FindByGameIDFn           func(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
+	UpdateLobbyNameFn        func(ctx context.Context, lobbyID uuid.UUID, name string) error
 }
 
 func (m *MockLobbyRepo) Create(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error {
@@ -452,6 +453,13 @@ func (m *MockLobbyRepo) FindByGameID(ctx context.Context, gameID uuid.UUID) (*mo
 		return m.FindByGameIDFn(ctx, gameID)
 	}
 	return nil, repository.ErrNotFound
+}
+
+func (m *MockLobbyRepo) UpdateLobbyName(ctx context.Context, lobbyID uuid.UUID, name string) error {
+	if m.UpdateLobbyNameFn != nil {
+		return m.UpdateLobbyNameFn(ctx, lobbyID, name)
+	}
+	return nil
 }
 
 // ── Lobby broadcaster mock ────────────────────────────────────────────────────
