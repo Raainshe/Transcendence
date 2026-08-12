@@ -39,9 +39,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 		r.Get("/leaderboard", s.publicHandler.GetLeaderboard)
 		r.Get("/users/{id}/stats", s.publicHandler.GetUserStats)
-		//r.Post("/lobbies", s.lobbyHandler.Create)
-		//r.Put("/lobbies/{id}", s.lobbyHandler.UpdateLobby)
-		//r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobb)
+		r.Post("/lobbies", s.publicHandler.CreateLobby)
+		r.Put("/lobbies/{id}", s.publicHandler.UpdateLobbyName)
+		r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobby)
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
@@ -128,6 +128,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Delete("/lobbies/{id}/leave", s.lobbyHandler.Leave)
 			r.Post("/lobbies/{id}/ready", s.lobbyHandler.SetReady)
 			r.Post("/lobbies/{id}/start", s.lobbyHandler.Start)
+			r.Put("/lobbies/{id}", s.lobbyHandler.UpdateLobbyName)
 		})
 	})
 

@@ -52,6 +52,7 @@ type publicLobby struct {
 	MaxPlayers int                 `json:"max_players"`
 	Status     string              `json:"status"`
 	CreatedAt  time.Time           `json:"created_at"`
+	Name       string              `json:"name"`
 	Members    []publicLobbyMember `json:"members"`
 }
 
@@ -70,7 +71,7 @@ func (h *PublicHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch leaderboard"})
 		return
 	}
-	writeJSON(w, 200, map[string]any{"leaderboard": toPublicLeaderboard(entries)})
+	writeJSON(w, http.StatusOK, map[string]any{"leaderboard": toPublicLeaderboard(entries)})
 }
 
 func (h *PublicHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
@@ -94,7 +95,7 @@ func (h *PublicHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch user stats"})
 		return
 	}
-	writeJSON(w, 200, map[string]any{"stats": toPublicUserStats(stats)})
+	writeJSON(w, http.StatusOK, map[string]any{"stats": toPublicUserStats(stats)})
 }
 
 func toPublicLeaderboard(entries []model.LeaderboardEntry) []publicLeaderboardEntry {
@@ -161,7 +162,46 @@ func toPublicLobby(d *model.LobbyDetail) publicLobby {
 		MaxPlayers: d.MaxPlayers,
 		Status:     d.Status,
 		CreatedAt:  d.CreatedAt,
+		Name:       d.Name,
 		Members:    members,
 	}
 }
 
+func (h *PublicHandler) DeleteLobby(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid lobby id"})
+		return
+	}
+	err = h.lobby.CloseLobby(r.Context(), userID, id)
+	if err != nil {
+		writeLobbyError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *PublicHandler) UpdateLobbyName(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid lobby id"})
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	lobby, err := h.lobby.UpdateLobbyName(r.Context(), userID, id, req.Name)
+	if err != nil {
+		writeLobbyError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"lobby": toPublicLobby(lobby)})
+}
