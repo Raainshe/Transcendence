@@ -251,7 +251,10 @@
       "notAllReady": "All players must be ready before starting.",
       "notMember": "You are not a member of this lobby.",
       "codeRequired": "Enter an invite code.",
-      "renameFailed": "Couldn't rename lobby."
+      "renameFailed": "Couldn't rename lobby.",
+      "nameRequired": "Lobby name is required",
+      "nameTooLong": "Lobby name too long.",
+      "notWaiting": "Lobby is not accepting changes."
     }
   },
   "legal": {

@@ -233,6 +233,11 @@
     "statusClosed": "Fermé",
     "closedHostLeft": "L'hôte a quitté le salon.",
     "closedStarted": "La partie a commencé.",
+    "name": "Nom du salon",
+    "saved": "Nom du salon enregistré",
+    "save": "Enregistrer le nom du salon",
+    "saving": "Enregistrement du nom...",
+    "unnamed": "Salon sans nom",
     "errors": {
       "generic": "Une erreur s'est produite. Réessayez.",
       "notFound": "Salon introuvable.",
@@ -245,7 +250,11 @@
       "notEnoughPlayers": "Au moins 2 joueurs sont requis pour lancer.",
       "notAllReady": "Tous les joueurs doivent être prêts.",
       "notMember": "Vous n'êtes pas membre de ce salon.",
-      "codeRequired": "Entrez un code d'invitation."
+      "codeRequired": "Entrez un code d'invitation.",
+      "renameFailed": "Impossible de renommer le salon.",
+      "nameRequired": "Le nom du salon est obligatoire.",
+      "nameTooLong": "Le nom du salon est trop long.",
+      "notWaiting": "Le salon n'accepte pas les modifications."
     }
   },
   "legal": {
