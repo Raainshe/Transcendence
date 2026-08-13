@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -43,6 +43,17 @@ const readyButtonLabel = computed(() =>
 )
 
 const lobbyName = ref('')
+
+watch(
+  () => lobbyStore.lobby?.name,
+  (name) => {
+    lobbyName.value = name ?? ''
+  },
+  { immediate: true },
+)
+
+const formError = computed(() => lobbyStore.error)
+
 const nameSuccess = ref(false)
 
 const nameChanged = computed(
@@ -190,7 +201,7 @@ onBeforeUnmount(() => {
               maxlength="64"
               :disabled="isSaving"
             />
-            <p v-if="formSuccess" class="lobby-view__name-message" role="status">{{ t('lobby.saved') }}</p>
+            <p v-if="nameSuccess" class="lobby-view__name-message" role="status">{{ t('lobby.saved') }}</p>
             <p v-if="formError" class="lobby-view__error" role="alert">{{ formError }}</p>
             <button
             type="submit"
