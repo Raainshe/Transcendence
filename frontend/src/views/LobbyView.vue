@@ -42,6 +42,17 @@ const readyButtonLabel = computed(() =>
   lobbyStore.myMember?.is_ready ? t('lobby.notReady') : t('lobby.ready'),
 )
 
+const lobbyName = ref('')
+const nameSuccess = ref(false)
+
+const nameChanged = computed(
+  () => lobbyStore.lobby && lobbyName.value.trim() !== (lobbyStore.lobby.name ?? '')
+)
+
+const canEditName = computed(
+  () => lobbyStore.isHost && lobbyStore.lobby?.status === 'waiting'
+)
+
 function memberInitials(member: LobbyMember): string {
   return member.username.slice(0, 2).toUpperCase()
 }
@@ -109,6 +120,14 @@ async function handleLeave(): Promise<void> {
   void router.push({ name: 'home' })
 }
 
+async function onSaveLobbyName() {
+  nameSuccess.value = false
+  const next = lobbyName.value.trim()
+  if (!next || !nameChanged.value) return
+  const ok = await lobbyStore.rename(next)
+  if (ok) nameSuccess.value = true
+}
+
 onMounted(async () => {
   const id = lobbyId.value
   if (!id) {
@@ -159,6 +178,34 @@ onBeforeUnmount(() => {
     <p v-else-if="lobbyStore.error" class="lobby-view__error">{{ lobbyStore.error }}</p>
 
     <section v-else-if="lobbyStore.lobby" class="lobby-view__panel">
+      <div class="lobby-view__name">
+        <template v-if="canEditName">
+          <form class="lobby-view__field" @submit.prevent="onSaveLobbyName">
+            <label class="lobby-view__name-label" for="lobby-name">{{ t('lobby.name') }}</label>
+            <input
+              id="lobby-name"
+              v-model="lobbyName"
+              type="text"
+              class="lobby-view__name-input"
+              maxlength="64"
+              :disabled="isSaving"
+            />
+            <p v-if="formSuccess" class="lobby-view__name-message" role="status">{{ t('lobby.saved') }}</p>
+            <p v-if="formError" class="lobby-view__error" role="alert">{{ formError }}</p>
+            <button
+            type="submit"
+            class="lobby-view__button"
+            :disabled="isSaving || !nameChanged"
+            >
+              {{ isSaving ? t('lobby.saving') : t('lobby.save') }}
+            </button>
+          </form>
+        </template>
+        <template v-else>
+          <label class="lobby-view__name-label" for="lobby-name">{{ t('lobby.name') }}</label>
+          <h2 class="lobby-view__name-display">{{ lobbyStore.lobby?.name || t('lobby.unnamed') }}</h2>
+        </template>
+      </div>
       <div class="lobby-view__invite">
         <span class="lobby-view__invite-label">{{ t('lobby.inviteCode') }}</span>
         <div class="lobby-view__invite-row">

@@ -5,6 +5,7 @@ import type {
   LobbyResponse,
   SetReadyPayload,
   StartLobbyResult,
+  RenameLobbyPayload,
 } from '@/types/api'
 
 export function createLobby(payload: CreateLobbyPayload): Promise<LobbyResponse> {
@@ -42,4 +43,11 @@ export function startLobby(id: string): Promise<StartLobbyResult> {
 
 export function leaveLobby(id: string): Promise<{ status: string }> {
   return apiFetch<{ status: string }>(`/lobbies/${id}/leave`, { method: 'DELETE' })
+}
+
+export function renameLobby(id: string, payload: RenameLobbyPayload): Promise<LobbyResponse> {
+  return apiFetch<LobbyResponse>(`/lobbies/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  })
 }

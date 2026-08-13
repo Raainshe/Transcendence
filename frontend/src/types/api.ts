@@ -211,6 +211,7 @@ export interface LobbyDetail {
   shared_seed: number | null
   created_at: string
   members: LobbyMember[]
+  name: string
 }
 
 export interface LobbyResponse {
@@ -227,6 +228,10 @@ export interface JoinLobbyByCodePayload {
 
 export interface SetReadyPayload {
   ready: boolean
+}
+
+export interface RenameLobbyPayload {
+  name: string
 }
 
 export interface MatchStartPlayer {

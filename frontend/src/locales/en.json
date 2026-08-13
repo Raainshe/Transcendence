@@ -233,6 +233,11 @@
     "statusClosed": "Closed",
     "closedHostLeft": "The host left and the lobby was closed.",
     "closedStarted": "The match has started.",
+    "name": "Lobby name",
+    "saved": "Lobby name saved",
+    "save": "Save Lobby name",
+    "saving": "Saving name..",
+    "unnamed": "Lobby with no name",
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "notFound": "Lobby not found.",
@@ -245,7 +250,8 @@
       "notEnoughPlayers": "At least 2 players are required to start.",
       "notAllReady": "All players must be ready before starting.",
       "notMember": "You are not a member of this lobby.",
-      "codeRequired": "Enter an invite code."
+      "codeRequired": "Enter an invite code.",
+      "renameFailed": "Couldn't rename lobby."
     }
   },
   "legal": {

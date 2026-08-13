@@ -102,6 +102,62 @@
   line-height: 1.4;
 }
 
+.lobby-view__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-1);
+}
+
+.lobby-view__name {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.lobby-view__name-label {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-dim);
+}
+
+.lobby-view__name-input {
+  padding: var(--sp-2) var(--sp-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+.lobby-view__name-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.lobby-view__name-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.lobby-view__name-message {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--accent-selected);
+  margin: 0;
+}
+
+.lobby-view__name-display {
+  font-family: var(--font-display);
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-selected);
+}
+
 .lobby-view__list {
   list-style: none;
   margin: 0;
