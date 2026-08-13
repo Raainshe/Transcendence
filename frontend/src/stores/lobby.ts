@@ -111,6 +111,7 @@ export const useLobbyStore = defineStore('lobby', () => {
         'invite_code is required': 'lobby.errors.codeRequired',
         'lobby name is required': 'lobby.errors.nameRequired',
         'lobby name must be 64 characters or fewer': 'lobby.errors.nameTooLong',
+        'lobby is not accepting changes': 'lobby.errors.notWaiting',
       }
       const mapped = known[err.message.toLowerCase()]
       if (mapped) return i18n.global.t(mapped)

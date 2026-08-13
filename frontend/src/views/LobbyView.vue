@@ -64,6 +64,8 @@ const canEditName = computed(
   () => lobbyStore.isHost && lobbyStore.lobby?.status === 'waiting'
 )
 
+const isSaving = computed(() => lobbyStore.actionBusy)
+
 function memberInitials(member: LobbyMember): string {
   return member.username.slice(0, 2).toUpperCase()
 }
