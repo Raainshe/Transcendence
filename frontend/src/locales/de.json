@@ -233,7 +233,10 @@
     "statusClosed": "Geschlossen",
     "closedHostLeft": "Der Host hat die Lobby verlassen.",
     "closedStarted": "Das Match hat begonnen.",
-    "errors": {
+    "notices": {
+      "redirectedToExisting": "Du bist bereits in einer Lobby — wir haben dich dorthin zurückgebracht. Verlasse sie, um eine neue zu starten."
+    },
+	"errors": {
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "notFound": "Lobby nicht gefunden.",
       "invalidMaxPlayers": "Spielerzahl muss zwischen 2 und 4 liegen.",

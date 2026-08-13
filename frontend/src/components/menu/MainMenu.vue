@@ -142,6 +142,12 @@ async function startNewGame() {
       gameAudio.stopMenuMusic()
       void router.push({ name: 'lobby', params: { id: res.lobby.id } })
     } catch (err) {
+      const existingId = await lobbyStore.existingLobbyRedirect(err)
+      if (existingId) {
+        gameAudio.stopMenuMusic()
+        void router.push({ name: 'lobby', params: { id: existingId } })
+        return
+      }
       createError.value = lobbyStore.mapError(err)
     } finally {
       createBusy.value = false

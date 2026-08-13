@@ -1,5 +1,9 @@
 export type UserRole = 'user' | 'admin'
 
+export interface CurrentLobbyResponse {
+  lobby: LobbyDetail | null
+}
+
 export interface Achievements {
   avatar_change: boolean
   highest_score_2_k: boolean

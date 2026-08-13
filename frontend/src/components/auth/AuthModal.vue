@@ -146,7 +146,7 @@ async function onSubmit(): Promise<void> {
     } else {
       await auth.register(username.value.trim(), email.value.trim(), password.value)
     }
-    emit('close')
+    window.location.assign('/')
   } catch (error) {
     errorMessage.value = mapApiError(error)
   } finally {
@@ -163,7 +163,7 @@ async function onSubmitCode(): Promise<void> {
   isSubmitting.value = true
   try {
     await auth.verifyTwoFactorLogin(code.value.trim())
-    emit('close')
+    window.location.assign('/')
   } catch (error) {
     errorMessage.value = mapApiError(error)
   } finally {

@@ -233,6 +233,9 @@
     "statusClosed": "Fermé",
     "closedHostLeft": "L'hôte a quitté le salon.",
     "closedStarted": "La partie a commencé.",
+	"notices": {
+      "redirectedToExisting": "Vous êtes déjà dans un salon — nous vous y avons ramené. Quittez-le pour en créer un nouveau."
+	},
     "errors": {
       "generic": "Une erreur s'est produite. Réessayez.",
       "notFound": "Salon introuvable.",
