@@ -73,7 +73,7 @@ func (s *APIKeyService) Authenticate(ctx context.Context, key string) (uuid.UUID
 	if m.RevokedAt != nil {
 		return uuid.Nil, ErrKeyRevoked
 	}
-	go s.r.TouchLastUsed(ctx, m.ID)
+	go s.r.TouchLastUsed(context.Background(), m.ID)
 	return m.UserID, nil
 }
 

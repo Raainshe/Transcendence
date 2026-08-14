@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	ErrLobbyFull       = errors.New("lobby is full")
-	ErrAlreadyInLobby  = errors.New("user is already in this lobby")
-	ErrNotLobbyMember  = errors.New("user is not a lobby member")
-	ErrLobbyNotWaiting = errors.New("lobby is not accepting changes")
+	ErrLobbyFull      = errors.New("lobby is full")
+	ErrAlreadyInLobby = errors.New("user is already in this lobby")
+	ErrNotLobbyMember = errors.New("user is not a lobby member")
 )
 
 type LobbyRepository interface {

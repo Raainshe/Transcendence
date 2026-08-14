@@ -20,6 +20,11 @@ type PublicHandler struct {
 	user  *service.UserService
 }
 
+// The public types below are a narrowed view of the internal
+// models (model.Lobby, model.LeaderboardEntry, model.UserStats, ...)
+// to keep the public API contract stable as internal models evolve.
+// When adding a field to one of those models, decide explicitly whether it
+// belongs here too
 type publicLeaderboardEntry struct {
 	Rank         int64     `json:"rank"`
 	UserID       uuid.UUID `json:"user_id"`

@@ -35,8 +35,10 @@ func (h *APIKeyHandler) Create(w http.ResponseWriter, r *http.Request) {
 	key, err := h.keys.GenerateAPIKey(r.Context(), userID, req.Name)
 	if err != nil {
 		switch {
-		case errors.Is(err, service.ErrKeyNameRequired), errors.Is(err, service.ErrKeyNameTooLong):
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "failed to create API key"})
+		case errors.Is(err, service.ErrKeyNameRequired):
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "API key name required"})
+		case errors.Is(err, service.ErrKeyNameTooLong):
+			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "API key name too long"})
 		default:
 			writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "internal server error"})
 		}

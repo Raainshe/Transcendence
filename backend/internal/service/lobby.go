@@ -383,7 +383,7 @@ func (s *LobbyService) UpdateLobbyName(ctx context.Context, hostID, lobbyID uuid
 		return nil, ErrNotLobbyHost
 	}
 	if lobby.Status != model.LobbyStatusWaiting {
-		return nil, repository.ErrLobbyNotWaiting
+		return nil, ErrLobbyNotWaiting
 	}
 	name = strings.TrimSpace(name)
 	if name == "" {
