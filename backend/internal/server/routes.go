@@ -21,7 +21,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-API-Key"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
@@ -34,14 +34,21 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Route("/api/public/v1", func(r chi.Router) {
 		r.Use(mw.MaxBodyBytes(1 << 20))
+		r.Use(mw.RateLimitIP(10, 30))
 		r.Use(mw.APIKeyAuth(s.apiSvc))
-		r.Use(mw.RateLimit(2, 10))
 
-		r.Get("/leaderboard", s.publicHandler.GetLeaderboard)
-		r.Get("/users/{id}/stats", s.publicHandler.GetUserStats)
-		r.Post("/lobbies", s.publicHandler.CreateLobby)
-		r.Put("/lobbies/{id}", s.publicHandler.UpdateLobbyName)
-		r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobby)
+		r.Group(func(r chi.Router) {
+			r.Use(mw.RateLimit(5, 20))
+			r.Get("/leaderboard", s.publicHandler.GetLeaderboard)
+			r.Get("/users/{id}/stats", s.publicHandler.GetUserStats)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(mw.RateLimit(1, 5))
+			r.Post("/lobbies", s.publicHandler.CreateLobby)
+			r.Put("/lobbies/{id}", s.publicHandler.UpdateLobbyName)
+			r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobby)
+		})
 	})
 
 	r.Route("/api/v1", func(r chi.Router) {
