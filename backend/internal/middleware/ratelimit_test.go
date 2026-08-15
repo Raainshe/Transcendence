@@ -58,3 +58,34 @@ func TestRateLimit(t *testing.T) {
 		}
 	})
 }
+
+func TestRateLimitIP(t *testing.T) {
+	t.Run("general limit & IP isolation", func(t *testing.T) {
+		next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		})
+
+		limited := middleware.RateLimitIP(1, 2)(next)
+
+		req := func(remoteAddr string) int {
+			req := httptest.NewRequest("GET", "/", nil)
+			req.RemoteAddr = remoteAddr
+			w := httptest.NewRecorder()
+			limited.ServeHTTP(w, req)
+			return w.Code
+		}
+
+		if c := req("1.2.3.4:1111"); c != 200 {
+			t.Errorf("request 1 for IP A: got %d, want 200", c)
+		}
+		if c := req("1.2.3.4:2222"); c != 200 {
+			t.Errorf("request 2 for IP A: got %d, want 200", c)
+		}
+		if c := req("1.2.3.4:3333"); c != 429 {
+			t.Errorf("request 3 for IP A: got %d, want 429", c)
+		}
+		if c := req("5.6.7.8:1111"); c != 200 {
+			t.Errorf("request 1 for IP B: got %d, want 200", c)
+		}
+	})
+}
