@@ -1,8 +1,10 @@
 package middleware
 
 import (
+	"math"
 	"net"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -10,106 +12,97 @@ import (
 	"golang.org/x/time/rate"
 )
 
-func RateLimit(rps float64, burst int) func(http.Handler) http.Handler {
-	type client struct {
-		limiter    *rate.Limiter
-		lastSeenAt time.Time
+type rateLimitClient struct {
+	limiter    *rate.Limiter
+	lastSeenAt time.Time
+}
+
+type limiterStore struct {
+	mu      sync.Mutex
+	clients map[string]*rateLimitClient
+	rps     float64
+	burst   int
+}
+
+func newLimiterStore(rps float64, burst int) *limiterStore {
+	rl := &limiterStore{clients: make(map[string]*rateLimitClient), rps: rps, burst: burst}
+	go rl.cleanupLoop()
+	return rl
+}
+
+func retryAfterSeconds(rps float64) string {
+	if rps <= 0 {
+		return "1"
 	}
-	var (
-		mu      sync.Mutex
-		clients = make(map[string]*client)
-	)
+	secs := int(math.Ceil(1 / rps))
+	if secs < 1 {
+		secs = 1
+	}
+	return strconv.Itoa(secs)
+}
 
-	go func() {
-		for {
-			time.Sleep(time.Minute)
-			mu.Lock()
-			for ip, c := range clients {
-				if time.Since(c.lastSeenAt) > 5*time.Minute {
-					delete(clients, ip)
-				}
+func (rl *limiterStore) cleanupLoop() {
+	for {
+		time.Sleep(time.Minute)
+		rl.mu.Lock()
+		for key, c := range rl.clients {
+			if time.Since(c.lastSeenAt) > 5*time.Minute {
+				delete(rl.clients, key)
 			}
-			mu.Unlock()
 		}
-	}()
+		rl.mu.Unlock()
+	}
+}
 
+func (rl *limiterStore) allow(key string) bool {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+
+	c, ok := rl.clients[key]
+	if !ok {
+		c = &rateLimitClient{limiter: rate.NewLimiter(rate.Limit(rl.rps), rl.burst)}
+		rl.clients[key] = c
+	}
+	c.lastSeenAt = time.Now()
+	return c.limiter.Allow()
+}
+
+func (rl *limiterStore) middleware(keyFunc func(*http.Request) (string, bool)) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			userID := UserIDFromContext(r.Context())
-			if userID == uuid.Nil {
+			key, ok := keyFunc(r)
+			if !ok {
 				writeJSONError(w, http.StatusUnauthorized, "unauthenticated")
 				return
 			}
-			key := userID.String()
-
-			mu.Lock()
-
-			if _, ok := clients[key]; !ok {
-				clients[key] = &client{
-					limiter: rate.NewLimiter(rate.Limit(rps), burst)}
-			}
-			clients[key].lastSeenAt = time.Now()
-			allowed := clients[key].limiter.Allow()
-			mu.Unlock()
-
-			if !allowed {
-				w.Header().Set("Retry-After", "1")
+			if !rl.allow(key) {
+				w.Header().Set("Retry-After", retryAfterSeconds(rl.rps))
 				writeJSONError(w, http.StatusTooManyRequests, "rate limit exceeded")
 				return
-
 			}
 			next.ServeHTTP(w, r)
 		})
 	}
 }
 
-func RateLimitIP(rps float64, burst int) func(http.Handler) http.Handler {
-	type client struct {
-		limiter    *rate.Limiter
-		lastSeenAt time.Time
-	}
-	var (
-		mu      sync.Mutex
-		clients = make(map[string]*client)
-	)
-
-	go func() {
-		for {
-			time.Sleep(time.Minute)
-			mu.Lock()
-			for ip, c := range clients {
-				if time.Since(c.lastSeenAt) > 5*time.Minute {
-					delete(clients, ip)
-				}
-			}
-			mu.Unlock()
+func RateLimit(rps float64, burst int) func(http.Handler) http.Handler {
+	rl := newLimiterStore(rps, burst)
+	return rl.middleware(func(r *http.Request) (string, bool) {
+		userID := UserIDFromContext(r.Context())
+		if userID == uuid.Nil {
+			return "", false
 		}
-	}()
+		return userID.String(), true
+	})
+}
 
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			key := r.RemoteAddr
-			if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
-				key = host
-			}
-
-			mu.Lock()
-
-			if _, ok := clients[key]; !ok {
-				clients[key] = &client{
-					limiter: rate.NewLimiter(rate.Limit(rps), burst)}
-			}
-			clients[key].lastSeenAt = time.Now()
-			allowed := clients[key].limiter.Allow()
-			mu.Unlock()
-
-			if !allowed {
-				w.Header().Set("Retry-After", "1")
-				writeJSONError(w, http.StatusTooManyRequests, "rate limit exceeded")
-				return
-
-			}
-			next.ServeHTTP(w, r)
-		})
-	}
+// if I add proxy remember to use X-Forwarded-For
+func RateLimitIP(rps float64, burst int) func(http.Handler) http.Handler {
+	rl := newLimiterStore(rps, burst)
+	return rl.middleware(func(r *http.Request) (string, bool) {
+		if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+			return host, true
+		}
+		return r.RemoteAddr, true
+	})
 }
