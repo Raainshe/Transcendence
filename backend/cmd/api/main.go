@@ -37,6 +37,14 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	done <- true
 }
 
+// @title           Transcendence Public API
+// @version         1.0
+// @description     Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.
+// @host            localhost:8080
+// @BasePath        /api/public/v1
+// @securityDefinitions.apikey ApiKeyAuth
+// @in              header
+// @name            X-API-Key
 func main() {
 
 	server := server.NewServer()

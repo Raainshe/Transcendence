@@ -10,8 +10,11 @@ import (
 	chimid "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	_ "backend/docs"
 	"backend/internal/handler"
 	mw "backend/internal/middleware"
+
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -28,6 +31,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/", s.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// Serve uploaded files (avatars, etc.) — no directory listings.
 	r.Handle("/uploads/*", http.StripPrefix("/uploads/", noDirListing(s.uploadDir, http.FileServer(http.Dir(s.uploadDir)))))

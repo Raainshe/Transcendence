@@ -1,0 +1,283 @@
+basePath: /api/public/v1
+definitions:
+  handler.errorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  handler.leaderboardResponse:
+    properties:
+      leaderboard:
+        items:
+          $ref: '#/definitions/handler.publicLeaderboardEntry'
+        type: array
+    type: object
+  handler.lobbyResponse:
+    properties:
+      lobby:
+        $ref: '#/definitions/handler.publicLobby'
+    type: object
+  handler.publicLeaderboardEntry:
+    properties:
+      avatar_url:
+        type: string
+      level_reached:
+        type: integer
+      mode:
+        type: string
+      rank:
+        type: integer
+      score:
+        type: integer
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.publicLobby:
+    properties:
+      created_at:
+        type: string
+      host_user_id:
+        type: string
+      id:
+        type: string
+      invite_code:
+        type: string
+      max_players:
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/handler.publicLobbyMember'
+        type: array
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  handler.publicLobbyMember:
+    properties:
+      avatar_url:
+        type: string
+      is_ready:
+        type: boolean
+      user_id:
+        type: string
+      username:
+        type: string
+    type: object
+  handler.publicUserStats:
+    properties:
+      avg_score:
+        type: integer
+      best_score:
+        type: integer
+      games_played:
+        type: integer
+      total_lines:
+        type: integer
+      wins:
+        type: integer
+    type: object
+  handler.updateLobbyNameRequest:
+    properties:
+      name:
+        type: string
+    type: object
+  handler.userStatsResponse:
+    properties:
+      stats:
+        $ref: '#/definitions/handler.publicUserStats'
+    type: object
+  model.CreateLobbyRequest:
+    properties:
+      max_players:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: 'Public API for third-party integrations: Leaderboard, User Stats,
+    and Lobby Management.'
+  title: Transcendence Public API
+  version: "1.0"
+paths:
+  /leaderboard:
+    get:
+      parameters:
+      - description: Max entries to return
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.leaderboardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Shows current Leaderboard
+      tags:
+      - leaderboard
+  /lobbies:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Lobby creation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateLobbyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.lobbyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Creates a new lobby
+      tags:
+      - lobby
+  /lobbies/{id}:
+    delete:
+      parameters:
+      - description: Lobby ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes Lobby
+      tags:
+      - lobby
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Lobby ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New lobby name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateLobbyNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.lobbyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Sets or Changes current LobbyName
+      tags:
+      - lobby
+  /users/{id}/stats:
+    get:
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.userStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Shows User Statistics
+      tags:
+      - userStats
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"
