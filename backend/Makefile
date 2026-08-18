@@ -39,6 +39,15 @@ itest:
 	@echo "Running integration tests..."
 	@go test ./internal/... -v -tags=integration -timeout 120s
 
+# Regenerate swagger/OpenAPI docs from annotations
+swagger:
+	@if command -v swag > /dev/null; then \
+		swag init -g cmd/api/main.go --output docs --parseInternal; \
+	else \
+		echo "swag is not installed. Install it with: go install github.com/swaggo/swag/cmd/swag@latest"; \
+		exit 1; \
+	fi
+
 # Clean the binary
 clean:
 	@echo "Cleaning..."
@@ -61,4 +70,4 @@ watch:
             fi; \
         fi
 
-.PHONY: all build run test clean watch docker-run docker-down itest
+.PHONY: all build run test clean watch docker-run docker-down itest swagger
