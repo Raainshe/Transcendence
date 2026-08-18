@@ -337,6 +337,9 @@
     "badgesTitle": "Badges",
     "seeAllAchievements": "Voir tous les succès",
     "xpTitle": "Progression",
+    "apiKeysTitle": "Clés API",
+    "apiKeysHint": "Générez des clés pour accéder à l'API publique en votre nom.",
+    "manageApiKeys": "Gérer les clés API",
 	"twoFactor": {
 		"title": "Authentification à deux facteurs",
 		"statusOn": "L'authentification à deux facteurs est activée.",
@@ -355,6 +358,38 @@
       "usernameTaken": "Ce nom d'utilisateur est déjà pris.",
       "avatarType": "Seules les images JPEG, PNG, WebP et GIF sont autorisées.",
       "avatarTooLarge": "L'image doit faire 5 Mo ou moins.",
+      "generic": "Une erreur s'est produite. Veuillez réessayer."
+    }
+  },
+  "apiKeys": {
+    "title": "Clés API",
+    "backToProfile": "Retour au profil",
+    "createTitle": "Créer une nouvelle clé",
+    "nameLabel": "Nom de la clé",
+    "namePlaceholder": "ex. Mon intégration",
+    "create": "Créer la clé",
+    "creating": "Création…",
+    "listTitle": "Vos clés API",
+    "loading": "Chargement…",
+    "empty": "Vous n'avez pas encore créé de clé API.",
+    "loadError": "Impossible de charger vos clés API.",
+    "created": "Créée",
+    "lastUsed": "Dernière utilisation",
+    "never": "Jamais utilisée",
+    "revoke": "Révoquer",
+    "revoking": "Révocation…",
+    "revokeTitle": "Révoquer cette clé API ?",
+    "revokeBody": "Toute application utilisant « {name} » perdra immédiatement l'accès. Cette action est irréversible.",
+    "revokeConfirm": "Révoquer la clé",
+    "revokeCancel": "Annuler",
+    "revealTitle": "Clé créée",
+    "revealWarning": "Copiez cette clé maintenant — elle ne sera plus affichée ensuite.",
+    "copy": "Copier",
+    "copied": "Copié !",
+    "done": "Terminé",
+    "errors": {
+      "nameRequired": "Le nom de la clé est requis.",
+      "nameTooLong": "Le nom de la clé doit contenir 64 caractères ou moins.",
       "generic": "Une erreur s'est produite. Veuillez réessayer."
     }
   },
@@ -498,6 +533,7 @@
     "lobby": "Transcendence - Salon",
     "userProfile": "Transcendence - Joueur",
     "players": "Transcendence - Joueurs",
-    "achievements": "Transcendence - Succès"
+    "achievements": "Transcendence - Succès",
+    "apiKeys": "Transcendence - Clés API"
   }
 }

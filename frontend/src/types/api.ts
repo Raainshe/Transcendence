@@ -147,6 +147,28 @@ export interface ApiErrorBody {
   error?: string
 }
 
+export interface ApiKeySummary {
+  id: string
+  name: string
+  created_at: string
+  last_used_at: string | null
+}
+
+export interface ApiKeysResponse {
+  api_keys: ApiKeySummary[]
+}
+
+export interface ApiKeyCreated {
+  id: string
+  name: string
+  key: string
+}
+
+export interface ApiKeyCreateResponse {
+  api_key: ApiKeyCreated
+  message: string
+}
+
 export interface UpdateMePayload {
   username?: string
   avatar_url?: string

@@ -337,6 +337,9 @@
     "badgesTitle": "Abzeichen",
     "seeAllAchievements": "Alle Erfolge anzeigen",
     "xpTitle": "Fortschritt",
+    "apiKeysTitle": "API-Schlüssel",
+    "apiKeysHint": "Erstelle Schlüssel für den Zugriff auf die öffentliche API in deinem Namen.",
+    "manageApiKeys": "API-Schlüssel verwalten",
 	"twoFactor": {
 		"title": "Zwei-Faktor-Authentifizierung",
 		"statusOn": "Die Zwei-Faktor-Authentifizierung ist aktiviert.",
@@ -355,6 +358,38 @@
       "usernameTaken": "Dieser Benutzername ist bereits vergeben.",
       "avatarType": "Nur JPEG-, PNG-, WebP- und GIF-Bilder sind erlaubt.",
       "avatarTooLarge": "Das Bild darf höchstens 5 MB groß sein.",
+      "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
+    }
+  },
+  "apiKeys": {
+    "title": "API-Schlüssel",
+    "backToProfile": "Zurück zum Profil",
+    "createTitle": "Neuen Schlüssel erstellen",
+    "nameLabel": "Schlüsselname",
+    "namePlaceholder": "z. B. Meine Integration",
+    "create": "Schlüssel erstellen",
+    "creating": "Wird erstellt…",
+    "listTitle": "Deine API-Schlüssel",
+    "loading": "Wird geladen…",
+    "empty": "Du hast noch keine API-Schlüssel erstellt.",
+    "loadError": "API-Schlüssel konnten nicht geladen werden.",
+    "created": "Erstellt",
+    "lastUsed": "Zuletzt verwendet",
+    "never": "Nie verwendet",
+    "revoke": "Widerrufen",
+    "revoking": "Wird widerrufen…",
+    "revokeTitle": "Diesen API-Schlüssel widerrufen?",
+    "revokeBody": "Jede Anwendung, die „{name}“ verwendet, verliert sofort den Zugriff. Das kann nicht rückgängig gemacht werden.",
+    "revokeConfirm": "Schlüssel widerrufen",
+    "revokeCancel": "Abbrechen",
+    "revealTitle": "Schlüssel erstellt",
+    "revealWarning": "Kopiere diesen Schlüssel jetzt — er wird danach nicht mehr angezeigt.",
+    "copy": "Kopieren",
+    "copied": "Kopiert!",
+    "done": "Fertig",
+    "errors": {
+      "nameRequired": "Der Schlüsselname ist erforderlich.",
+      "nameTooLong": "Der Schlüsselname darf höchstens 64 Zeichen lang sein.",
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen."
     }
   },
@@ -498,6 +533,7 @@
     "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Spieler",
     "players": "Transcendence - Spieler",
-    "achievements": "Transcendence - Erfolge"
+    "achievements": "Transcendence - Erfolge",
+    "apiKeys": "Transcendence - API-Schlüssel"
   }
 }

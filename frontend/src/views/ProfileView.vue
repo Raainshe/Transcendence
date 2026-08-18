@@ -448,6 +448,16 @@ async function onDeleteAccount(): Promise<void> {
       </p>
     </section>
 
+    <section class="profile-view__panel" aria-labelledby="profile-api-keys-heading">
+      <h2 id="profile-api-keys-heading" class="profile-view__section-title">
+        {{ t('profile.apiKeysTitle') }}
+      </h2>
+      <p class="profile-view__hint">{{ t('profile.apiKeysHint') }}</p>
+      <RouterLink :to="{ name: 'apiKeys' }" class="profile-view__link">
+        {{ t('profile.manageApiKeys') }}
+      </RouterLink>
+    </section>
+
     <section class="profile-view__panel profile-view__danger" aria-labelledby="profile-danger-heading">
       <h2 id="profile-danger-heading" class="profile-view__section-title">
         {{ t('profile.dangerTitle') }}
