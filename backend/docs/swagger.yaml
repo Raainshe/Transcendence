@@ -3,6 +3,7 @@ definitions:
   handler.errorResponse:
     properties:
       error:
+        example: invalid request body
         type: string
     type: object
   handler.leaderboardResponse:
@@ -20,18 +21,25 @@ definitions:
   handler.publicLeaderboardEntry:
     properties:
       avatar_url:
+        example: /uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg
         type: string
       level_reached:
+        example: 12
         type: integer
       mode:
+        example: marathon
         type: string
       rank:
+        example: 1
         type: integer
       score:
+        example: 98500
         type: integer
       user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       username:
+        example: fearcon
         type: string
     type: object
   handler.publicLobby:
@@ -39,49 +47,65 @@ definitions:
       created_at:
         type: string
       host_user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       invite_code:
+        example: ABC123
         type: string
       max_players:
+        example: 4
         type: integer
       members:
         items:
           $ref: '#/definitions/handler.publicLobbyMember'
         type: array
       name:
+        example: Friday Night Tetris
         type: string
       status:
+        example: waiting
         type: string
     type: object
   handler.publicLobbyMember:
     properties:
       avatar_url:
+        example: /uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg
         type: string
       is_ready:
+        example: true
         type: boolean
       user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
         type: string
       username:
+        example: fearcon
         type: string
     type: object
   handler.publicUserStats:
     properties:
       avg_score:
+        example: 61200
         type: integer
       best_score:
+        example: 98500
         type: integer
       games_played:
+        example: 42
         type: integer
       total_lines:
+        example: 1240
         type: integer
       wins:
+        example: 18
         type: integer
     type: object
   handler.updateLobbyNameRequest:
     properties:
       name:
+        example: Friday Night Tetris
         type: string
     type: object
   handler.userStatsResponse:
@@ -92,6 +116,7 @@ definitions:
   model.CreateLobbyRequest:
     properties:
       max_players:
+        example: 4
         type: integer
     type: object
 host: localhost:8080
@@ -104,6 +129,8 @@ info:
 paths:
   /leaderboard:
     get:
+      description: Returns the top players ranked by score across all modes. Limit
+        defaults to 20 and is capped at 100.
       parameters:
       - description: Max entries to return
         in: query
@@ -133,6 +160,9 @@ paths:
     post:
       consumes:
       - application/json
+      description: Creates a new lobby with the caller as host. max_players must be
+        between 2 and 4. A user can only be in one waiting lobby at a time — creating
+        a second one fails with 409.
       parameters:
       - description: Lobby creation parameters
         in: body
@@ -166,6 +196,7 @@ paths:
       - lobby
   /lobbies/{id}:
     delete:
+      description: Permanently deletes a lobby. Only the host may delete it.
       parameters:
       - description: Lobby ID
         in: path
@@ -199,6 +230,9 @@ paths:
     put:
       consumes:
       - application/json
+      description: Renames a lobby. Only the host may rename it, renaming after it
+        has started or closed fails with 409. Name must be non-empty and 64 characters
+        or fewer.
       parameters:
       - description: Lobby ID
         in: path
@@ -245,6 +279,8 @@ paths:
       - lobby
   /users/{id}/stats:
     get:
+      description: Returns aggregate game stats (games played, wins, best score, total
+        lines, average score) for the given user.
       parameters:
       - description: User ID
         in: path
@@ -274,7 +310,7 @@ paths:
       - ApiKeyAuth: []
       summary: Shows User Statistics
       tags:
-      - userStats
+      - userstats
 securityDefinitions:
   ApiKeyAuth:
     in: header

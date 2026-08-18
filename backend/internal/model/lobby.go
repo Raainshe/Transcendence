@@ -37,7 +37,7 @@ type LobbyDetail struct {
 }
 
 type CreateLobbyRequest struct {
-	MaxPlayers int `json:"max_players"`
+	MaxPlayers int `json:"max_players" example:"4"`
 }
 
 type SetReadyRequest struct {

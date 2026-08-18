@@ -26,38 +26,38 @@ type PublicHandler struct {
 // When adding a field to one of those models, decide explicitly whether it
 // belongs here too
 type publicLeaderboardEntry struct {
-	Rank         int64     `json:"rank"`
-	UserID       uuid.UUID `json:"user_id"`
-	Username     string    `json:"username"`
-	AvatarURL    *string   `json:"avatar_url"`
-	Score        int       `json:"score"`
-	LevelReached int       `json:"level_reached"`
-	Mode         string    `json:"mode"`
+	Rank         int64     `json:"rank" example:"1"`
+	UserID       uuid.UUID `json:"user_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Username     string    `json:"username" example:"fearcon"`
+	AvatarURL    *string   `json:"avatar_url" example:"/uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg"`
+	Score        int       `json:"score" example:"98500"`
+	LevelReached int       `json:"level_reached" example:"12"`
+	Mode         string    `json:"mode" example:"marathon"`
 }
 
 type publicUserStats struct {
-	GamesPlayed int `json:"games_played"`
-	Wins        int `json:"wins"`
-	BestScore   int `json:"best_score"`
-	TotalLines  int `json:"total_lines"`
-	AvgScore    int `json:"avg_score"`
+	GamesPlayed int `json:"games_played" example:"42"`
+	Wins        int `json:"wins" example:"18"`
+	BestScore   int `json:"best_score" example:"98500"`
+	TotalLines  int `json:"total_lines" example:"1240"`
+	AvgScore    int `json:"avg_score" example:"61200"`
 }
 
 type publicLobbyMember struct {
-	UserID    uuid.UUID `json:"user_id"`
-	Username  string    `json:"username"`
-	AvatarURL *string   `json:"avatar_url"`
-	IsReady   bool      `json:"is_ready"`
+	UserID    uuid.UUID `json:"user_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	Username  string    `json:"username" example:"fearcon"`
+	AvatarURL *string   `json:"avatar_url" example:"/uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg"`
+	IsReady   bool      `json:"is_ready" example:"true"`
 }
 
 type publicLobby struct {
-	ID         uuid.UUID           `json:"id"`
-	HostUserID uuid.UUID           `json:"host_user_id"`
-	InviteCode string              `json:"invite_code"`
-	MaxPlayers int                 `json:"max_players"`
-	Status     string              `json:"status"`
+	ID         uuid.UUID           `json:"id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	HostUserID uuid.UUID           `json:"host_user_id" example:"550e8400-e29b-41d4-a716-446655440000"`
+	InviteCode string              `json:"invite_code" example:"ABC123"`
+	MaxPlayers int                 `json:"max_players" example:"4"`
+	Status     string              `json:"status" example:"waiting"`
 	CreatedAt  time.Time           `json:"created_at"`
-	Name       string              `json:"name"`
+	Name       string              `json:"name" example:"Friday Night Tetris"`
 	Members    []publicLobbyMember `json:"members"`
 }
 
@@ -71,11 +71,11 @@ type lobbyResponse struct {
 	Lobby publicLobby `json:"lobby"`
 }
 type errorResponse struct {
-	Error string `json:"error"`
+	Error string `json:"error" example:"invalid request body"`
 }
 
 type updateLobbyNameRequest struct {
-	Name string `json:"name"`
+	Name string `json:"name" example:"Friday Night Tetris"`
 }
 
 func NewPublicHandler(games *service.GameService, lobby *service.LobbyService, user *service.UserService) *PublicHandler {

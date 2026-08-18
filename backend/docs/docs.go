@@ -22,6 +22,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Returns the top players ranked by score across all modes. Limit defaults to 20 and is capped at 100.",
                 "produces": [
                     "application/json"
                 ],
@@ -66,6 +67,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time — creating a second one fails with 409.",
                 "consumes": [
                     "application/json"
                 ],
@@ -122,6 +124,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Renames a lobby. Only the host may rename it, renaming after it has started or closed fails with 409. Name must be non-empty and 64 characters or fewer.",
                 "consumes": [
                     "application/json"
                 ],
@@ -195,6 +198,7 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Permanently deletes a lobby. Only the host may delete it.",
                 "tags": [
                     "lobby"
                 ],
@@ -246,11 +250,12 @@ const docTemplate = `{
                         "ApiKeyAuth": []
                     }
                 ],
+                "description": "Returns aggregate game stats (games played, wins, best score, total lines, average score) for the given user.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "userStats"
+                    "userstats"
                 ],
                 "summary": "Shows User Statistics",
                 "parameters": [
@@ -296,7 +301,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "error": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "invalid request body"
                 }
             }
         },
@@ -323,25 +329,32 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar_url": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg"
                 },
                 "level_reached": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 12
                 },
                 "mode": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "marathon"
                 },
                 "rank": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "score": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 98500
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "username": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "fearcon"
                 }
             }
         },
@@ -352,16 +365,20 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "host_user_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "invite_code": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "ABC123"
                 },
                 "max_players": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 4
                 },
                 "members": {
                     "type": "array",
@@ -370,10 +387,12 @@ const docTemplate = `{
                     }
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Friday Night Tetris"
                 },
                 "status": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "waiting"
                 }
             }
         },
@@ -381,16 +400,20 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avatar_url": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "/uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg"
                 },
                 "is_ready": {
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
                 },
                 "username": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "fearcon"
                 }
             }
         },
@@ -398,19 +421,24 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "avg_score": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 61200
                 },
                 "best_score": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 98500
                 },
                 "games_played": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 42
                 },
                 "total_lines": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1240
                 },
                 "wins": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 18
                 }
             }
         },
@@ -418,7 +446,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "example": "Friday Night Tetris"
                 }
             }
         },
@@ -434,7 +463,8 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "max_players": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 4
                 }
             }
         }
