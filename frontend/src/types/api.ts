@@ -282,6 +282,7 @@ export interface MatchDetail {
   game_id: string
   status: string
   mode: string
+  lobby_name: string
   shared_seed: number
   players: MatchPlayerView[]
   results?: MatchEndedPayload

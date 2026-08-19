@@ -75,6 +75,7 @@ export const useMatchStore = defineStore('match', () => {
   const socket = useMatchSocket()
 
   const gameId = ref<string | null>(null)
+  const lobbyName = ref('')
   const players = ref<MatchPlayerView[]>([])
   const opponents = ref<Map<string, OpponentView>>(new Map())
   const disconnectedOpponents = ref<Set<string>>(new Set())
@@ -134,6 +135,7 @@ export const useMatchStore = defineStore('match', () => {
 
   function reset(): void {
     gameId.value = null
+    lobbyName.value = ''
     players.value = []
     opponents.value = new Map()
     disconnectedOpponents.value = new Set()
@@ -202,6 +204,7 @@ export const useMatchStore = defineStore('match', () => {
         return false
       }
 
+      lobbyName.value = detail.lobby_name ?? ''
       players.value = detail.players ?? []
       if (players.value.length > 0) {
         stashMatchPlayers(id, players.value)
@@ -419,6 +422,7 @@ export const useMatchStore = defineStore('match', () => {
 
   return {
     gameId,
+    lobbyName,
     players,
     opponents,
     opponentList,

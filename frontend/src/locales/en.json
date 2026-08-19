@@ -116,6 +116,7 @@
     "pauseSfxOff": "Sound effects: OFF",
     "playfieldAria": "Tetris playfield",
     "hud": {
+      "lobby": "Lobby",
       "score": "Score",
       "level": "Lvl",
       "lines": "Lines",

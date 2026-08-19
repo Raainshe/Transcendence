@@ -46,6 +46,10 @@ const showLevel = computed(
 
 const showPhase = computed(() => store.variant === 'marathon' || store.variant === 'multiplayer')
 
+const showLobbyName = computed(
+  () => store.multiplayerGameId != null && matchStore.lobbyName !== '',
+)
+
 const showTimer = computed(() => store.variant === 'sprint' || store.variant === 'ultra')
 
 const failureLabel = computed(() => {
@@ -85,6 +89,10 @@ const showSoloGameOver = computed(
   <header v-if="band === 'top'" class="game-hud game-hud--bar" aria-live="polite">
     <HoldQueue :hold-piece="store.holdPiece" :can-hold="store.canHold" />
     <GameModeBadge :variation="store.variant" size="sm" />
+    <div v-if="showLobbyName" class="game-hud__stat game-hud__stat--phase">
+      <span class="game-hud__label">{{ t('game.hud.lobby') }}</span>
+      <span class="game-hud__value game-hud__value--sm">{{ matchStore.lobbyName }}</span>
+    </div>
     <div class="game-hud__stat game-hud__stat--score">
       <span class="game-hud__label">{{ t('game.hud.score') }}</span>
       <span class="game-hud__value">{{ store.score.toLocaleString() }}</span>
