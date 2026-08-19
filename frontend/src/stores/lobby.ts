@@ -67,6 +67,7 @@ export const useLobbyStore = defineStore('lobby', () => {
   const lobby = ref<LobbyDetail | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const notice = ref<string | null>(null)
   const actionBusy = ref(false)
   const closedReason = ref<LobbyClosedPayload['reason'] | null>(null)
 
@@ -120,10 +121,26 @@ export const useLobbyStore = defineStore('lobby', () => {
     return i18n.global.t('lobby.errors.generic')
   }
 
+  function isInAnotherLobbyError(err: unknown): boolean {
+    return (
+      err instanceof ApiError &&
+      err.message.toLowerCase() === 'user is already in another waiting lobby'
+    )
+  }
+
+  async function existingLobbyRedirect(err: unknown): Promise<string | null> {
+    if (!isInAnotherLobbyError(err)) return null
+    const res = await lobbiesApi.getCurrentLobby().catch(() => null)
+    const id = res?.lobby?.id ?? null
+    if (id) notice.value = i18n.global.t('lobby.notices.redirectedToExisting')
+    return id
+  }
+
   function reset(): void {
     lobby.value = null
     loading.value = false
     error.value = null
+    notice.value = null
     actionBusy.value = false
     closedReason.value = null
   }
@@ -257,6 +274,7 @@ export const useLobbyStore = defineStore('lobby', () => {
     lobby,
     loading,
     error,
+    notice,
     actionBusy,
     closedReason,
     isHost,
@@ -271,5 +289,6 @@ export const useLobbyStore = defineStore('lobby', () => {
     leave,
     applyWsEnvelope,
     mapError,
+    existingLobbyRedirect,
   }
 })

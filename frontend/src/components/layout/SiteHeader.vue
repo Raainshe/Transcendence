@@ -76,7 +76,7 @@ function closeAuthModal(): void {
 
 async function onLogout(): Promise<void> {
   await auth.logout()
-  await router.push({ name: 'home' })
+  window.location.assign('/')
 }
 
 function clearLoginQuery(): void {

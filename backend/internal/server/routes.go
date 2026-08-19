@@ -141,6 +141,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Delete("/lobbies/{id}/leave", s.lobbyHandler.Leave)
 			r.Post("/lobbies/{id}/ready", s.lobbyHandler.SetReady)
 			r.Post("/lobbies/{id}/start", s.lobbyHandler.Start)
+			r.Get("/lobbies/current", s.lobbyHandler.Current)
 			r.Put("/lobbies/{id}", s.lobbyHandler.UpdateLobbyName)
 		})
 	})

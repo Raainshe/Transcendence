@@ -238,6 +238,9 @@
     "save": "Enregistrer le nom du salon",
     "saving": "Enregistrement du nom...",
     "unnamed": "Salon sans nom",
+    "notices": {
+      "redirectedToExisting": "Vous êtes déjà dans un salon — nous vous y avons ramené. Quittez-le pour en créer un nouveau."
+    },
     "errors": {
       "generic": "Une erreur s'est produite. Réessayez.",
       "notFound": "Salon introuvable.",

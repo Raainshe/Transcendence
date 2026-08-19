@@ -238,6 +238,9 @@
     "save": "Speichern",
     "saving": "Name wird gespeichert..",
     "unnamed": "Lobby ohne Name",
+    "notices": {
+      "redirectedToExisting": "Du bist bereits in einer Lobby — wir haben dich dorthin zurückgebracht. Verlasse sie, um eine neue zu starten."
+    },
     "errors": {
       "generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
       "notFound": "Lobby nicht gefunden.",

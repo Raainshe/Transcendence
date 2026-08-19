@@ -96,6 +96,14 @@ func (s *LobbyService) GetLobby(ctx context.Context, id uuid.UUID) (*model.Lobby
 	return s.lobbies.FindDetail(ctx, id)
 }
 
+func (s *LobbyService) GetCurrentLobby(ctx context.Context, userID uuid.UUID) (*model.LobbyDetail, error) {
+	lobby, err := s.lobbies.FindWaitingLobbyByUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return s.lobbies.FindDetail(ctx, lobby.ID)
+}
+
 func (s *LobbyService) GetLobbyByCode(ctx context.Context, code string) (*model.LobbyDetail, error) {
 	lobby, err := s.lobbies.FindByInviteCode(ctx, code)
 	if err != nil {

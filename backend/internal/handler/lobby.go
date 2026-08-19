@@ -64,6 +64,20 @@ func (h *LobbyHandler) Get(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"lobby": detail})
 }
 
+func (h *LobbyHandler) Current(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	detail, err := h.lobbies.GetCurrentLobby(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrNotFound) {
+			writeJSON(w, http.StatusOK, map[string]any{"lobby": nil})
+			return
+		}
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "failed to fetch current lobby"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"lobby": detail})
+}
+
 func (h *LobbyHandler) GetByCode(w http.ResponseWriter, r *http.Request) {
 	code := strings.TrimSpace(chi.URLParam(r, "code"))
 	if code == "" {

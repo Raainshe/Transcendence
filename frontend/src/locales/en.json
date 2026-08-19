@@ -238,6 +238,9 @@
     "save": "Save Lobby name",
     "saving": "Saving name..",
     "unnamed": "Lobby with no name",
+    "notices": {
+      "redirectedToExisting": "You're already in a lobby - we brought you back to it. Leave it to start a new one."
+    },
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "notFound": "Lobby not found.",

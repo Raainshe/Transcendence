@@ -70,6 +70,12 @@ async function submit(): Promise<void> {
     emit('close')
     void router.push({ name: 'lobby', params: { id: res.lobby.id } })
   } catch (err) {
+    const existingId = await lobbyStore.existingLobbyRedirect(err)
+    if (existingId) {
+      emit('close')
+      void router.push({ name: 'lobby', params: { id: existingId } })
+      return
+    }
     errorMessage.value = lobbyStore.mapError(err)
   } finally {
     isSubmitting.value = false

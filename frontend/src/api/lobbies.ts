@@ -1,6 +1,7 @@
 import { apiFetch } from '@/api/client'
 import type {
   CreateLobbyPayload,
+  CurrentLobbyResponse,
   JoinLobbyByCodePayload,
   LobbyResponse,
   SetReadyPayload,
@@ -28,6 +29,10 @@ export function getLobby(id: string): Promise<LobbyResponse | null> {
     method: 'GET',
     allowStatuses: [404],
   })
+}
+
+export function getCurrentLobby(): Promise<CurrentLobbyResponse> {
+  return apiFetch<CurrentLobbyResponse>('/lobbies/current', { method: 'GET' })
 }
 
 export function setReady(id: string, payload: SetReadyPayload): Promise<LobbyResponse> {

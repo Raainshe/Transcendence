@@ -151,6 +151,9 @@ onMounted(async () => {
   if (!loaded) {
     return
   }
+  if (lobbyStore.notice) {
+    setTimeout(() => { lobbyStore.notice = null }, 6000)
+  }
   if (lobbyStore.lobby?.status === 'closed' && lobbyStore.lobby.game_id) {
     const seed = lobbyStore.lobby.shared_seed
     if (seed) {
@@ -187,6 +190,7 @@ onBeforeUnmount(() => {
     </header>
 
     <p v-if="closedMessage" class="lobby-view__notice" role="status">{{ closedMessage }}</p>
+    <p v-if="lobbyStore.notice" class="lobby-view__notice" role="status">{{ lobbyStore.notice }}</p>
     <p v-if="lobbyStore.loading" class="lobby-view__status">{{ t('lobby.loading') }}</p>
     <p v-else-if="lobbyStore.error" class="lobby-view__error">{{ lobbyStore.error }}</p>
 
