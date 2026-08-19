@@ -27,6 +27,7 @@ type MockUserRepo struct {
 	UpdateLastSeenFn func(ctx context.Context, id uuid.UUID) error
 	DeleteFn         func(ctx context.Context, id uuid.UUID) error
 	Set2FAEnabledFn  func(ctx context.Context, id uuid.UUID, enabled bool) error
+	AddXPFn          func(ctx context.Context, id uuid.UUID, xp int) error
 }
 
 type MockTwoFactorRepo struct {
@@ -123,6 +124,12 @@ func (m *MockUserRepo) ClearAvatar(ctx context.Context, id uuid.UUID) error {
 func (m *MockUserRepo) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
 	if m.UpdateLastSeenFn != nil {
 		return m.UpdateLastSeenFn(ctx, id)
+	}
+	return nil
+}
+func (m *MockUserRepo) AddXP(ctx context.Context, id uuid.UUID, xp int) error {
+	if m.AddXPFn != nil {
+		return m.AddXPFn(ctx, id, xp)
 	}
 	return nil
 }
