@@ -90,6 +90,8 @@ func NewPublicHandler(games *service.GameService, lobby *service.LobbyService, u
 // @Param 		limit query int false "Max entries to return"
 // @Success 	200 {object} leaderboardResponse
 // @Failure 	400 {object} errorResponse
+// @Failure		401 {object} errorResponse
+// @Failure		429 {object} errorResponse
 // @Failure		500 {object} errorResponse
 // @Router 		/leaderboard [get]
 func (h *PublicHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
@@ -108,13 +110,16 @@ func (h *PublicHandler) GetLeaderboard(w http.ResponseWriter, r *http.Request) {
 
 // @Summary		Shows User Statistics
 // @Description Returns aggregate game stats (games played, wins, best score, total lines, average score) for the given user.
+// @Description You can use GET Leaderboard to get the User ID.
 // @Security 	ApiKeyAuth
 // @Tags		userstats
 // @Produce 	json
 // @Param 		id		path		string	true	"User ID"
 // @Success 	200 	{object} 	userStatsResponse
 // @Failure 	400 {object} errorResponse
+// @Failure		401 {object} errorResponse
 // @Failure		404 {object} errorResponse
+// @Failure		429 {object} errorResponse
 // @Failure		500 {object} errorResponse
 // @Router		/users/{id}/stats [get]
 func (h *PublicHandler) GetUserStats(w http.ResponseWriter, r *http.Request) {
@@ -169,7 +174,8 @@ func toPublicUserStats(stats *model.UserStats) publicUserStats {
 }
 
 // @Summary		Creates a new lobby
-// @Description Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time — creating a second one fails with 409.
+// @Description Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time, creating a second one fails with 409.
+// @Description Fetch the lobbyID to update the Lobby name (PUT) or DELETE.
 // @Security 	ApiKeyAuth
 // @Tags		lobby
 // @Accept 		json
@@ -177,7 +183,9 @@ func toPublicUserStats(stats *model.UserStats) publicUserStats {
 // @Param 		request body model.CreateLobbyRequest true "Lobby creation parameters"
 // @Success 	201 {object} lobbyResponse
 // @Failure 	400 {object} errorResponse
+// @Failure 	401 {object} errorResponse
 // @Failure 	409 {object} errorResponse
+// @Failure 	429 {object} errorResponse
 // @Failure 	500 {object} errorResponse
 // @Router		/lobbies [post]
 func (h *PublicHandler) CreateLobby(w http.ResponseWriter, r *http.Request) {
@@ -221,14 +229,17 @@ func toPublicLobby(d *model.LobbyDetail) publicLobby {
 }
 
 // @Summary 	Deletes Lobby
-// @Description Permanently deletes a lobby. Only the host may delete it.
+// @Description Permanently deletes a lobby. Only the host may delete it, only while it is still waiting, deleting after the match has started or the lobby closed fails with 409.
 // @Security 	ApiKeyAuth
 // @Tags		lobby
 // @Param		id path string true "Lobby ID"
 // @Success 	204
 // @Failure 	400 {object} errorResponse
+// @Failure 	401 {object} errorResponse
 // @Failure 	403 {object} errorResponse
 // @Failure 	404 {object} errorResponse
+// @Failure 	409 {object} errorResponse
+// @Failure 	429 {object} errorResponse
 // @Failure 	500 {object} errorResponse
 // @Router		/lobbies/{id} [delete]
 func (h *PublicHandler) DeleteLobby(w http.ResponseWriter, r *http.Request) {
@@ -256,9 +267,11 @@ func (h *PublicHandler) DeleteLobby(w http.ResponseWriter, r *http.Request) {
 // @Param 		request body updateLobbyNameRequest true "New lobby name"
 // @Success 	200 {object} lobbyResponse
 // @Failure 	400 {object} errorResponse
+// @Failure 	401 {object} errorResponse
 // @Failure 	403 {object} errorResponse
 // @Failure 	404 {object} errorResponse
 // @Failure 	409 {object} errorResponse
+// @Failure 	429 {object} errorResponse
 // @Failure 	500 {object} errorResponse
 // @Router		/lobbies/{id} [put]
 func (h *PublicHandler) UpdateLobbyName(w http.ResponseWriter, r *http.Request) {

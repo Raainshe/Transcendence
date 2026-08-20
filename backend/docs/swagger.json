@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.",
+        "description": "Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.\n\n## Getting started\n1. Log in to the app and create a key under User \u003e Profile \u003e API Keys (or call `POST /api/v1/users/me/api-keys` with your JWT).\n2. In this page, click Authorize and paste your key to try requests live. In your own client, send it as the X-API-Key header.\n\n## Rate limits\nUnauthenticated requests are capped per IP at 10 req/s (burst 30). Authenticated requests are capped per key: 5 req/s (burst 20) on GET endpoints, 1 req/s (burst 5) on POST/PUT/DELETE endpoints. Exceeding a limit returns `429` with a `Retry-After` header.\n\n## Errors\nEvery error response shares the shape `{\"error\": \"message\"}`, with the HTTP status indicating the failure category (`400` invalid input, `401` missing/invalid key, `403` not the resource owner, `404` not found, `409` conflicting state, `429` rate limited).",
         "title": "Transcendence Public API",
         "contact": {},
         "version": "1.0"
@@ -45,6 +45,18 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -61,7 +73,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time — creating a second one fails with 409.",
+                "description": "Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time, creating a second one fails with 409.\nFetch the lobbyID to update the Lobby name (PUT) or DELETE.",
                 "consumes": [
                     "application/json"
                 ],
@@ -96,8 +108,20 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/handler.errorResponse"
                         }
@@ -160,6 +184,12 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
@@ -178,6 +208,12 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "429": {
+                        "description": "Too Many Requests",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -192,7 +228,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Permanently deletes a lobby. Only the host may delete it.",
+                "description": "Permanently deletes a lobby. Only the host may delete it, only while it is still waiting, deleting after the match has started or the lobby closed fails with 409.",
                 "tags": [
                     "lobby"
                 ],
@@ -216,6 +252,12 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "403": {
                         "description": "Forbidden",
                         "schema": {
@@ -224,6 +266,18 @@
                     },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/handler.errorResponse"
                         }
@@ -244,7 +298,7 @@
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Returns aggregate game stats (games played, wins, best score, total lines, average score) for the given user.",
+                "description": "Returns aggregate game stats (games played, wins, best score, total lines, average score) for the given user.\nYou can use GET Leaderboard to get the User ID.",
                 "produces": [
                     "application/json"
                 ],
@@ -274,8 +328,20 @@
                             "$ref": "#/definitions/handler.errorResponse"
                         }
                     },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handler.errorResponse"
+                        }
+                    },
+                    "429": {
+                        "description": "Too Many Requests",
                         "schema": {
                             "$ref": "#/definitions/handler.errorResponse"
                         }
