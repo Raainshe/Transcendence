@@ -9,6 +9,7 @@ import (
 	"errors"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 
@@ -42,7 +43,7 @@ func (s *APIKeyService) GenerateAPIKey(ctx context.Context, userID uuid.UUID, na
 	if name == "" {
 		return nil, ErrKeyNameRequired
 	}
-	if len(name) > MaxNameLength {
+	if utf8.RuneCountInString(name) > MaxNameLength {
 		return nil, ErrKeyNameTooLong
 	}
 

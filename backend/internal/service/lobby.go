@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 
@@ -18,7 +19,7 @@ import (
 
 var (
 	ErrInvalidMaxPlayers = errors.New("max_players must be between 2 and 4")
-	ErrNotLobbyHost      = errors.New("only the lobby host can start the match")
+	ErrNotLobbyHost      = errors.New("only the lobby host can perform this action")
 	ErrLobbyNotJoinable  = errors.New("lobby is not joinable")
 	ErrLobbyFull         = errors.New("lobby is full")
 	ErrAlreadyInLobby    = errors.New("user is already in this lobby")
@@ -375,6 +376,9 @@ func (s *LobbyService) CloseLobby(ctx context.Context, hostID, lobbyID uuid.UUID
 	if lobby.HostUserID != hostID {
 		return ErrNotLobbyHost
 	}
+	if lobby.Status != model.LobbyStatusWaiting {
+		return ErrLobbyNotWaiting
+	}
 	if err := s.lobbies.DeleteLobby(ctx, lobbyID); err != nil {
 		return err
 	}
@@ -397,7 +401,7 @@ func (s *LobbyService) UpdateLobbyName(ctx context.Context, hostID, lobbyID uuid
 	if name == "" {
 		return nil, ErrInvalidLobbyName
 	}
-	if len(name) > 64 {
+	if utf8.RuneCountInString(name) > 64 {
 		return nil, ErrLobbyNameTooLong
 	}
 	err = s.lobbies.UpdateLobbyName(ctx, lobbyID, name)

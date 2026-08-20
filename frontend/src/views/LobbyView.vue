@@ -52,8 +52,6 @@ watch(
   { immediate: true },
 )
 
-const formError = computed(() => lobbyStore.error)
-
 const nameSuccess = ref(false)
 
 const nameChanged = computed(
@@ -192,9 +190,10 @@ onBeforeUnmount(() => {
     <p v-if="closedMessage" class="lobby-view__notice" role="status">{{ closedMessage }}</p>
     <p v-if="lobbyStore.notice" class="lobby-view__notice" role="status">{{ lobbyStore.notice }}</p>
     <p v-if="lobbyStore.loading" class="lobby-view__status">{{ t('lobby.loading') }}</p>
-    <p v-else-if="lobbyStore.error" class="lobby-view__error">{{ lobbyStore.error }}</p>
+    <p v-else-if="lobbyStore.error && !lobbyStore.lobby" class="lobby-view__error">{{ lobbyStore.error }}</p>
 
     <section v-else-if="lobbyStore.lobby" class="lobby-view__panel">
+      <p v-if="lobbyStore.error" class="lobby-view__error" role="alert">{{ lobbyStore.error }}</p>
       <div class="lobby-view__name">
         <template v-if="canEditName">
           <form class="lobby-view__field" @submit.prevent="onSaveLobbyName">
@@ -208,7 +207,6 @@ onBeforeUnmount(() => {
               :disabled="isSaving"
             />
             <p v-if="nameSuccess" class="lobby-view__name-message" role="status">{{ t('lobby.saved') }}</p>
-            <p v-if="formError" class="lobby-view__error" role="alert">{{ formError }}</p>
             <button
             type="submit"
             class="lobby-view__button"
