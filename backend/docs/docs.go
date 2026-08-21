@@ -547,9 +547,9 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost",
 	BasePath:         "/api/public/v1",
-	Schemes:          []string{},
+	Schemes:          []string{"https"},
 	Title:            "Transcendence Public API",
 	Description:      "Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.\n\n## Getting started\n1. Log in to the app and create a key under User > Profile > API Keys (or call `POST /api/v1/users/me/api-keys` with your JWT).\n2. In this page, click Authorize and paste your key to try requests live. In your own client, send it as the X-API-Key header.\n\n## Rate limits\nUnauthenticated requests are capped per IP at 10 req/s (burst 30). Authenticated requests are capped per key: 5 req/s (burst 20) on GET endpoints, 1 req/s (burst 5) on POST/PUT/DELETE endpoints. Exceeding a limit returns `429` with a `Retry-After` header.\n\n## Errors\nEvery error response shares the shape `{\"error\": \"message\"}`, with the HTTP status indicating the failure category (`400` invalid input, `401` missing/invalid key, `403` not the resource owner, `404` not found, `409` conflicting state, `429` rate limited).",
 	InfoInstanceName: "swagger",

@@ -7,6 +7,9 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 /** Backend URL for the Vite dev proxy (not exposed to the browser). */
 const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8080'
 
+const hmrClientPort = Number(process.env.HMR_CLIENT_PORT)
+const behindCaddy = Number.isFinite(hmrClientPort) && hmrClientPort > 0
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -19,6 +22,11 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
+    port: 5173,
+    hmr: behindCaddy
+      ? { protocol: 'wss', host: 'localhost', clientPort: hmrClientPort }
+      : undefined,
     proxy: {
       '/api': { target: apiProxyTarget, changeOrigin: true, ws: true },
       '/uploads': { target: apiProxyTarget, changeOrigin: true },

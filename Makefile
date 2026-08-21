@@ -29,8 +29,8 @@ clean:
 	$(COMPOSE) down -v
 
 help:
-	@echo "make up            - start backend + frontend (no rebuild)"
-	@echo "make build         - start backend + frontend with rebuild"
+	@echo "make up            - start the stack (app at https://localhost)"
+	@echo "make build         - start with rebuild (app at https://localhost)"
 	@echo "make restart       - stop and start (no rebuild)"
 	@echo "make restart-build - stop and start with rebuild"
 	@echo "make down          - stop and remove containers"

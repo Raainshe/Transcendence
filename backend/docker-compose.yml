@@ -5,8 +5,8 @@ services:
       dockerfile: Dockerfile
       target: prod
     restart: unless-stopped
-    ports:
-      - ${PORT}:${PORT}
+    expose:
+      - ${PORT}
     environment:
       UPLOAD_DIR: /app/uploads
       APP_ENV: ${APP_ENV}
