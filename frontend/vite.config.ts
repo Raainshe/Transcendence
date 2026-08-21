@@ -3,6 +3,7 @@ import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
+import tailwindcss from '@tailwindcss/vite'
 
 /** Backend URL for the Vite dev proxy (not exposed to the browser). */
 const apiProxyTarget = process.env.API_PROXY_TARGET ?? 'http://localhost:8080'
@@ -14,6 +15,7 @@ const behindCaddy = Number.isFinite(hmrClientPort) && hmrClientPort > 0
 export default defineConfig({
   plugins: [
     vue(),
+    tailwindcss(),
     vueDevTools(),
   ],
   resolve: {

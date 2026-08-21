@@ -125,4 +125,16 @@ rmakoni: Project Manager + Technical Lead + Developer
       in the frontend to throw before the socket connected. Had minimal experience with Go, Typescript,
       Vue and SQL before this project.
 - rmakoni
-	-
+	- Built most of the Vue frontend: routing, layout, menus, play view, HUD,
+	  and the lobby/match UI on top of Pinia and the existing auth/i18n stack.
+	- Designed the Tetris engine as framework-agnostic TypeScript, following the
+	  Tetris Guideline: 7-bag generation, SRS wall-kicks, DAS/ARR input,
+	  extended lock-down, gravity/levels, Hold, ghost piece, Guideline scoring,
+	  T-Spins, Back-to-Back, and Marathon / Sprint / Ultra / multiplayer variants.
+	- Implemented remote multiplayer over WebSockets. Clients stream player.state
+	  (board, score, lines) into a match room; opponents render live on the play
+	  view, with reconnect/backoff and elimination / match-ended handling.
+	- On the backend, built lobby flow: create and join by invite code (2–4 players),
+	  ready/start gates, host-only start, and handing the lobby off onto a match
+	  WebSocket room when the game begins.
+	-I struggled the most with developing the engine as I had various bugs which had to do with the logic I implemented and the game not behaving correctly. I also struggled with implementing the Websockets for the game and wanted a more complex UI but required a rewrite.
