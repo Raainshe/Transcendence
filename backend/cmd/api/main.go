@@ -50,7 +50,8 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 // @description
 // @description     ## Errors
 // @description     Every error response shares the shape `{"error": "message"}`, with the HTTP status indicating the failure category (`400` invalid input, `401` missing/invalid key, `403` not the resource owner, `404` not found, `409` conflicting state, `429` rate limited).
-// @host            localhost:8080
+// @host            localhost
+// @schemes         https
 // @BasePath        /api/public/v1
 // @securityDefinitions.apikey ApiKeyAuth
 // @in              header

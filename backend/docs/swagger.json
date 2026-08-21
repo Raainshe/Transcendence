@@ -6,8 +6,11 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost",
     "basePath": "/api/public/v1",
+    "schemes": [
+        "https"
+    ],
     "paths": {
         "/leaderboard": {
             "get": {

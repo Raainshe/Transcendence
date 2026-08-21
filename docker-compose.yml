@@ -3,24 +3,44 @@ include:
 
 volumes:
   uploads_volume_bp:
+  caddy_data:
+  caddy_config:
 
 services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: transcendence_caddy
+    restart: unless-stopped
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - blueprint
+    depends_on:
+      - frontend
+      - app
+
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: transcendence_frontend
     restart: unless-stopped
-    ports:
-      - "5173:5173"
+    expose:
+      - "5173"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     environment:
       CHOKIDAR_USEPOLLING: "true"
-      # Vite dev proxy: use host-published port (works even if service DNS differs).
-      #On native linux machines we change this to http://app:8080
-      #On wsl we need to use http://host.docker.internal:8080
+      # Vite HMR must use wss on 443 when the browser talks to Caddy, not :5173.
+      HMR_CLIENT_PORT: "443"
+      # Unused by the browser (Caddy proxies /api). Internal fallback if Vite proxies.
+      # Host-side npm run dev on WSL: http://host.docker.internal:8080 (requires publishing PORT).
       API_PROXY_TARGET: http://app:8080
     extra_hosts:
       - host.docker.internal:host-gateway
