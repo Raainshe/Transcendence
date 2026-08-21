@@ -137,4 +137,4 @@ rmakoni: Project Manager + Technical Lead + Developer
 	- On the backend, built lobby flow: create and join by invite code (2–4 players),
 	  ready/start gates, host-only start, and handing the lobby off onto a match
 	  WebSocket room when the game begins.
-	-I struggled the most with developing the engine as I had various bugs which had to do with the logic I implemented and the game not behaving correctly. I also struggled with implementing the Websockets for the game and wanted a more complex UI but required a rewrite.
+	- I struggled the most with developing the engine as I had various bugs which had to do with the logic I implemented and the game not behaving correctly. I also struggled with implementing the Websockets for the game and wanted a more complex UI but required a rewrite.
