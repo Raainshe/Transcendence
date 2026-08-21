@@ -84,9 +84,9 @@ rmakoni: Project Manager + Technical Lead + Developer
 
 ## Modules:
 ### Major:
-- Frontend + Backen Framework 2pts ()
+- Frontend + Backend Framework 2pts ()
 - WebSocket 2pts ()
-- Interact with other users 2pts ()
+- Interact with other users 2pts (nmannar)
 - Public API 2pts ()
 - Standard User Management 2pts ()
 - Advanced user roles 2pts ()
@@ -99,7 +99,7 @@ rmakoni: Project Manager + Technical Lead + Developer
 - Multi Browser support 1pt ()
 - Multi Language support 1pt ()
 - Game Stats + Match History 1pt ()
-- 2FA 1pt ()
+- 2FA 1pt (nmannar)
 - Gamification 1pt ()
 - 6 points
 
@@ -111,6 +111,18 @@ rmakoni: Project Manager + Technical Lead + Developer
 - ksinn:
 	-
 - nmannar:
-	-
+	- Implemented optional email 2FA. On the backend, added an AuthService extension
+      that uses bcrypt-hashed 6-digit codes with a 10-minute expiry,
+      sends them through an SMTP mailer, and uses a verification step for login.
+      On the frontend, built the two-step login, the enable/disable 2FA controls in the profile page.
+      Integrated it with SendGrid for delivery.
+    - Built persistent 1-on-1 messaging between friends. On the backend added a chat service
+      that enforces friends-only access, validates and length-caps messages,
+      and sends them over the existing WebSocket hub. History and unread counts are stored.
+      On the frontend built the ChatView (conversation sidebar + message thread).
+    - Challenges: When implementing Chat, there was a tough bug where clicking "Send" did nothing.
+      I traced it through the browser's inspector and found the cause: a Go nil slice caused .map()
+      in the frontend to throw before the socket connected. Had minimal experience with Go, Typescript,
+      Vue and SQL before this project.
 - rmakoni
 	-
