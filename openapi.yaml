@@ -12,6 +12,13 @@ servers:
   - url: /api/v1
     description: Current API version
 
+externalDocs:
+  description: >-
+    Public API for third-party integrations (Leaderboard, User Stats, Lobby
+    Management) an API-key authenticated subset of this API with
+    its own interactive docs and try-it-out console.
+  url: /swagger/index.html
+
 components:
   securitySchemes:
     BearerAuth:

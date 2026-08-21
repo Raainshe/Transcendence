@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 
@@ -41,6 +41,28 @@ const statusLabel = computed(() => {
 const readyButtonLabel = computed(() =>
   lobbyStore.myMember?.is_ready ? t('lobby.notReady') : t('lobby.ready'),
 )
+
+const lobbyName = ref('')
+
+watch(
+  () => lobbyStore.lobby?.name,
+  (name) => {
+    lobbyName.value = name ?? ''
+  },
+  { immediate: true },
+)
+
+const nameSuccess = ref(false)
+
+const nameChanged = computed(
+  () => lobbyStore.lobby && lobbyName.value.trim() !== (lobbyStore.lobby.name ?? '')
+)
+
+const canEditName = computed(
+  () => lobbyStore.isHost && lobbyStore.lobby?.status === 'waiting'
+)
+
+const isSaving = computed(() => lobbyStore.actionBusy)
 
 function memberInitials(member: LobbyMember): string {
   return member.username.slice(0, 2).toUpperCase()
@@ -109,6 +131,14 @@ async function handleLeave(): Promise<void> {
   void router.push({ name: 'home' })
 }
 
+async function onSaveLobbyName() {
+  nameSuccess.value = false
+  const next = lobbyName.value.trim()
+  if (!next || !nameChanged.value) return
+  const ok = await lobbyStore.rename(next)
+  if (ok) nameSuccess.value = true
+}
+
 onMounted(async () => {
   const id = lobbyId.value
   if (!id) {
@@ -160,9 +190,37 @@ onBeforeUnmount(() => {
     <p v-if="closedMessage" class="lobby-view__notice" role="status">{{ closedMessage }}</p>
     <p v-if="lobbyStore.notice" class="lobby-view__notice" role="status">{{ lobbyStore.notice }}</p>
     <p v-if="lobbyStore.loading" class="lobby-view__status">{{ t('lobby.loading') }}</p>
-    <p v-else-if="lobbyStore.error" class="lobby-view__error">{{ lobbyStore.error }}</p>
+    <p v-else-if="lobbyStore.error && !lobbyStore.lobby" class="lobby-view__error">{{ lobbyStore.error }}</p>
 
     <section v-else-if="lobbyStore.lobby" class="lobby-view__panel">
+      <p v-if="lobbyStore.error" class="lobby-view__error" role="alert">{{ lobbyStore.error }}</p>
+      <div class="lobby-view__name">
+        <template v-if="canEditName">
+          <form class="lobby-view__field" @submit.prevent="onSaveLobbyName">
+            <label class="lobby-view__name-label" for="lobby-name">{{ t('lobby.name') }}</label>
+            <input
+              id="lobby-name"
+              v-model="lobbyName"
+              type="text"
+              class="lobby-view__name-input"
+              maxlength="64"
+              :disabled="isSaving"
+            />
+            <p v-if="nameSuccess" class="lobby-view__name-message" role="status">{{ t('lobby.saved') }}</p>
+            <button
+            type="submit"
+            class="lobby-view__button"
+            :disabled="isSaving || !nameChanged"
+            >
+              {{ isSaving ? t('lobby.saving') : t('lobby.save') }}
+            </button>
+          </form>
+        </template>
+        <template v-else>
+          <label class="lobby-view__name-label" for="lobby-name">{{ t('lobby.name') }}</label>
+          <h2 class="lobby-view__name-display">{{ lobbyStore.lobby?.name || t('lobby.unnamed') }}</h2>
+        </template>
+      </div>
       <div class="lobby-view__invite">
         <span class="lobby-view__invite-label">{{ t('lobby.inviteCode') }}</span>
         <div class="lobby-view__invite-row">

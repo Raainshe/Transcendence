@@ -50,6 +50,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/profile/api-keys',
+      name: 'apiKeys',
+      component: () => import('@/views/ApiKeysView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/leaderboard',
       name: 'leaderboard',
       component: () => import('@/views/LeaderboardView.vue'),

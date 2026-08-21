@@ -27,10 +27,11 @@ type MockUserRepo struct {
 	UpdateLastSeenFn func(ctx context.Context, id uuid.UUID) error
 	DeleteFn         func(ctx context.Context, id uuid.UUID) error
 	Set2FAEnabledFn  func(ctx context.Context, id uuid.UUID, enabled bool) error
+	AddXPFn          func(ctx context.Context, id uuid.UUID, xp int) error
 }
 
 type MockTwoFactorRepo struct {
-	CreateFn	    func(ctx context.Context, c *model.TwoFactorCode) error
+	CreateFn        func(ctx context.Context, c *model.TwoFactorCode) error
 	GetActiveFn     func(ctx context.Context, userID uuid.UUID, purpose string) (*model.TwoFactorCode, error)
 	MarkConsumedFn  func(ctx context.Context, id uuid.UUID) error
 	DeleteForUserFn func(ctx context.Context, userID uuid.UUID, purpose string) error
@@ -126,6 +127,12 @@ func (m *MockUserRepo) UpdateLastSeen(ctx context.Context, id uuid.UUID) error {
 	}
 	return nil
 }
+func (m *MockUserRepo) AddXP(ctx context.Context, id uuid.UUID, xp int) error {
+	if m.AddXPFn != nil {
+		return m.AddXPFn(ctx, id, xp)
+	}
+	return nil
+}
 
 // ── Relationship repo mock ────────────────────────────────────────────────────
 
@@ -194,16 +201,16 @@ func (m *MockRelationshipRepo) ListBlocked(ctx context.Context, userID uuid.UUID
 type MockGameRepo struct {
 	RecordMatchFn            func(ctx context.Context, game *model.Game, player *model.GamePlayer) error
 	CreateMultiplayerMatchFn func(ctx context.Context, game *model.Game, players []model.GamePlayer) error
-	FindByIDFn        func(ctx context.Context, id uuid.UUID) (*model.Game, error)
-	ListGamesFn       func(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
-	CountGamesFn      func(ctx context.Context, userID *uuid.UUID) (int, error)
-	FindGameDetailFn  func(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
-	ListLeaderboardFn func(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
-	GetUserStatsFn      func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
-	IsGamePlayerFn      func(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
-	ListMatchPlayersFn        func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
-	ListMatchResultsFn        func(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error)
-	FinishMultiplayerMatchFn  func(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
+	FindByIDFn               func(ctx context.Context, id uuid.UUID) (*model.Game, error)
+	ListGamesFn              func(ctx context.Context, userID *uuid.UUID, limit, offset int) ([]model.Game, error)
+	CountGamesFn             func(ctx context.Context, userID *uuid.UUID) (int, error)
+	FindGameDetailFn         func(ctx context.Context, id uuid.UUID) (*model.GameDetail, error)
+	ListLeaderboardFn        func(ctx context.Context, limit int) ([]model.LeaderboardEntry, error)
+	GetUserStatsFn           func(ctx context.Context, userID uuid.UUID) (*model.UserStats, error)
+	IsGamePlayerFn           func(ctx context.Context, gameID, userID uuid.UUID) (bool, error)
+	ListMatchPlayersFn       func(ctx context.Context, gameID uuid.UUID) ([]model.MatchPlayerView, error)
+	ListMatchResultsFn       func(ctx context.Context, gameID uuid.UUID) (*model.MatchEndedPayload, error)
+	FinishMultiplayerMatchFn func(ctx context.Context, gameID uuid.UUID, finishedAt time.Time, players []model.GamePlayer) error
 }
 
 func (m *MockGameRepo) RecordMatch(ctx context.Context, game *model.Game, player *model.GamePlayer) error {
@@ -360,19 +367,20 @@ func HashPassword(password string) string {
 // ── Lobby repo mock ───────────────────────────────────────────────────────────
 
 type MockLobbyRepo struct {
-	CreateFn                  func(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error
-	FindByIDFn                func(ctx context.Context, id uuid.UUID) (*model.Lobby, error)
-	FindByInviteCodeFn        func(ctx context.Context, code string) (*model.Lobby, error)
-	FindDetailFn              func(ctx context.Context, id uuid.UUID) (*model.LobbyDetail, error)
-	FindWaitingLobbyByUserFn  func(ctx context.Context, userID uuid.UUID) (*model.Lobby, error)
-	AddMemberFn               func(ctx context.Context, lobbyID, userID uuid.UUID) error
-	RemoveMemberFn            func(ctx context.Context, lobbyID, userID uuid.UUID) error
-	SetReadyFn                func(ctx context.Context, lobbyID, userID uuid.UUID, ready bool) error
-	DeleteLobbyFn             func(ctx context.Context, id uuid.UUID) error
-	LinkGameFn                func(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error
-	MemberCountFn             func(ctx context.Context, lobbyID uuid.UUID) (int, error)
-	IsMemberFn                func(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
-	FindByGameIDFn            func(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
+	CreateFn                 func(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error
+	FindByIDFn               func(ctx context.Context, id uuid.UUID) (*model.Lobby, error)
+	FindByInviteCodeFn       func(ctx context.Context, code string) (*model.Lobby, error)
+	FindDetailFn             func(ctx context.Context, id uuid.UUID) (*model.LobbyDetail, error)
+	FindWaitingLobbyByUserFn func(ctx context.Context, userID uuid.UUID) (*model.Lobby, error)
+	AddMemberFn              func(ctx context.Context, lobbyID, userID uuid.UUID) error
+	RemoveMemberFn           func(ctx context.Context, lobbyID, userID uuid.UUID) error
+	SetReadyFn               func(ctx context.Context, lobbyID, userID uuid.UUID, ready bool) error
+	DeleteLobbyFn            func(ctx context.Context, id uuid.UUID) error
+	LinkGameFn               func(ctx context.Context, lobbyID, gameID uuid.UUID, seed int64) error
+	MemberCountFn            func(ctx context.Context, lobbyID uuid.UUID) (int, error)
+	IsMemberFn               func(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
+	FindByGameIDFn           func(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
+	UpdateLobbyNameFn        func(ctx context.Context, lobbyID uuid.UUID, name string) error
 }
 
 func (m *MockLobbyRepo) Create(ctx context.Context, lobby *model.Lobby, hostUserID uuid.UUID) error {
@@ -454,13 +462,20 @@ func (m *MockLobbyRepo) FindByGameID(ctx context.Context, gameID uuid.UUID) (*mo
 	return nil, repository.ErrNotFound
 }
 
+func (m *MockLobbyRepo) UpdateLobbyName(ctx context.Context, lobbyID uuid.UUID, name string) error {
+	if m.UpdateLobbyNameFn != nil {
+		return m.UpdateLobbyNameFn(ctx, lobbyID, name)
+	}
+	return nil
+}
+
 // ── Lobby broadcaster mock ────────────────────────────────────────────────────
 
 type MockBroadcaster struct {
-	BroadcastLobbyFn              func(lobbyID uuid.UUID, env ws.Envelope)
-	SubscribeAllInLobbyToMatchFn  func(lobbyID, gameID uuid.UUID)
-	Messages                      []ws.Envelope
-	AutoJoinCalls                 []struct {
+	BroadcastLobbyFn             func(lobbyID uuid.UUID, env ws.Envelope)
+	SubscribeAllInLobbyToMatchFn func(lobbyID, gameID uuid.UUID)
+	Messages                     []ws.Envelope
+	AutoJoinCalls                []struct {
 		LobbyID uuid.UUID
 		GameID  uuid.UUID
 	}
@@ -485,3 +500,43 @@ func (m *MockBroadcaster) SubscribeAllInLobbyToMatch(lobbyID, gameID uuid.UUID) 
 	}{LobbyID: lobbyID, GameID: gameID})
 }
 
+// ── APIKey repo mock ─────────────────────────────────────────────────────────
+
+type MockAPIKeyRepo struct {
+	CreateFn        func(ctx context.Context, key *model.APIKey) error
+	FindByHashFn    func(ctx context.Context, keyHash string) (*model.APIKey, error)
+	ListForUserFn   func(ctx context.Context, userID uuid.UUID) ([]model.APIKeyList, error)
+	RevokeFn        func(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
+	TouchLastUsedFn func(ctx context.Context, id uuid.UUID) error
+}
+
+func (m *MockAPIKeyRepo) Create(ctx context.Context, key *model.APIKey) error {
+	if m.CreateFn != nil {
+		return m.CreateFn(ctx, key)
+	}
+	return nil
+}
+func (m *MockAPIKeyRepo) FindByHash(ctx context.Context, keyHash string) (*model.APIKey, error) {
+	if m.FindByHashFn != nil {
+		return m.FindByHashFn(ctx, keyHash)
+	}
+	return nil, repository.ErrNotFound
+}
+func (m *MockAPIKeyRepo) ListForUser(ctx context.Context, userID uuid.UUID) ([]model.APIKeyList, error) {
+	if m.ListForUserFn != nil {
+		return m.ListForUserFn(ctx, userID)
+	}
+	return []model.APIKeyList{}, nil
+}
+func (m *MockAPIKeyRepo) Revoke(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
+	if m.RevokeFn != nil {
+		return m.RevokeFn(ctx, id, userID)
+	}
+	return nil
+}
+func (m *MockAPIKeyRepo) TouchLastUsed(ctx context.Context, id uuid.UUID) error {
+	if m.TouchLastUsedFn != nil {
+		return m.TouchLastUsedFn(ctx, id)
+	}
+	return nil
+}

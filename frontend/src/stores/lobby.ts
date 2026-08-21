@@ -110,6 +110,9 @@ export const useLobbyStore = defineStore('lobby', () => {
         'user is not a lobby member': 'lobby.errors.notMember',
         'lobby not found': 'lobby.errors.notFound',
         'invite_code is required': 'lobby.errors.codeRequired',
+        'lobby name is required': 'lobby.errors.nameRequired',
+        'lobby name must be 64 characters or fewer': 'lobby.errors.nameTooLong',
+        'lobby is not accepting changes': 'lobby.errors.notWaiting',
       }
       const mapped = known[err.message.toLowerCase()]
       if (mapped) return i18n.global.t(mapped)
@@ -174,6 +177,22 @@ export const useLobbyStore = defineStore('lobby', () => {
       lobby.value = res.lobby
     } catch (err) {
       error.value = mapError(err)
+    } finally {
+      actionBusy.value = false
+    }
+  }
+
+  async function rename(name: string): Promise<boolean> {
+    if (!lobby.value || actionBusy.value) return false
+    actionBusy.value = true
+    error.value = null
+    try {
+      const res = await lobbiesApi.renameLobby(lobby.value.id, { name })
+      lobby.value = res.lobby
+      return true
+    } catch (err) {
+      error.value = mapError(err)
+      return false
     } finally {
       actionBusy.value = false
     }
@@ -265,6 +284,7 @@ export const useLobbyStore = defineStore('lobby', () => {
     reset,
     load,
     toggleReady,
+    rename,
     start,
     leave,
     applyWsEnvelope,

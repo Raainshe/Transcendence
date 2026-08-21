@@ -10,8 +10,11 @@ import (
 	chimid "github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 
+	_ "backend/docs"
 	"backend/internal/handler"
 	mw "backend/internal/middleware"
+
+	httpSwagger "github.com/swaggo/http-swagger/v2"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -21,16 +24,38 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-API-Key"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
 
 	r.Get("/", s.HelloWorldHandler)
 	r.Get("/health", s.healthHandler)
+	r.Get("/swagger/*", httpSwagger.Handler(
+		httpSwagger.URL("/swagger/doc.json"),
+	))
 
 	// Serve uploaded files (avatars, etc.) — no directory listings.
 	r.Handle("/uploads/*", http.StripPrefix("/uploads/", noDirListing(s.uploadDir, http.FileServer(http.Dir(s.uploadDir)))))
+
+	r.Route("/api/public/v1", func(r chi.Router) {
+		r.Use(mw.MaxBodyBytes(1 << 20))
+		r.Use(mw.RateLimitIP(10, 30))
+		r.Use(mw.APIKeyAuth(s.apiSvc))
+
+		r.Group(func(r chi.Router) {
+			r.Use(mw.RateLimit(5, 20))
+			r.Get("/leaderboard", s.publicHandler.GetLeaderboard)
+			r.Get("/users/{id}/stats", s.publicHandler.GetUserStats)
+		})
+
+		r.Group(func(r chi.Router) {
+			r.Use(mw.RateLimit(1, 5))
+			r.Post("/lobbies", s.publicHandler.CreateLobby)
+			r.Put("/lobbies/{id}", s.publicHandler.UpdateLobbyName)
+			r.Delete("/lobbies/{id}", s.publicHandler.DeleteLobby)
+		})
+	})
 
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Use(mw.MaxBodyBytes(1 << 20)) // 1 MB cap for JSON bodies
@@ -82,6 +107,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Get("/users/me/blocks", s.userHandler.GetBlockedUsers)
 			r.Post("/users/me/block/{id}", s.userHandler.BlockUser)
 			r.Delete("/users/me/block/{id}", s.userHandler.UnblockUser)
+			r.Get("/users/me/api-keys", s.apiHandler.List)
+			r.Post("/users/me/api-keys", s.apiHandler.Create)
+			r.Delete("/users/me/api-keys/{id}", s.apiHandler.Revoke)
 		})
 
 		// Games
@@ -114,6 +142,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Post("/lobbies/{id}/ready", s.lobbyHandler.SetReady)
 			r.Post("/lobbies/{id}/start", s.lobbyHandler.Start)
 			r.Get("/lobbies/current", s.lobbyHandler.Current)
+			r.Put("/lobbies/{id}", s.lobbyHandler.UpdateLobbyName)
 		})
 	})
 

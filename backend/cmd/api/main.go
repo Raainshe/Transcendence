@@ -37,6 +37,24 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	done <- true
 }
 
+// @title           Transcendence Public API
+// @version         1.0
+// @description     Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.
+// @description
+// @description     ## Getting started
+// @description     1. Log in to the app and create a key under User > Profile > API Keys (or call `POST /api/v1/users/me/api-keys` with your JWT).
+// @description     2. In this page, click Authorize and paste your key to try requests live. In your own client, send it as the X-API-Key header.
+// @description
+// @description     ## Rate limits
+// @description     Unauthenticated requests are capped per IP at 10 req/s (burst 30). Authenticated requests are capped per key: 5 req/s (burst 20) on GET endpoints, 1 req/s (burst 5) on POST/PUT/DELETE endpoints. Exceeding a limit returns `429` with a `Retry-After` header.
+// @description
+// @description     ## Errors
+// @description     Every error response shares the shape `{"error": "message"}`, with the HTTP status indicating the failure category (`400` invalid input, `401` missing/invalid key, `403` not the resource owner, `404` not found, `409` conflicting state, `429` rate limited).
+// @host            localhost:8080
+// @BasePath        /api/public/v1
+// @securityDefinitions.apikey ApiKeyAuth
+// @in              header
+// @name            X-API-Key
 func main() {
 
 	server := server.NewServer()

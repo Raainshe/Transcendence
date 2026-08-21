@@ -230,6 +230,7 @@ describe('useMatchStore opponentList', () => {
       game_id: 'game-finished',
       status: 'finished',
       mode: 'multiplayer',
+      lobby_name: 'Friday Night Tetris',
       shared_seed: 123,
       players: [
         { user_id: SELF_ID, username: 'self', avatar_url: null },

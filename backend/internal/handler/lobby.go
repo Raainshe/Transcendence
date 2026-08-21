@@ -34,7 +34,7 @@ func (h *LobbyHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.CreateLobby(r.Context(), userID, req.MaxPlayers)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *LobbyHandler) Join(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.JoinLobby(r.Context(), userID, id)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -131,7 +131,7 @@ func (h *LobbyHandler) JoinByCode(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.JoinLobbyByCode(r.Context(), userID, code)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -147,7 +147,7 @@ func (h *LobbyHandler) Leave(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.lobbies.LeaveLobby(r.Context(), userID, id); err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -170,7 +170,7 @@ func (h *LobbyHandler) SetReady(w http.ResponseWriter, r *http.Request) {
 
 	detail, err := h.lobbies.SetReady(r.Context(), userID, id, req.Ready)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
@@ -187,36 +187,66 @@ func (h *LobbyHandler) Start(w http.ResponseWriter, r *http.Request) {
 
 	result, err := h.lobbies.StartLobby(r.Context(), userID, id)
 	if err != nil {
-		h.writeLobbyError(w, err)
+		writeLobbyError(w, err)
 		return
 	}
 
 	writeJSON(w, http.StatusOK, result)
 }
 
-func (h *LobbyHandler) writeLobbyError(w http.ResponseWriter, err error) {
+func (h *LobbyHandler) UpdateLobbyName(w http.ResponseWriter, r *http.Request) {
+	userID := middleware.UserIDFromContext(r.Context())
+	id, err := uuid.Parse(chi.URLParam(r, "id"))
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid lobby id"})
+		return
+	}
+
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid request body"})
+		return
+	}
+
+	lobby, err := h.lobbies.UpdateLobbyName(r.Context(), userID, id, req.Name)
+	if err != nil {
+		writeLobbyError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"lobby": lobby})
+}
+
+func writeLobbyError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, repository.ErrNotFound):
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "lobby not found"})
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "lobby not found"})
 	case errors.Is(err, service.ErrInvalidMaxPlayers):
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrNotLobbyHost):
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrLobbyNotJoinable):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrLobbyFull):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrAlreadyInLobby):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrInAnotherLobby):
-		writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrNotEnoughPlayers):
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrNotAllReady):
-		writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
 	case errors.Is(err, service.ErrNotLobbyMember):
-		writeJSON(w, http.StatusForbidden, map[string]string{"error": err.Error()})
+		writeJSON(w, http.StatusForbidden, errorResponse{Error: err.Error()})
+	case errors.Is(err, service.ErrInvalidLobbyName):
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+	case errors.Is(err, service.ErrLobbyNameTooLong):
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: err.Error()})
+	case errors.Is(err, service.ErrLobbyNotWaiting):
+		writeJSON(w, http.StatusConflict, errorResponse{Error: err.Error()})
 	default:
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "lobby operation failed"})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "lobby operation failed"})
 	}
 }

@@ -151,6 +151,28 @@ export interface ApiErrorBody {
   error?: string
 }
 
+export interface ApiKeySummary {
+  id: string
+  name: string
+  created_at: string
+  last_used_at: string | null
+}
+
+export interface ApiKeysResponse {
+  api_keys: ApiKeySummary[]
+}
+
+export interface ApiKeyCreated {
+  id: string
+  name: string
+  key: string
+}
+
+export interface ApiKeyCreateResponse {
+  api_key: ApiKeyCreated
+  message: string
+}
+
 export interface UpdateMePayload {
   username?: string
   avatar_url?: string
@@ -215,6 +237,7 @@ export interface LobbyDetail {
   shared_seed: number | null
   created_at: string
   members: LobbyMember[]
+  name: string
 }
 
 export interface LobbyResponse {
@@ -231,6 +254,10 @@ export interface JoinLobbyByCodePayload {
 
 export interface SetReadyPayload {
   ready: boolean
+}
+
+export interface RenameLobbyPayload {
+  name: string
 }
 
 export interface MatchStartPlayer {
@@ -255,6 +282,7 @@ export interface MatchDetail {
   game_id: string
   status: string
   mode: string
+  lobby_name: string
   shared_seed: number
   players: MatchPlayerView[]
   results?: MatchEndedPayload

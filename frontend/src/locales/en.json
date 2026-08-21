@@ -116,6 +116,7 @@
     "pauseSfxOff": "Sound effects: OFF",
     "playfieldAria": "Tetris playfield",
     "hud": {
+      "lobby": "Lobby",
       "score": "Score",
       "level": "Lvl",
       "lines": "Lines",
@@ -233,9 +234,14 @@
     "statusClosed": "Closed",
     "closedHostLeft": "The host left and the lobby was closed.",
     "closedStarted": "The match has started.",
-	"notices": {
-		"redirectedToExisting": "You're already in a lobby - we brought you back to it. Leave it to start a new one."
-	},
+    "name": "Lobby name",
+    "saved": "Lobby name saved",
+    "save": "Save Lobby name",
+    "saving": "Saving name..",
+    "unnamed": "Lobby with no name",
+    "notices": {
+      "redirectedToExisting": "You're already in a lobby - we brought you back to it. Leave it to start a new one."
+    },
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "notFound": "Lobby not found.",
@@ -248,7 +254,11 @@
       "notEnoughPlayers": "At least 2 players are required to start.",
       "notAllReady": "All players must be ready before starting.",
       "notMember": "You are not a member of this lobby.",
-      "codeRequired": "Enter an invite code."
+      "codeRequired": "Enter an invite code.",
+      "renameFailed": "Couldn't rename lobby.",
+      "nameRequired": "Lobby name is required",
+      "nameTooLong": "Lobby name too long.",
+      "notWaiting": "Lobby is not accepting changes."
     }
   },
   "legal": {
@@ -331,6 +341,9 @@
     "badgesTitle": "Badges",
     "seeAllAchievements": "See all achievements",
     "xpTitle": "Progression",
+    "apiKeysTitle": "API Keys",
+    "apiKeysHint": "Generate keys to access the public API on your behalf.",
+    "manageApiKeys": "Manage API keys",
 	"twoFactor": {
 		"title": "Two-factor authentication",
 		"statusOn": "Two-factor authentication is enabled.",
@@ -349,6 +362,38 @@
       "usernameTaken": "That username is already taken.",
       "avatarType": "Only JPEG, PNG, WebP, and GIF images are allowed.",
       "avatarTooLarge": "Image must be 5 MB or smaller.",
+      "generic": "Something went wrong. Please try again."
+    }
+  },
+  "apiKeys": {
+    "title": "API Keys",
+    "backToProfile": "Back to profile",
+    "createTitle": "Create a new key",
+    "nameLabel": "Key name",
+    "namePlaceholder": "e.g. My integration",
+    "create": "Create key",
+    "creating": "Creating…",
+    "listTitle": "Your API keys",
+    "loading": "Loading…",
+    "empty": "You haven't created any API keys yet.",
+    "loadError": "Could not load your API keys.",
+    "created": "Created",
+    "lastUsed": "Last used",
+    "never": "Never used",
+    "revoke": "Revoke",
+    "revoking": "Revoking…",
+    "revokeTitle": "Revoke this API key?",
+    "revokeBody": "Any application using \"{name}\" will immediately lose access. This cannot be undone.",
+    "revokeConfirm": "Revoke key",
+    "revokeCancel": "Cancel",
+    "revealTitle": "Key created",
+    "revealWarning": "Copy this key now — it won't be shown again.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "done": "Done",
+    "errors": {
+      "nameRequired": "Key name is required.",
+      "nameTooLong": "Key name must be 64 characters or fewer.",
       "generic": "Something went wrong. Please try again."
     }
   },
@@ -492,6 +537,7 @@
     "lobby": "Transcendence - Lobby",
     "userProfile": "Transcendence - Player",
     "players": "Transcendence - Players",
-    "achievements": "Transcendence - Achievements"
+    "achievements": "Transcendence - Achievements",
+    "apiKeys": "Transcendence - API Keys"
   }
 }

@@ -1,0 +1,376 @@
+basePath: /api/public/v1
+definitions:
+  handler.errorResponse:
+    properties:
+      error:
+        example: invalid request body
+        type: string
+    type: object
+  handler.leaderboardResponse:
+    properties:
+      leaderboard:
+        items:
+          $ref: '#/definitions/handler.publicLeaderboardEntry'
+        type: array
+    type: object
+  handler.lobbyResponse:
+    properties:
+      lobby:
+        $ref: '#/definitions/handler.publicLobby'
+    type: object
+  handler.publicLeaderboardEntry:
+    properties:
+      avatar_url:
+        example: /uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg
+        type: string
+      level_reached:
+        example: 12
+        type: integer
+      mode:
+        example: marathon
+        type: string
+      rank:
+        example: 1
+        type: integer
+      score:
+        example: 98500
+        type: integer
+      user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      username:
+        example: fearcon
+        type: string
+    type: object
+  handler.publicLobby:
+    properties:
+      created_at:
+        type: string
+      host_user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      invite_code:
+        example: ABC123
+        type: string
+      max_players:
+        example: 4
+        type: integer
+      members:
+        items:
+          $ref: '#/definitions/handler.publicLobbyMember'
+        type: array
+      name:
+        example: Friday Night Tetris
+        type: string
+      status:
+        example: waiting
+        type: string
+    type: object
+  handler.publicLobbyMember:
+    properties:
+      avatar_url:
+        example: /uploads/avatars/550e8400-e29b-41d4-a716-446655440000/abc123.jpg
+        type: string
+      is_ready:
+        example: true
+        type: boolean
+      user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      username:
+        example: fearcon
+        type: string
+    type: object
+  handler.publicUserStats:
+    properties:
+      avg_score:
+        example: 61200
+        type: integer
+      best_score:
+        example: 98500
+        type: integer
+      games_played:
+        example: 42
+        type: integer
+      total_lines:
+        example: 1240
+        type: integer
+      wins:
+        example: 18
+        type: integer
+    type: object
+  handler.updateLobbyNameRequest:
+    properties:
+      name:
+        example: Friday Night Tetris
+        type: string
+    type: object
+  handler.userStatsResponse:
+    properties:
+      stats:
+        $ref: '#/definitions/handler.publicUserStats'
+    type: object
+  model.CreateLobbyRequest:
+    properties:
+      max_players:
+        example: 4
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: |-
+    Public API for third-party integrations: Leaderboard, User Stats, and Lobby Management.
+
+    ## Getting started
+    1. Log in to the app and create a key under User > Profile > API Keys (or call `POST /api/v1/users/me/api-keys` with your JWT).
+    2. In this page, click Authorize and paste your key to try requests live. In your own client, send it as the X-API-Key header.
+
+    ## Rate limits
+    Unauthenticated requests are capped per IP at 10 req/s (burst 30). Authenticated requests are capped per key: 5 req/s (burst 20) on GET endpoints, 1 req/s (burst 5) on POST/PUT/DELETE endpoints. Exceeding a limit returns `429` with a `Retry-After` header.
+
+    ## Errors
+    Every error response shares the shape `{"error": "message"}`, with the HTTP status indicating the failure category (`400` invalid input, `401` missing/invalid key, `403` not the resource owner, `404` not found, `409` conflicting state, `429` rate limited).
+  title: Transcendence Public API
+  version: "1.0"
+paths:
+  /leaderboard:
+    get:
+      description: Returns the top players ranked by score across all modes. Limit
+        defaults to 20 and is capped at 100.
+      parameters:
+      - description: Max entries to return
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.leaderboardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Shows current Leaderboard
+      tags:
+      - leaderboard
+  /lobbies:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates a new lobby with the caller as host. max_players must be between 2 and 4. A user can only be in one waiting lobby at a time, creating a second one fails with 409.
+        Fetch the lobbyID to update the Lobby name (PUT) or DELETE.
+      parameters:
+      - description: Lobby creation parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateLobbyRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handler.lobbyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Creates a new lobby
+      tags:
+      - lobby
+  /lobbies/{id}:
+    delete:
+      description: Permanently deletes a lobby. Only the host may delete it, only
+        while it is still waiting, deleting after the match has started or the lobby
+        closed fails with 409.
+      parameters:
+      - description: Lobby ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Deletes Lobby
+      tags:
+      - lobby
+    put:
+      consumes:
+      - application/json
+      description: Renames a lobby. Only the host may rename it, renaming after it
+        has started or closed fails with 409. Name must be non-empty and 64 characters
+        or fewer.
+      parameters:
+      - description: Lobby ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New lobby name
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.updateLobbyNameRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.lobbyResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Sets or Changes current LobbyName
+      tags:
+      - lobby
+  /users/{id}/stats:
+    get:
+      description: |-
+        Returns aggregate game stats (games played, wins, best score, total lines, average score) for the given user.
+        You can use GET Leaderboard to get the User ID.
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.userStatsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handler.errorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Shows User Statistics
+      tags:
+      - userstats
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: X-API-Key
+    type: apiKey
+swagger: "2.0"

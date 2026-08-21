@@ -59,6 +59,7 @@ func (s *MatchService) GetMatch(ctx context.Context, callerID, gameID uuid.UUID)
 		GameID:     gameID,
 		Status:     game.Status,
 		Mode:       game.Mode,
+		LobbyName:  lobby.Name,
 		SharedSeed: *lobby.SharedSeed,
 		Players:    players,
 	}

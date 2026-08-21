@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/google/uuid"
 
@@ -18,7 +19,7 @@ import (
 
 var (
 	ErrInvalidMaxPlayers = errors.New("max_players must be between 2 and 4")
-	ErrNotLobbyHost      = errors.New("only the lobby host can start the match")
+	ErrNotLobbyHost      = errors.New("only the lobby host can perform this action")
 	ErrLobbyNotJoinable  = errors.New("lobby is not joinable")
 	ErrLobbyFull         = errors.New("lobby is full")
 	ErrAlreadyInLobby    = errors.New("user is already in this lobby")
@@ -26,6 +27,9 @@ var (
 	ErrNotEnoughPlayers  = errors.New("at least 2 players are required to start")
 	ErrNotAllReady       = errors.New("all players must be ready before starting")
 	ErrNotLobbyMember    = errors.New("user is not a lobby member")
+	ErrInvalidLobbyName  = errors.New("lobby name is required")
+	ErrLobbyNameTooLong  = errors.New("lobby name must be 64 characters or fewer")
+	ErrLobbyNotWaiting   = errors.New("lobby is not accepting changes")
 )
 
 const inviteCodeChars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -362,4 +366,48 @@ func isUniqueViolation(err error) bool {
 
 func (s *LobbyService) IsMember(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error) {
 	return s.lobbies.IsMember(ctx, lobbyID, userID)
+}
+
+func (s *LobbyService) CloseLobby(ctx context.Context, hostID, lobbyID uuid.UUID) error {
+	lobby, err := s.lobbies.FindByID(ctx, lobbyID)
+	if err != nil {
+		return err
+	}
+	if lobby.HostUserID != hostID {
+		return ErrNotLobbyHost
+	}
+	if lobby.Status != model.LobbyStatusWaiting {
+		return ErrLobbyNotWaiting
+	}
+	if err := s.lobbies.DeleteLobby(ctx, lobbyID); err != nil {
+		return err
+	}
+	s.broadcastClosed(lobbyID, "closed_by_host")
+	return nil
+}
+
+func (s *LobbyService) UpdateLobbyName(ctx context.Context, hostID, lobbyID uuid.UUID, name string) (*model.LobbyDetail, error) {
+	lobby, err := s.lobbies.FindByID(ctx, lobbyID)
+	if err != nil {
+		return nil, err
+	}
+	if lobby.HostUserID != hostID {
+		return nil, ErrNotLobbyHost
+	}
+	if lobby.Status != model.LobbyStatusWaiting {
+		return nil, ErrLobbyNotWaiting
+	}
+	name = strings.TrimSpace(name)
+	if name == "" {
+		return nil, ErrInvalidLobbyName
+	}
+	if utf8.RuneCountInString(name) > 64 {
+		return nil, ErrLobbyNameTooLong
+	}
+	err = s.lobbies.UpdateLobbyName(ctx, lobbyID, name)
+	if err != nil {
+		return nil, err
+	}
+	s.broadcastUpdated(ctx, lobbyID)
+	return s.lobbies.FindDetail(ctx, lobbyID)
 }

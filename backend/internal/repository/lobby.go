@@ -13,10 +13,9 @@ import (
 )
 
 var (
-	ErrLobbyFull        = errors.New("lobby is full")
-	ErrAlreadyInLobby   = errors.New("user is already in this lobby")
-	ErrNotLobbyMember   = errors.New("user is not a lobby member")
-	ErrLobbyNotWaiting  = errors.New("lobby is not accepting changes")
+	ErrLobbyFull      = errors.New("lobby is full")
+	ErrAlreadyInLobby = errors.New("user is already in this lobby")
+	ErrNotLobbyMember = errors.New("user is not a lobby member")
 )
 
 type LobbyRepository interface {
@@ -33,6 +32,7 @@ type LobbyRepository interface {
 	MemberCount(ctx context.Context, lobbyID uuid.UUID) (int, error)
 	IsMember(ctx context.Context, lobbyID, userID uuid.UUID) (bool, error)
 	FindByGameID(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error)
+	UpdateLobbyName(ctx context.Context, lobbyID uuid.UUID, name string) error
 }
 
 type lobbyRepository struct {
@@ -51,12 +51,12 @@ func (r *lobbyRepository) Create(ctx context.Context, lobby *model.Lobby, hostUs
 	defer tx.Rollback()
 
 	const insertLobby = `
-		INSERT INTO lobbies (id, host_user_id, invite_code, max_players, status, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO lobbies (id, host_user_id, invite_code, max_players, status, created_at, name)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	if _, err := tx.ExecContext(ctx, insertLobby,
 		lobby.ID.String(), lobby.HostUserID.String(), lobby.InviteCode,
-		lobby.MaxPlayers, lobby.Status, lobby.CreatedAt,
+		lobby.MaxPlayers, lobby.Status, lobby.CreatedAt, lobby.Name,
 	); err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (r *lobbyRepository) Create(ctx context.Context, lobby *model.Lobby, hostUs
 
 func (r *lobbyRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Lobby, error) {
 	const q = `
-		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at
+		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at, name
 		FROM lobbies WHERE id = $1
 	`
 	return r.scanLobby(r.db.QueryRowContext(ctx, q, id.String()))
@@ -84,7 +84,7 @@ func (r *lobbyRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.Lo
 
 func (r *lobbyRepository) FindByGameID(ctx context.Context, gameID uuid.UUID) (*model.Lobby, error) {
 	const q = `
-		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at
+		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at, name
 		FROM lobbies WHERE game_id = $1
 	`
 	return r.scanLobby(r.db.QueryRowContext(ctx, q, gameID.String()))
@@ -92,7 +92,7 @@ func (r *lobbyRepository) FindByGameID(ctx context.Context, gameID uuid.UUID) (*
 
 func (r *lobbyRepository) FindByInviteCode(ctx context.Context, code string) (*model.Lobby, error) {
 	const q = `
-		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at
+		SELECT id, host_user_id, invite_code, max_players, status, game_id, shared_seed, created_at, name
 		FROM lobbies WHERE invite_code = $1
 	`
 	return r.scanLobby(r.db.QueryRowContext(ctx, q, strings.ToUpper(strings.TrimSpace(code))))
@@ -100,7 +100,7 @@ func (r *lobbyRepository) FindByInviteCode(ctx context.Context, code string) (*m
 
 func (r *lobbyRepository) FindWaitingLobbyByUser(ctx context.Context, userID uuid.UUID) (*model.Lobby, error) {
 	const q = `
-		SELECT l.id, l.host_user_id, l.invite_code, l.max_players, l.status, l.game_id, l.shared_seed, l.created_at
+		SELECT l.id, l.host_user_id, l.invite_code, l.max_players, l.status, l.game_id, l.shared_seed, l.created_at, l.name
 		FROM lobbies l
 		JOIN lobby_members m ON m.lobby_id = l.id
 		WHERE m.user_id = $1 AND l.status = 'waiting'
@@ -258,7 +258,7 @@ func (r *lobbyRepository) scanLobby(row *sql.Row) (*model.Lobby, error) {
 	var sharedSeed sql.NullInt64
 	err := row.Scan(
 		&idStr, &hostStr, &l.InviteCode, &l.MaxPlayers, &l.Status,
-		&gameID, &sharedSeed, &l.CreatedAt,
+		&gameID, &sharedSeed, &l.CreatedAt, &l.Name,
 	)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -286,4 +286,20 @@ func (r *lobbyRepository) scanLobby(row *sql.Row) (*model.Lobby, error) {
 		l.SharedSeed = &v
 	}
 	return &l, nil
+}
+
+func (r *lobbyRepository) UpdateLobbyName(ctx context.Context, lobbyID uuid.UUID, name string) error {
+	const q = `UPDATE lobbies SET name = $2 WHERE id = $1`
+	res, err := r.db.ExecContext(ctx, q, lobbyID.String(), name)
+	if err != nil {
+		return err
+	}
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
 }
