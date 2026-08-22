@@ -243,6 +243,152 @@ components:
                 type: string
                 nullable: true
 
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sender_id:
+          type: string
+          format: uuid
+        recipient_id:
+          type: string
+          format: uuid
+        body:
+          type: string
+          example: "gg, great match!"
+        created_at:
+          type: string
+          format: date-time
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    UnreadCount:
+      type: object
+      properties:
+        sender_id:
+          type: string
+          format: uuid
+        count:
+          type: integer
+          example: 3
+
+    Achievements:
+      type: object
+      description: Fixed set of badge flags; every field is always present.
+      properties:
+        avatar_change: { type: boolean }
+        highest_score_2_k: { type: boolean }
+        highest_score_10_k: { type: boolean }
+        highest_score_50_k: { type: boolean }
+        total_points_30_k: { type: boolean }
+        total_points_100_k: { type: boolean }
+        total_points_250_k: { type: boolean }
+        level_2: { type: boolean }
+        level_8: { type: boolean }
+        level_15: { type: boolean }
+        first_mp_game: { type: boolean }
+        first_win: { type: boolean }
+        hundreth_win: { type: boolean }
+        played_10: { type: boolean }
+        played_50: { type: boolean }
+        played_100: { type: boolean }
+        first_friend: { type: boolean }
+        first_clear: { type: boolean }
+
+    APIKeyCreated:
+      type: object
+      description: Returned only once, at creation — the raw key is never shown again.
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "CI pipeline"
+        key:
+          type: string
+          example: "tra_9f2e1c8a4b7d6e0f3a5c1b8d7e2f4a6c"
+
+    APIKeyList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "CI pipeline"
+        created_at:
+          type: string
+          format: date-time
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    GamePlayer:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        game_id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        score:
+          type: integer
+          example: 42000
+        lines_cleared:
+          type: integer
+          example: 30
+        level_reached:
+          type: integer
+          example: 5
+        placement:
+          type: integer
+          nullable: true
+          example: 1
+        is_winner:
+          type: boolean
+
+    Game:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [marathon, sprint, ultra, multiplayer]
+          example: "marathon"
+        status:
+          type: string
+          example: "finished"
+        created_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    GameDetail:
+      allOf:
+        - $ref: '#/components/schemas/Game'
+        - type: object
+          properties:
+            players:
+              type: array
+              items:
+                $ref: '#/components/schemas/GamePlayer'
+
 paths:
 
   # ── Auth ──────────────────────────────────────────────────────────────────
@@ -318,11 +464,26 @@ paths:
                   example: "supersecret"
       responses:
         '200':
-          description: Login successful
+          description: Login successful (2FA not enabled on this account)
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AuthResponse'
+        '202':
+          description: >-
+            Credentials valid but 2FA is enabled. A one-time code was emailed;
+            complete login with `POST /auth/2fa/verify-login`.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  two_factor_required:
+                    type: boolean
+                    example: true
+                  pending_token:
+                    type: string
+                    description: Short-lived (10 min) token to pass to /auth/2fa/verify-login
         '400':
           description: Invalid request body
           content:
@@ -381,6 +542,165 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /auth/2fa/setup:
+    post:
+      summary: Request a 2FA enable code
+      description: Emails a 6-digit one-time code (10 min expiry) to enable 2FA on the account.
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Code sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "verification code sent"
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Could not start 2FA setup
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/2fa/verify:
+    post:
+      summary: Confirm the enable code and turn on 2FA
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  example: "482913"
+      responses:
+        '200':
+          description: 2FA enabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "two-factor authentication enabled"
+        '400':
+          description: Invalid request body, or invalid/expired code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Could not enable 2FA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/2fa:
+    delete:
+      summary: Disable 2FA
+      description: Unconditionally disables 2FA on the authenticated account (no "already disabled" check).
+      tags: [Auth]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 2FA disabled
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "two-factor authentication disabled"
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Could not disable 2FA
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/2fa/verify-login:
+    post:
+      summary: Complete a login that required 2FA
+      description: |
+        Called after `POST /auth/login` responds `202`. Exchanges the pending
+        token plus the emailed one-time code for a real access token. Unlike
+        `/auth/login`, the response contains **only** the token — fetch the
+        user separately via `GET /users/me` if needed.
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pending_token, code]
+              properties:
+                pending_token:
+                  type: string
+                code:
+                  type: string
+                  example: "482913"
+      responses:
+        '200':
+          description: Login complete
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: >-
+            Invalid, expired, or tampered pending token, or invalid/expired/
+            already-used code — all collapse to this single generic error.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "invalid code or session"
 
   # ── Users ─────────────────────────────────────────────────────────────────
 
@@ -648,6 +968,776 @@ paths:
               example:
                 error: "only jpeg, png, webp, and gif images are allowed"
 
+    delete:
+      summary: Delete the authenticated user's avatar
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Avatar deleted
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No avatar set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "no avatar set"
+        '500':
+          description: Deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{id}/achievements:
+    get:
+      summary: Get a user's achievement badges
+      tags: [Users]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Achievement badge flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  achievements:
+                    $ref: '#/components/schemas/Achievements'
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/friends:
+    get:
+      summary: List the authenticated user's friends
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Friend list (empty array if none)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  friends:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to get friends
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/friends/requests:
+    get:
+      summary: List pending friend requests sent to the authenticated user
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pending requests (empty array if none)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requests:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to get friend requests
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/friends/{id}:
+    post:
+      summary: Send a friend request
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Friend request sent (pending)
+        '400':
+          description: Invalid UUID, or attempting to friend yourself
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: >-
+            A relationship already exists between these users, in any status
+            (pending, accepted, or blocked).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to send friend request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    patch:
+      summary: Accept a pending friend request
+      description: "`{id}` is the user who originally sent the request."
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Request accepted
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: No pending request from that user found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to accept friend request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Remove a friend (or cancel/decline a pending request)
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Relationship removed
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: >-
+            No relationship exists between these users, or the existing
+            relationship is a block (blocks are not removable via this endpoint).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to remove friend
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/blocks:
+    get:
+      summary: List users the authenticated user has blocked
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Blocked users (empty array if none)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  blocked:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to get blocked users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/block/{id}:
+    post:
+      summary: Block a user
+      description: >-
+        Also removes any reverse relationship (e.g. an existing friendship
+        or a request the other user sent you) before applying the block.
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User blocked
+        '400':
+          description: Invalid UUID, or attempting to block yourself
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: User is already blocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to block user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: Unblock a user
+      tags: [Users]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: User unblocked
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User is not currently blocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to unblock user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── API Keys ──────────────────────────────────────────────────────────────
+
+  /users/me/api-keys:
+    get:
+      summary: List the authenticated user's API keys
+      description: Never returns the key secret itself, only metadata.
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: API key list (empty array if none)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_keys:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/APIKeyList'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to list API keys
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Create a new API key
+      description: >-
+        The raw key (`tra_...`) is returned only in this response and is
+        never stored or shown again — only its hash is persisted.
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  example: "CI pipeline"
+      responses:
+        '201':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    $ref: '#/components/schemas/APIKeyCreated'
+                  message:
+                    type: string
+                    example: "Store this key, it will not be shown again."
+        '400':
+          description: Invalid request body, or name missing/too long
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/me/api-keys/{id}:
+    delete:
+      summary: Revoke an API key
+      tags: [API Keys]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Key revoked
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: >-
+            Key not found, or found but owned by a different user
+            (ownership mismatch is indistinguishable from not-found).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to revoke API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Chat ──────────────────────────────────────────────────────────────────
+
+  /chat/messages/{friendID}:
+    get:
+      summary: Get the conversation with a friend
+      description: Requires an accepted friendship — non-friends receive 403.
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: friendID
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+          description: Invalid/out-of-range values silently fall back to the default.
+      responses:
+        '200':
+          description: Messages between the two users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  messages:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Message'
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Not friends with this user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                error: "you can only message friends"
+        '500':
+          description: Could not load conversation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chat/messages/{friendID}/read:
+    post:
+      summary: Mark a conversation as read
+      description: >-
+        Does not check friendship status — succeeds for any valid user ID,
+        unlike GET on this resource.
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: friendID
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Marked read
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Could not mark read
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /chat/unread:
+    get:
+      summary: Get unread message counts per sender
+      tags: [Chat]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Unread counts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  unread:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UnreadCount'
+        '500':
+          description: Could not load unread counts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ── Games ─────────────────────────────────────────────────────────────────
+
+  /games:
+    get:
+      summary: List recorded games
+      tags: [Games]
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: string
+            format: uuid
+          description: Filter to games this user played in
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: Paginated game list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  games:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Game'
+                  total:
+                    type: integer
+                    description: Total count matching the filter (ignores limit/offset)
+        '400':
+          description: user_id, limit, or offset is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to list games
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      summary: Record a completed single-player game for the authenticated user
+      description: >-
+        Records exactly one player row (the caller). This endpoint does not
+        support submitting other players' results, even when `mode` is
+        `multiplayer` — multiplayer results are recorded server-side via the
+        WebSocket match flow instead.
+      tags: [Games]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode, score, lines_cleared, level_reached, started_at, finished_at]
+              properties:
+                mode:
+                  type: string
+                  enum: [marathon, sprint, ultra, multiplayer]
+                  example: "marathon"
+                score:
+                  type: integer
+                  example: 42000
+                lines_cleared:
+                  type: integer
+                  example: 30
+                level_reached:
+                  type: integer
+                  example: 5
+                started_at:
+                  type: string
+                  format: date-time
+                finished_at:
+                  type: string
+                  format: date-time
+                is_winner:
+                  type: boolean
+                  description: Ignored (forced false) unless mode is "multiplayer"
+      responses:
+        '201':
+          description: Game recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  game:
+                    $ref: '#/components/schemas/Game'
+        '400':
+          description: Invalid request body, or mode not in the allowed set
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Not authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to record match
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /games/{id}:
+    get:
+      summary: Get a game and its players
+      tags: [Games]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Game detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  game:
+                    $ref: '#/components/schemas/GameDetail'
+        '400':
+          description: Invalid UUID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Game not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Failed to fetch game
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   # ── Leaderboard ───────────────────────────────────────────────────────────
 
   /leaderboard:
@@ -859,6 +1949,73 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+    put:
+      summary: Rename a lobby
+      description: Host only, and only while the lobby is still waiting.
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  example: "Friday Night Tetris"
+      responses:
+        '200':
+          description: Lobby renamed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    $ref: '#/components/schemas/Lobby'
+        '400':
+          description: Invalid UUID, invalid body, empty name, or name over 64 characters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Only the lobby host may rename it
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Lobby not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Lobby is no longer accepting changes (already started or closed)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lobby operation failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /lobbies/{id}/join:
     post:
       summary: Join a lobby by UUID
@@ -975,6 +2132,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /lobbies/current:
+    get:
+      summary: Get the authenticated user's current waiting lobby
+      description: 'Returns `"lobby": null` (not a 404) when the user isn''t in one.'
+      tags: [Lobbies]
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current lobby snapshot, or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lobby:
+                    oneOf:
+                      - $ref: '#/components/schemas/Lobby'
+                      - type: 'null'
+        '500':
+          description: Failed to fetch current lobby
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /ws:
     get:
       summary: WebSocket hub for lobby and match events
@@ -1046,9 +2229,13 @@ paths:
 
 tags:
   - name: Auth
-    description: Registration, login, token management
+    description: Registration, login, token management, and 2FA
   - name: Users
-    description: User profiles and account management
+    description: User profiles, account management, friends/blocks, and achievements
+  - name: Chat
+    description: Direct messaging between friends
+  - name: API Keys
+    description: Self-service management of public-API keys
   - name: Games
     description: Game recording and leaderboard
   - name: Matches
