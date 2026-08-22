@@ -9,7 +9,7 @@ This project is a modern, web-based implementation of the classic arcade game Te
 make up
 ```
 
-Open **https://localhost**. The browser will warn about Caddy’s self-signed certificate; proceed anyway (Advanced → Continue / Accept the Risk).
+Open **https://localhost:8443**. The browser will warn about Caddy’s self-signed certificate; proceed anyway (Advanced → Continue / Accept the Risk).
 
 All client-facing backend traffic (REST, public API, swagger, uploads, WebSockets) is HTTPS/WSS on port 443. Port 80 only redirects to HTTPS. Ports 8080 and 5173 are not published.
 
@@ -20,16 +20,46 @@ make help    # other targets
 ```
 
 ## Resources
-!TODO: add you resources
 - Go: [Docs](https://go.dev/doc/)
+- Chi: [Docs](https://github.com/go-chi/chi/)
+- Vue.js: [Docs](https://vuejs.org/guide/introduction.html)
+- Tailwind: [Docs](https://v2.tailwindcss.com/docs)
+- OpenAPI: [Docs](https://spec.openapis.org/oas/v3.1.0.html)
+- Swagger: [Docs](https://swagger.io/specification/)
+- W3 school(HTML, CSS): [Docs](https://www.w3schools.com/)
+- Youtube Tutorials:
+	- [link](https://www.youtube.com/watch?v=iX8g4LqF8p8&list=PLLXLQba2wc-A&index=3)
+	- [link](https://www.youtube.com/watch?v=BkzgYfygDy8&list=PLLXLQba2wc-A&index=4)
+	- [link](https://www.youtube.com/watch?v=W4njY-VzkUU&list=PLLXLQba2wc-A&index=6)
+	- [link](https://www.youtube.com/watch?v=5oKpoqmUj64&list=PLLXLQba2wc-A&index=13)
+
 - AI usage: Go tests
 
 
-## Team Information: !TODO: add brief descriptions
+## Team Information:
 jwardeng: Developer
+- Write code for assigned features.
+- Participate in code reviews.
+- Test their implementations.
+
 ksinn: Product Owner + Developer
+- Write code for assigned features.
+- Participate in code reviews.
+- Test their implementations.
+- Maintains the product backlog.
+
 nmannar: Developer
+- Write code for assigned features.
+- Participate in code reviews.
+- Test their implementations.
+
 rmakoni: Project Manager + Technical Lead + Developer
+- Write code for assigned features.
+- Participate in code reviews.
+- Test their implementations.
+- Organizes team meetings and planning sessions.
+- Ensures team communication.
+- Makes technology stack decisions.
 
 ## Project Management:
 - How the team organized the work:
@@ -42,7 +72,9 @@ rmakoni: Project Manager + Technical Lead + Developer
 - Backend: Go + Chi
 - Database: Postgres17, because it's the most popular
 - Other: Goose + Docker + JWT + i18n + SendGrid
-- Justifications: !TODO: add
+- Justifications:
+	- Works well together
+	- industry standard
 
 ## Database Schema:
 - [migrations folder](./backend/migrations/)
@@ -79,31 +111,32 @@ rmakoni: Project Manager + Technical Lead + Developer
 - Gamification:
 	- progression bar (level ups)
 	- badges / achievements
+- Internal API:
+	- [View OpenAPI in Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/Raainshe/Transcendence/refs/heads/main/openapi.yaml)
 - Public API:
-	- [View API in Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/Raainshe/Transcendence/refs/heads/main/openapi.yaml)
+	- [View Public APISwagger File](https://localhost:8443/swagger/index.html)
 
 ## Modules:
 ### Major:
 - Frontend + Backend Framework 2pts (Frontend: rmakoni, Backend: ksinn)
-- WebSocket 2pts ()
+- WebSocket 2pts (rmakoni, nmannar)
 - Interact with other users 2pts (nmannar, ksinn)
-- Public API 2pts ()
+- Public API 2pts (jwardeng)
 - Standard User Management 2pts (ksinn)
-- Advanced user roles 2pts ()
-- Game (web-based) 2pts ()
-- Remote players 2pts ()
-- Multiplayer 3+ 2pts ()
-- 18 points
+- Game (web-based) 2pts (rmakoni)
+- Remote players 2pts (rmakoni)
+- Multiplayer 3+ 2pts (rmakoni)
+- 16 points
 ### Minor:
 - File Upload 1pt (ksinn)
-- Multi Browser support 1pt ()
-- Multi Language support 1pt ()
-- Game Stats + Match History 1pt (ksinn)
+- Multi Browser support 1pt (rmakoni)
+- Multi Language support 1pt (rmakoni)
+- Game Stats + Match History 1pt (ksinn, jwardeng)
 - 2FA 1pt (nmannar)
-- Gamification 1pt ()
+- Gamification 1pt (jwardeng)
 - 6 points
 
-#### Total: 24 Points
+#### Total: 22 Points
 
 ## Individual Contributions:
 - jwardeng:
