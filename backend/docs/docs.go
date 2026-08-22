@@ -547,7 +547,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost",
+	Host:             "localhost:8443",
 	BasePath:         "/api/public/v1",
 	Schemes:          []string{"https"},
 	Title:            "Transcendence Public API",

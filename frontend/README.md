@@ -1,48 +1,51 @@
-# frontend
+# Frontend
 
-This template should help get you started developing with Vue 3 in Vite.
+Vue 3 SPA for Transcendence: menus, profiles, friends, chat, and a Tetris Guideline engine with live 2–4 player matches.
 
-## Recommended IDE Setup
+The evaluated stack is the repo root (`make up` → **https://localhost:8443**). This README covers working on the client itself.
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Stack
 
-## Recommended Browser Setup
+- Vue 3, Vite, TypeScript
+- Vue Router, Pinia, vue-i18n (en / de / fr)
+- Tailwind CSS v4 (utilities only; Preflight off so the BEM theme stays intact)
+- Vitest, ESLint, oxlint, Prettier
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
+Requires Node `^20.19.0 || >=22.12.0`.
 
-## Type Support for `.vue` Imports in TS
+## Scripts
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
-
-```sh
+```bash
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
+npm run dev          # Vite on http://localhost:5173 (proxies /api and /uploads)
+npm run build        # type-check + production bundle
+npm run preview      # serve the production build
+npm run test         # Vitest (watch)
+npm run test:run     # Vitest once
 npm run lint
+npm run format
 ```
+
+For host-side `npm run dev`, the API should already be running. Vite proxies `/api` and `/uploads` to `API_PROXY_TARGET` (default `http://localhost:8080`). Optional variables are in [`.env.example`](./.env.example).
+
+Behind Caddy, `HMR_CLIENT_PORT` is set in Compose so Hot Module Replacement uses WSS. Do not point `VITE_API_BASE_URL` at a plain `http://` origin for the evaluated HTTPS stack.
+
+## Layout
+
+| Path | Role |
+| --- | --- |
+| `src/views/` | Route pages (home, play, lobby, profile, friends, chat, …) |
+| `src/components/` | Layout, menu, game HUD, auth, profile |
+| `src/game/` | Framework-agnostic Tetris engine, input, scoring, render |
+| `src/stores/` | Pinia: auth, lobby, match, session, settings |
+| `src/composables/` | WebSocket clients (match, lobby, chat) |
+| `src/api/` | REST helpers |
+| `src/assets/styles/` | Design tokens, reset, BEM stylesheets |
+| `src/locales/` | i18n JSON |
+| `src/router/` | Vue Router |
+
+`@` aliases to `src/` (see `vite.config.ts`).
+
+## IDE
+
+[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (disable Vetur). Vue DevTools in Chromium or Firefox is optional but useful.

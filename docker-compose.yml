@@ -38,7 +38,7 @@ services:
     environment:
       CHOKIDAR_USEPOLLING: "true"
       # Vite HMR must use wss on 443 when the browser talks to Caddy, not :5173.
-      HMR_CLIENT_PORT: "443"
+      HMR_CLIENT_PORT: "8443"
       # Unused by the browser (Caddy proxies /api). Internal fallback if Vite proxies.
       # Host-side npm run dev on WSL: http://host.docker.internal:8080 (requires publishing PORT).
       API_PROXY_TARGET: http://app:8080

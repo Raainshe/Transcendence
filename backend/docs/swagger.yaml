@@ -119,9 +119,7 @@ definitions:
         example: 4
         type: integer
     type: object
-host: localhost
-schemes:
-  - https
+host: localhost:8443
 info:
   contact: {}
   description: |-
@@ -370,6 +368,8 @@ paths:
       summary: Shows User Statistics
       tags:
       - userstats
+schemes:
+- https
 securityDefinitions:
   ApiKeyAuth:
     in: header
