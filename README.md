@@ -107,7 +107,10 @@ rmakoni: Project Manager + Technical Lead + Developer
 
 ## Individual Contributions:
 - jwardeng:
-	-
+	- Implemented the public API module, including the functionality for a user to create an API-Key: the key is hashed with SHA-256 before being stored in the DB. Added a 2-phase rate-limiter: one IP-based, which kicks in when unauthenticated traffic hits the endpoints, and one API-Key-based, used to prevent abuse and enforce per-key limits for API-Key holders.The public endpoints, mirror already existing routes, so I added a public DTO for each resource to control what's exposed. I used swagger to document the public API and enable a quick overview & try-out section and added a Lobby-Name option for lobbies, so the public PUT endpoint would have a more meaningful field to expose.
+	- Added the gamification feature, which includes persistent storage and visual feedback for User Achievements, Badges, XP and Leveling. Achievements are based on milestones like score and total-points thresholds, level reached, games played/won, and actions such as adding a friend or changing your avatar. XP increases based on Achievements unlocked, Wins and Games Played. Designed the badges to give visual feedback for achievements.
+	- Challenges: Since I joined the team a little bit later on my main challenge was to learn the code-base and get used to the existing tech-stack. I had to learn Go on the go and get accustomed to the frontend stack. It was a really good experience tho thanks to the good architecture of my teammates and the Go's C-like syntax.
+
 - ksinn:
 	-
 - nmannar:
