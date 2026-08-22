@@ -45,7 +45,7 @@ rmakoni: Project Manager + Technical Lead + Developer
 - Justifications: !TODO: add
 
 ## Database Schema:
-- !TODO: add Database schema + Tables
+- [migrations folder](./backend/migrations/)
 
 ## Features List:
 - User:
@@ -80,25 +80,25 @@ rmakoni: Project Manager + Technical Lead + Developer
 	- progression bar (level ups)
 	- badges / achievements
 - Public API:
-	- !TODO: link to swagger UI
+	- [View API in Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/Raainshe/Transcendence/refs/heads/main/openapi.yaml)
 
 ## Modules:
 ### Major:
-- Frontend + Backend Framework 2pts ()
+- Frontend + Backend Framework 2pts (Frontend: rmakoni, Backend: ksinn)
 - WebSocket 2pts ()
-- Interact with other users 2pts (nmannar)
+- Interact with other users 2pts (nmannar, ksinn)
 - Public API 2pts ()
-- Standard User Management 2pts ()
+- Standard User Management 2pts (ksinn)
 - Advanced user roles 2pts ()
 - Game (web-based) 2pts ()
 - Remote players 2pts ()
 - Multiplayer 3+ 2pts ()
 - 18 points
 ### Minor:
-- File Upload 1pt ()
+- File Upload 1pt (ksinn)
 - Multi Browser support 1pt ()
 - Multi Language support 1pt ()
-- Game Stats + Match History 1pt ()
+- Game Stats + Match History 1pt (ksinn)
 - 2FA 1pt (nmannar)
 - Gamification 1pt ()
 - 6 points
@@ -109,7 +109,22 @@ rmakoni: Project Manager + Technical Lead + Developer
 - jwardeng:
 	-
 - ksinn:
-	-
+	- Implemented the Go Backend:
+		- Go module, base structs, first SQL migrations
+		- Chi router + route registration, JWT auth middleware
+		- auth/user/game handler-service
+	- File uploads:
+		- Avatar upload endpoint + underlzing file storage implementation
+	- OpenAPI specs
+	- Friend system:
+		- Model, DB Layer, service functions and routes for the friends system
+	- Backend unit test suite
+	- Cleanup / best practics:
+		- unified error responses, stopped silentlz swallowing errors
+		- tighten password policy, request body size capping, made db health checks log and cintinue instead of stopping hard
+	- Integration test suite
+	- User online status
+		- added last seen claim to JWTs
 - nmannar:
 	- Implemented optional email 2FA. On the backend, added an AuthService extension
       that uses bcrypt-hashed 6-digit codes with a 10-minute expiry,
